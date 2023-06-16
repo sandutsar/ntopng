@@ -1,14 +1,9 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
-
-if(ntop.isPro()) then
-    package.path = dirs.installdir .. "/pro/scripts/lua/modules/?.lua;" .. package.path
-    local snmp_utils = require "snmp_utils"
-end
 
 require "lua_utils"
 local graph_utils = require "graph_utils"
@@ -27,7 +22,6 @@ local ifId = interface.getId()
 local as_info = interface.getASInfo(asn) or {}
 local asname = as_info["asname"]
 local base_url = ntop.getHttpPrefix() .. "/lua/as_details.lua"
-local asn_behavior_update_freq = 300 -- An update each 300 seconds
 
 local page_params = {}
 
@@ -57,27 +51,6 @@ sendHTTPContentTypeHeader('text/html')
 -- #######################
 
 local function formatDropdownEntries(entries, base_url, param_arr, param_filter, curr_filter)
-   local dropdownString = "" 
-
-   for _, htype in ipairs(entries) do
-      if type(htype) == "string" then
-        -- plain html
-        dropdownString = htype
-        goto continue
-      end
-
-      param_arr[param_filter] = htype[1]
-      
-      dropdownString = dropdownString .. '<li><a class="dropdown-item' .. (htype[1] == curr_filter and 'active' or '') .. '" href="' .. getPageUrl(base_url, param_arr) .. '">' .. htype[2] .. '</a></li>'
-      ::continue::
-   end
-
-   return dropdownString
-end
-
--- #######################
-
-local function addDropdownEntries(entries, base_url, param_arr, param_filter, curr_filter)
    local dropdownString = "" 
 
    for _, htype in ipairs(entries) do
@@ -138,43 +111,8 @@ if isEmptyString(page) or page == "historical" then
       print(" "..i18n("as_details.as_timeseries_enable_message",{url = ntop.getHttpPrefix().."/lua/admin/prefs.lua?tab=on_disk_ts",icon_flask="<i class=\"fas fa-flask\"></i>"})..'</div>')
 
    else
-      local schema = _GET["ts_schema"] or default_schema
-      local selected_epoch = _GET["epoch"] or ""
-      local asn_url = ntop.getHttpPrefix()..'/lua/as_details.lua?ifid='..ifId..'&asn='..asn..'&page=historical'
-
-      local tags = {
-         ifid = ifId,
-         asn = asn,
-         protocol = _GET["protocol"],
-       }
-
-       local all_timeseries = {
-         {schema="asn:traffic",             label=i18n("traffic"), split_directions = true --[[ split RX and TX directions ]]},
-			{schema="asn:rtt",                 label=i18n("graphs.num_ms_rtt"), nedge_exclude=1},
-			{schema="asn:traffic_sent",        label=i18n("graphs.traffic_sent"), nedge_exclude=1},
-			{schema="asn:traffic_rcvd",        label=i18n("graphs.traffic_rcvd"), nedge_exclude=1},
-			{schema="asn:score",                 label=i18n("score"), split_directions = true},
-			{schema="asn:tcp_retransmissions", label=i18n("graphs.tcp_packets_retr"), nedge_exclude=1},
-         {schema="asn:tcp_out_of_order",    label=i18n("graphs.tcp_packets_ooo"), nedge_exclude=1},
-         {schema="asn:tcp_lost",            label=i18n("graphs.tcp_packets_lost"), nedge_exclude=1},
-         {schema="asn:tcp_keep_alive",      label=i18n("graphs.tcp_packets_keep_alive"), nedge_exclude=1},
-       }
-
-       if ntop.isPro() then
-         local pro_timeseries = {
-            {schema="asn:score_anomalies",       label=i18n("graphs.iface_score_anomalies")},
-            {schema="asn:score_behavior",        label=i18n("graphs.iface_score_behavior"), split_directions = true, first_timeseries_only = true, metrics_labels = {i18n("graphs.score"), i18n("graphs.lower_bound"), i18n("graphs.upper_bound")}},
-            {schema="asn:traffic_anomalies",     label=i18n("graphs.iface_traffic_anomalies")},
-            {schema="asn:traffic_rx_behavior_v2",   label=i18n("graphs.iface_traffic_rx_behavior"), split_directions = true, first_timeseries_only = true, time_elapsed = asn_behavior_update_freq, value_formatter = {"NtopUtils.fbits_from_bytes", "NtopUtils.bytesToSize"}, metrics_labels = {i18n("graphs.traffic_rcvd"), i18n("graphs.lower_bound"), i18n("graphs.upper_bound")}},
-            {schema="asn:traffic_tx_behavior_v2",   label=i18n("graphs.iface_traffic_tx_behavior"), split_directions = true, first_timeseries_only = true, time_elapsed = asn_behavior_update_freq, value_formatter = {"NtopUtils.fbits_from_bytes", "NtopUtils.bytesToSize"}, metrics_labels = {i18n("graphs.traffic_sent"), i18n("graphs.lower_bound"), i18n("graphs.upper_bound")}},
-         }
-         all_timeseries = table.merge(all_timeseries, pro_timeseries)
-       end
-
-       graph_utils.drawGraphs(ifId, schema, tags, _GET["zoom"], asn_url, selected_epoch, {
-         top_protocols = "top:asn:ndpi",
-         timeseries = all_timeseries,
-       })
+      local source_value_object = { asn = tonumber(asn), ifid = interface.getId() }
+      graph_utils.drawNewGraphs(source_value_object)
    end
 
    print[[
@@ -228,14 +166,16 @@ end
 local dt_buttons = "['<div class=\"btn-group\"><button class=\"btn btn-link dropdown-toggle\" data-bs-toggle=\"dropdown\">"..i18n("flows_page.applications").. " " .. application_filter .. "<span class=\"caret\"></span></button> <ul class=\"dropdown-menu\" role=\"menu\" >"
 dt_buttons = dt_buttons..'<li><a class="dropdown-item" href="'..nav_url..'&page=flows">'..i18n("flows_page.all_proto")..'</a></li>'
 
-local ndpi_stats = interface.getASInfo(asn)
+local ndpi_stats = interface.getASInfo(asn) or {}
 
-for key, value in pairsByKeys(ndpi_stats["ndpi"], asc) do
-   local class_active = ''
-   if(key == application) then
-      class_active = 'active'
-   end
-   dt_buttons = dt_buttons..'<li><a class="dropdown-item '..class_active..'" href="'..nav_url..'&page=flows&application='..key..'">'..key..'</a></li>'
+if table.len(ndpi_stats) > 0 then
+  for key, value in pairsByKeys(ndpi_stats["ndpi"], asc) do
+    local class_active = ''
+    if(key == application) then
+        class_active = 'active'
+    end
+    dt_buttons = dt_buttons..'<li><a class="dropdown-item '..class_active..'" href="'..nav_url..'&page=flows&application='..key..'">'..key..'</a></li>'
+  end
 end
 
 dt_buttons = dt_buttons .. "</ul>"

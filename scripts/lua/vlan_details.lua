@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 dirs = ntop.getDirs()
@@ -72,23 +72,8 @@ else
       Selectively render information pages
    --]]
    if page == "historical" then
-      local schema = _GET["ts_schema"] or "vlan:traffic"
-      local selected_epoch = _GET["epoch"] or ""
-      local vlan_url = ntop.getHttpPrefix()..'/lua/vlan_details.lua?ifid='..ifId..'&vlan='..vlan_id..'&page=historical'
-
-      local tags = {
-         ifid = ifId,
-         vlan = vlan_id,
-         protocol = _GET["protocol"],
-      }
-
-      graph_utils.drawGraphs(ifId, schema, tags, _GET["zoom"], vlan_url, selected_epoch, {
-         top_protocols = "top:vlan:ndpi",
-         timeseries = {
-            {schema="vlan:traffic",             	  label=i18n("traffic")},
-	    {schema="vlan:score",                	  label=i18n("score"), split_directions = true},
-         },
-      })
+      local source_value_object = { vlan = tonumber(vlan_id), ifid = interface.getId() }
+      graph_utils.drawNewGraphs(source_value_object)
    elseif (page == "config") then
       if(not isAdministrator()) then
          return

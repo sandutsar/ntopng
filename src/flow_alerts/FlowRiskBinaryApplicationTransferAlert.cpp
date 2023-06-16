@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,14 +21,13 @@
 
 #include "flow_alerts_includes.h"
 
-ndpi_serializer* FlowRiskBinaryApplicationTransferAlert::getAlertJSON(ndpi_serializer* serializer) {
-  Flow *f = getFlow();
+ndpi_serializer* FlowRiskBinaryApplicationTransferAlert::getAlertJSON(
+    ndpi_serializer* serializer) {
+  Flow* f = getFlow();
 
-  if(serializer == NULL)
-    return NULL;
+  if (serializer == NULL) return NULL;
 
   f->getHTTPInfo(serializer);
 
   return serializer;
 }
-

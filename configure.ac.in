@@ -1,63 +1,117 @@
 AC_INIT([ntopng],[@VERSION@])
 
+AC_CONFIG_MACRO_DIR([m4])
+
 HERE=`pwd`
 SYSTEM=`uname -s`
 
-CPPFLAGS="${CPPFLAGS} -Wno-address-of-packed-member -Wno-unused-function"
 AC_PROG_CPP
 AC_PROG_CXX
 
-dnl> On Ubuntu do sudo apt-get install -y clang-10  clang-tools-10
+PKG_PROG_PKG_CONFIG
+
 AC_ARG_WITH(leak-sanitizer,     [  --with-leak-sanitizer   Build with support for the LLVM address leak and sanitizer])
 AS_IF([test "${with_leak_sanitizer+set}" = set],[
-    CFLAGS="-g -O0 -Wall -Wno-unused-value -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fsanitize=leak -fno-omit-frame-pointer"
-    CPPFLAGS="-g -O0 -Wall -Wno-unused-value -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fsanitize=leak -fno-omit-frame-pointer"
+    CFLAGS="${CFLAGS} -g -O0 -Wall -Wno-unused-value -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fsanitize=leak -fno-omit-frame-pointer"
+    CXXFLAGS="${CXXFLAGS} -g -O0 -Wall -Wno-unused-value -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fsanitize=leak -fno-omit-frame-pointer"
     LDFLAGS="${LDFLAGS} -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fsanitize=leak"
-    if test $SYSTEM = "Darwin"; then
-        CC=clang
-        CXX="clang++ -fPIE"
-    else
-       if test -x "/usr/bin/clang-10"; then
-           CC=clang-10
-           CXX="clang++-10 -fPIE"
-       elif test -x "/usr/bin/clang-11"; then
-           CC=clang-11
-           CXX="clang++-11 -fPIE"
-       else
-           echo "Could not find clang"
-           exit 1
-       fi
-    fi
-    CPP=$CC
+    USE_CLANG=yes
 ])
 
-dnl> On Ubuntu do sudo apt-get install -y clang-10  clang-tools-10
 AC_ARG_WITH(sanitizer,     [  --with-sanitizer   Build with support for the LLVM address sanitizer])
 AS_IF([test "${with_sanitizer+set}" = set],[
-    CFLAGS="-g -O0 -Wall -Wno-unused-value -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fno-omit-frame-pointer"
-    CPPFLAGS="-g -O0 -Wall -Wno-unused-value -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fno-omit-frame-pointer"
+    CFLAGS="${CFLAGS} -g -O0 -Wall -Wno-unused-value -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fno-omit-frame-pointer"
+    CXXFLAGS="${CXXFLAGS} -g -O0 -Wall -Wno-unused-value -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment -fno-omit-frame-pointer"
     LDFLAGS="${LDFLAGS} -fsanitize=address -fsanitize=undefined -fno-sanitize=alignment"
-    if test $SYSTEM = "Darwin"; then
-        CC=clang
-        CXX="clang++ -fPIE"
-    else
-       if test -x "/usr/bin/clang-10"; then
-           CC=clang-10
-           CXX="clang++-10 -fPIE"
-       elif test -x "/usr/bin/clang-11"; then
-           CC=clang-11
-           CXX="clang++-11 -fPIE"
-       else
-           echo "Could not find clang"
-           exit 1
-       fi
-    fi
-    CPP=$CC
+    USE_CLANG=yes
 ])
 
-dnl> Add /usr/local/ /opt/local
+AC_ARG_ENABLE(fuzztargets, AS_HELP_STRING([--enable-fuzztargets], [Enable fuzz targets]), [enable_fuzztargets=$enableval], [enable_fuzztargets=no])
+AC_ARG_ENABLE(fuzztargets-local, AS_HELP_STRING([--enable-fuzztargets-local], [Enable fuzz targets for local testing]), [enable_fuzztargets_local=$enableval], [enable_fuzztargets_local=no])
+AC_ARG_WITH(fuzz-protobuf, AS_HELP_STRING([--with-fuzz-protobuf], [Build with protobuf mutator support]), [with_fuzz_protobuf=$enableval], [with_fuzz_protobuf=no])
+
+AS_VAR_IF(enable_fuzztargets_local, yes, [enable_fuzztargets="yes" AC_SUBST(FUZZ_LOCAL_TEST, "1")])
+AS_VAR_IF(with_fuzz_protobuf, yes, [
+    AC_SUBST(FUZZ_WITH_PROTOBUF, "1")
+    PKG_CHECK_MODULES(LIBPROTOBUF_MUTATOR, libprotobuf-mutator, [], [AC_MSG_ERROR(Could not find libprotobuf-mutator. Perhaps you should set PKG_CONFIG_PATH accordingly)])
+    PKG_CHECK_MODULES(PROTOBUF, protobuf, [], [AC_MSG_ERROR(Could not find protobuf. Perhaps you should set PKG_CONFIG_PATH accordingly)])
+])
+
+FUZZ_MAKEFILE_INC=
+FUZZ_OBJECTS=
+AS_VAR_IF(enable_fuzztargets, yes, [
+    FUZZ_MAKEFILE_INC="include ./fuzz/Makefile"
+    FUZZ_OBJECTS='$(patsubst %.cpp, %.o, $(wildcard fuzz/stub/*.cpp))'
+    AC_LANG_PUSH(C++)
+    AC_SUBST(LIB_FUZZING_ENGINE)
+
+    dnl> Check that the compiler supports the flags $LIB_FUZZING_ENGINE
+    AX_CHECK_COMPILE_FLAG(
+        $LIB_FUZZING_ENGINE,
+        [AC_SUBST(HAS_FUZZLDFLAGS, "1")],dnl SUCCESS
+        [:],dnl FAIL
+        [],
+        [AC_LANG_SOURCE([[
+#include <sys/types.h>
+extern "C" int LLVMFuzzerTestOneInput(const unsigned char *Data, size_t Size);
+extern "C" int LLVMFuzzerTestOneInput(const unsigned char *Data, size_t Size) {
+(void)Data;
+(void)Size;
+return 0;
+}
+        ]])]
+    )
+
+    AC_LANG_POP()
+])
+
+AC_ARG_WITH(hiredis, AS_HELP_STRING([--without-hiredis], [Build without hiredis integration]), [with_hiredis=no], [with_hiredis=yes])
+
+
+dnl> CLANG_STDLIB="-stdlib=libc++"
+
+dnl> On Ubuntu do sudo apt-get install -y clang-14  clang-tools-14
+if test "x$USE_CLANG" = xyes; then
+    if test $SYSTEM = "Darwin"; then
+        CC=clang
+        CXX="clang++ -fno-color-diagnostics -fPIE -stdlib=libc++"
+    else
+       if test -x "/usr/bin/clang-13"; then
+           CLANG_VERSION=13
+       elif test -x "/usr/bin/clang-14"; then
+           CLANG_VERSION=14
+       else
+           echo "Could not find clang. Please install clang-14 clang-tools-14"
+           exit 1
+       fi
+
+       CC=clang-$CLANG_VERSION
+       CXX="clang++-$CLANG_VERSION -fno-color-diagnostics -fPIE $CLANG_STDLIB"
+    fi
+fi
+
 CFLAGS="${CFLAGS} -I${HERE} -I${HERE}/include"
-CPPFLAGS="${CPPFLAGS} -I${HERE} -I${HERE}/include"
+CXXFLAGS="${CXXFLAGS} -I${HERE} -I${HERE}/include"
+
+CXXFLAGS="${CXXFLAGS} -Wno-address-of-packed-member -Wno-unused-function"
+
+dnl> MacOS brew.sh
+HOMEBREW_DIR=/opt/homebrew
+if test -d $HOMEBREW_DIR; then
+ CFLAGS="${CFLAGS} -I ${HOMEBREW_DIR}/include"
+ CXXFLAGS="${CXXFLAGS} -I ${HOMEBREW_DIR}/include"
+ LDFLAGS="${LDFLAGS} -L ${HOMEBREW_DIR}/lib"
+fi
+
+if test -f /proc/device-tree/model; then
+  IS_RASPBERRY=`cat /proc/device-tree/model | grep -a -e "Orange Pi" -e Raspberry | wc -l`
+  
+  if test "$IS_RASPBERRY" = "1"; then
+    CFLAGS="${CFLAGS} -DHAVE_EMBEDDED_SUPPORT"
+    CXXFLAGS="${CXXFLAGS} -DHAVE_EMBEDDED_SUPPORT"
+    AC_DEFINE(HAVE_RASPBERRY, 1, [rPI detected])
+  fi
+fi
 
 TODAY=`date +%y%m%d`
 NTOPNG_MAJOR=`echo "${PACKAGE_VERSION}" | cut -d . -f 1`
@@ -93,7 +147,7 @@ if test $SYSTEM = "FreeBSD" || test $SYSTEM = "Darwin"; then
 
    dnl> https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
    CC=clang
-   CXX="clang++ -fPIE"
+   CXX="clang++ -fpie -fno-color-diagnostics $CLANG_STDLIB"
    if test $SYSTEM = "FreeBSD"; then
     MAKE=gmake
     BIN_PATH=/usr/local/bin
@@ -107,7 +161,7 @@ if test $SYSTEM = "FreeBSD" || test $SYSTEM = "Darwin"; then
    dnl> CXX=clang++ -fsanitize=address -fsanitize-address-use-after-scope
    OSXV=`sw_vers -productVersion`
    if test $SYSTEM = "Darwin"; then
-     OS="MacOSX $OSXV"
+     OS="macOS $OSXV"
    else
      OS=`uname -or | cut -d '-' -f 1`
    fi
@@ -118,22 +172,6 @@ if test $SYSTEM = "FreeBSD" || test $SYSTEM = "Darwin"; then
             CFLAGS="-fno-color-diagnostics $CFLAGS"
       fi
    fi
-else
-  if test $SYSTEM = "Linux"; then
-    if [ test -f /usr/bin/clang++ ]; then
-      CC=clang
-      CXX="clang++ -fPIE"
-      AC_MSG_RESULT(Using clang++ compiler)
-    fi
-
-    if [ test -f /etc/redhat-release ]; then
-      OS=`cat /etc/redhat-release`
-    else
-      if [ test -f /usr/bin/lsb_release ]; then
-        OS=`/usr/bin/lsb_release -d|cut -d ':' -f 2`
-      fi
-    fi
-  fi
 fi
 
 dnl> Remove spaces
@@ -141,17 +179,21 @@ OS="${OS#"${OS%%[![:space:]]*}"}"
 
 AC_CHECK_LIB([atomic], [__atomic_exchange_8], [LIBS="${LIBS} -latomic"])
 
-AC_CHECK_LIB([zmq], [zmq_socket_monitor])
-if test "x$ac_cv_lib_zmq_zmq_socket_monitor" = xyes; then :
-  LIBS="${LIBS} -lzmq"
-  AC_DEFINE_UNQUOTED(HAVE_ZMQ, 1, [ZMQ is present])
-else
-  echo "ZMQ not present or too old (< v. 3.x)"
-  exit 1
-fi
+AC_ARG_WITH(zmq-static,
+    [  --with-zmq-static       Use static link for the zmq library],
+    [PKG_CHECK_MODULES_STATIC(ZMQ, [libzmq >= 3],
+        [AC_DEFINE_UNQUOTED(HAVE_ZMQ, 1, [ZMQ is present])],
+        [AC_MSG_ERROR(ZMQ not present or too old (< v. 3.x))]
+    )],
+    [PKG_CHECK_MODULES(ZMQ, [libzmq >= 3],
+        [AC_DEFINE_UNQUOTED(HAVE_ZMQ, 1, [ZMQ is present])],
+        [AC_MSG_ERROR(ZMQ not present or too old (< v. 3.x))]
+    )]
+)
 
 AC_CHECK_LIB([sodium], [sodium_init], LIBS="${LIBS} -lsodium")
-
+AC_CHECK_LIB([rdkafka], [rd_kafka_metadata], AC_DEFINE_UNQUOTED(HAVE_KAFKA, 1, [librdkafka is installed] LIBS="${LIBS} -lrdkafka") LIBS="${LIBS} -lrdkafka")
+   
 NEDGE=0
 if test "${with_nedge+set}" = set; then
   AC_DEFINE(HAVE_NEDGE, 1, [nedge support is present])
@@ -178,7 +220,7 @@ fi
 
 if test -d "/usr/local/include"; then
   CFLAGS="${CFLAGS} -I/usr/local/include"
-  CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+  CXXFLAGS="${CXXFLAGS} -I/usr/local/include"
 fi
 
 if test -d "/usr/local/lib"; then
@@ -187,7 +229,7 @@ fi
 
 if test -d /opt/local/include; then :
   CFLAGS="${CFLAGS} -I/opt/local/include"
-  CPPFLAGS="${CPPFLAGS} -I/opt/local/include"
+  CXXFLAGS="${CXXFLAGS} -I/opt/local/include"
 fi
 
 if test -d /opt/local/lib; then :
@@ -197,7 +239,7 @@ fi
 if [ test -f /usr/bin/lsb_release ]; then
   CODENAME=`/usr/bin/lsb_release -c|cut -f 2`
   if test $CODENAME = "wheezy" ; then
-    CPPFLAGS="${CPPFLAGS} -DOLD_NETFILTER_INTERFACE=1"
+    CXXFLAGS="${CXXFLAGS} -DOLD_NETFILTER_INTERFACE=1"
   fi
 fi
 
@@ -289,19 +331,11 @@ if test -z "$NDPI_INC" || test -z "$NDPI_LIB" ; then :
 fi
 dnl finish: nDPI handling
 
-if test $SYSTEM = "FreeBSD"; then
-   JSON_LIB=/usr/local/lib/libjson-c.a
-   JSON_INC=`pkg-config --cflags json-c`
-else
-   pkg-config --exists json-c
-   if test "$?" -ne 1; then
-     JSON_INC=`pkg-config --cflags json-c`
-     JSON_LIB=`pkg-config --libs json-c`
-   else
-     echo "Please install libjson-c-dev package prerequisite"
-     exit -1
-   fi
-fi
+AC_ARG_WITH(json-c-static,
+    [  --with-json-c-static       Use static link for the json-c library],
+    [PKG_CHECK_MODULES_STATIC(JSON, json-c, [], [AC_MSG_ERROR(Please install libjson-c-dev package prerequisite)])],
+    [PKG_CHECK_MODULES(JSON, json-c, [], [AC_MSG_ERROR(Please install libjson-c-dev package prerequisite)])]
+)
 
 pkg-config --exists libssl
 if test "$?" -ne 1; then
@@ -310,7 +344,19 @@ if test "$?" -ne 1; then
   SSL_LIB="`pkg-config --libs libssl` -lssl -lcrypto"
 else
   dnl Workaround for MacOS Brew
-  if test -d "/usr/local/opt/openssl/lib"; then
+  if test -d "/usr/local/Cellar/openssl@1.1"; then
+    AC_DEFINE_UNQUOTED(NO_SSL_DL, 1, [has openssl])
+    SSL_INC="-I/usr/local/Cellar/openssl@1.1/include"
+    SSL_LIB="-L/usr/local/Cellar/openssl@1.1 -lssl -lcrypto"
+  elif test -d "/usr/local/opt/openssl/lib"; then
+    AC_DEFINE_UNQUOTED(NO_SSL_DL, 1, [has openssl])
+    SSL_INC="-I/usr/local/opt/openssl/include"
+    SSL_LIB="-L/usr/local/opt/openssl/lib -lssl -lcrypto"
+  elif test -d "/opt/homebrew/Cellar/openssl@1.1"; then
+    AC_DEFINE_UNQUOTED(NO_SSL_DL, 1, [has openssl])
+    SSL_INC="-I/opt/homebrew/Cellar/openssl@1.1/include"
+    SSL_LIB="-L/opt/homebrew/Cellar/openssl@1.1 -lssl -lcrypto"
+  elif test -d "/usr/local/opt/openssl/lib"; then
     AC_DEFINE_UNQUOTED(NO_SSL_DL, 1, [has openssl])
     SSL_INC="-I/usr/local/opt/openssl/include"
     SSL_LIB="-L/usr/local/opt/openssl/lib -lssl -lcrypto"
@@ -323,6 +369,19 @@ else
     echo "Please install openssl-dev(el) package prerequisite"
     exit -1
   fi
+fi
+
+
+AC_MSG_CHECKING([PF_RING nBPF])
+NBPF_HOME=${PWD}/../PF_RING/userland/nbpf
+LIBNBPF=${NBPF_HOME}/libnbpf.a
+if test -f ${LIBNBPF}; then :
+   LIBS="${LIBS} ${LIBNBPF}"
+   CFLAGS="${CFLAGS} -I${NBPF_HOME}"
+   AC_DEFINE_UNQUOTED(HAVE_NBPF, "1", [PF_RING nBPF is present])
+   AC_MSG_RESULT(yes)
+else
+   AC_MSG_RESULT(no)
 fi
 
 AC_MSG_CHECKING(for ntopng professional edition)
@@ -362,22 +421,10 @@ fi
 
 if test -d "pro"; then :
 AC_MSG_RESULT(yes)
-PRO_OBJECTS='$(patsubst pro/%.cpp, pro/%.o, $(wildcard pro/*.cpp)) $(patsubst pro/flow_checks/%.cpp, pro/flow_checks/%.o, $(wildcard pro/flow_checks/*.cpp)) $(patsubst pro/host_checks/%.cpp, pro/host_checks/%.o, $(wildcard pro/host_checks/*.cpp))'
+PRO_OBJECTS='$(patsubst pro/src/%.cpp, pro/src/%.o, $(wildcard pro/src/*.cpp)) $(patsubst pro/src/flow_checks/%.cpp, pro/src/flow_checks/%.o, $(wildcard pro/src/flow_checks/*.cpp)) $(patsubst pro/src/host_checks/%.cpp, pro/src/host_checks/%.o, $(wildcard pro/src/host_checks/*.cpp))'
+CFLAGS="${CFLAGS} -I ./pro/include -I./pro/include/flow_checks -I ./pro/include/host_checks"
 
-if test "${with_nedge+set}" != set; then
-  if test $SYSTEM = "FreeBSD" || test $SYSTEM = "Darwin" || test $MACHINE = "armv7l" || test $MACHINE = "aarch64"; then
-  if test -d "../PF_RING"; then
-      cd ../PF_RING/userland/; ./configure; cd ./nbpf; ${MAKE}; cd ${HERE}
-      LIBS="${LIBS} -L../PF_RING/userland/nbpf -lnbpf"
-   else
-      echo "Missing ../PF_RING: please fetch PF_RING code from https://github.com/ntop/PF_RING and try again"
-      exit
-   fi
-  fi
-fi
-
-CFLAGS="${CFLAGS} -I../PF_RING/userland/nbpf"
-PRO_HEADERS='$(wildcard pro/*.h)'
+PRO_HEADERS='$(wildcard pro/include/*.h) $(wildcard pro/include/flow_checks/*.h) $(wildcard pro/include/host_checks/*.h) '
 PRO_MAKEFILE_INC="include ./pro/inc.Makefile"
 dnl> Remove heading spaces
 AC_DEFINE_UNQUOTED(NTOPNG_PRO, 1, [Building ntopng professional])
@@ -387,7 +434,7 @@ AC_DEFINE_UNQUOTED(NTOPNG_PRO_GIT_DATE, "${PRO_GIT_DATE}", [ntopng professional 
 DUMMY=`cd ./pro; ${MAKE} build`
 PRO_INCS="${PRO_INCS} -I${HERE}/pro -I${HERE}/pro/utils -I${HERE}/pro/third-party/libb64-1.2.1/include"
 
-if test -r "../license/systemId.c"; then :
+if test -r "../license/license.h"; then :
   LICENSEDIR="`pwd`/../license"
   LICENSELIBS="-L${LICENSEDIR} -llicense"
   AC_DEFINE_UNQUOTED(NTOPNG_PRO_HAVE_LICENSE, 1, [ntopng has license])
@@ -416,11 +463,20 @@ if test -f ".git/index"; then
 fi
 
 if test $SYSTEM = "Linux"; then
-  if test -f /etc/debian_version; then
-    DEBIAN_VERSION=`cat /etc/debian_version`
-    OSNAME="Debian $DEBIAN_VERSION"
+  if [ test -f /usr/bin/lsb_release ]; then
+      OSNAME=`/usr/bin/lsb_release -d|cut -d ':' -f 2| sed -e 's/^[[[:space:]]]*//'`
+      OS="$OSNAME"
   else
-    OSNAME=`./config.guess`
+    if test -f /etc/debian_version; then
+       DEBIAN_VERSION=`cat /etc/debian_version`
+       OSNAME="Debian $DEBIAN_VERSION"
+    else
+        if test -f /etc/redhat-release; then
+          OS=`cat /etc/redhat-release | cut -d '(' -f 1 | awk '{$1=$1};1'`
+        else
+          OS=`./config.guess`
+        fi
+   fi
   fi
 else
 dnl> wget -O config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
@@ -430,7 +486,6 @@ dnl> wget -O config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=bl
     OSNAME=`./config.guess`
   fi
 fi
-AC_DEFINE_UNQUOTED(PACKAGE_OSNAME, "${OSNAME}", [OS name])
 
 if test $MACHINE = "x86_64"; then
   EXTN="amd64"
@@ -442,18 +497,22 @@ fi
 
 DATE=`date +"%Y-%m-%d"`
 
-pkg-config --exists hiredis
-if test "$?" -ne 1; then
-  HIREDIS_INC="`pkg-config --cflags hiredis` -I/usr/include/hiredis"
-  if test $SYSTEM = "FreeBSD"; then
-     HIREDIS_LIB="/usr/local/lib/libhiredis.a"
-   else
-     HIREDIS_LIB="`pkg-config --libs hiredis`"
-  fi
-else
-  echo "Please install hiredis package prerequisite"
-  exit -1
-fi
+HIREDIS_INC=
+HIREDIS_LIB=
+AS_VAR_IF(with_hiredis, yes, [
+    pkg-config --exists hiredis
+    if test "$?" -ne 1; then
+    HIREDIS_INC="`pkg-config --cflags hiredis` -I/usr/include/hiredis"
+    if test $SYSTEM = "FreeBSD"; then
+        HIREDIS_LIB="/usr/local/lib/libhiredis.a"
+    else
+        HIREDIS_LIB="`pkg-config --libs hiredis`"
+    fi
+    else
+    echo "Please install hiredis package prerequisite"
+    exit -1
+    fi
+])
 
 if test "${with_nedge+set}" != set; then
   if test -d "${HOME}/PF_RING" ; then :
@@ -480,7 +539,7 @@ if test "${with_nedge+set}" != set; then
      echo "${PF_RING_HOME}/userland/libpcap/libpcap.a"
      if test -f "${PF_RING_HOME}/userland/libpcap/libpcap.a"; then
        LIBS="${LIBS} ${PF_RING_HOME}/userland/lib/libpfring.a -L${PF_RING_HOME}/userland/libpcap/ `${PF_RING_HOME}/userland/lib/pfring_config --libs`"
-       CPPFLAGS="${CPPFLAGS} -I${PF_RING_HOME}/kernel -I${PF_RING_HOME}/userland/lib -I${PF_RING_HOME}/userland/libpcap"
+       CXXFLAGS="${CXXFLAGS} -I${PF_RING_HOME}/kernel -I${PF_RING_HOME}/userland/lib -I${PF_RING_HOME}/userland/libpcap"
        echo "Using PF_RING installed in ${PF_RING_HOME}"
      else
        echo "Found PF_RING but the userland libs have not been compiled"
@@ -491,7 +550,7 @@ if test "${with_nedge+set}" != set; then
        if test -f "/opt/pfring/lib/libpfring.a"; then
          echo "/opt/pfring/lib/libpfring.a"
          LIBS="${LIBS} /opt/pfring/lib/libpfring.a -L/opt/pfring/lib"
-         CPPFLAGS="${CPPFLAGS} -I/opt/pfring/include"
+         CXXFLAGS="${CXXFLAGS} -I/opt/pfring/include"
          echo "Using PF_RING installed in /opt/pfring"
       else
        if test -f "/usr/local/lib/libpfring.a"; then
@@ -578,10 +637,12 @@ if test x$cap != x; then
 fi
 
 if test "${with_nedge+set}" != set; then
-  AC_CHECK_LIB([ldap], [ldap_initialize], [LIBS="${LIBS} -lldap -llber"])
-  if test "x$ac_cv_lib_ldap_ldap_initialize" = xyes; then
-    AC_DEFINE_UNQUOTED(HAVE_LDAP, 1, [LDAP support is present])
-  fi
+ if test $SYSTEM != "FreeBSD"; then
+   AC_CHECK_LIB([ldap], [ldap_initialize], [LIBS="${LIBS} -lldap -llber"])
+   if test "x$ac_cv_lib_ldap_ldap_initialize" = xyes; then
+     AC_DEFINE_UNQUOTED(HAVE_LDAP, 1, [LDAP support is present])
+   fi
+ fi
 fi
 
 UGLIFYJS=`which uglifyjs`
@@ -632,17 +693,23 @@ if test -f "/etc/centos-release"; then
   fi
 fi
 
-AC_CHECK_LIB([maxminddb], [MMDB_lookup_sockaddr])
-AC_CHECK_HEADERS(maxminddb.h)
-if test ".${ac_cv_lib_maxminddb_MMDB_lookup_sockaddr}" = ".yes" &&
-   test ".${ac_cv_header_maxminddb_h}" = ".yes"; then
-   DOWNLOAD_GEOIP=1
-   MAXMINDDB_LIB=-lmaxminddb
-   AC_DEFINE_UNQUOTED(HAVE_MAXMINDDB, 1, [MaxMind DB support])
-else
-   AC_MSG_RESULT(Please install libmaxminddb-dev (https://github.com/maxmind/libmaxminddb) and try again)
-   exit 1
-fi
+AC_ARG_WITH(maxminddb-static,
+    [  --with-maxminddb-static       Use static link for the maxminddb library],
+    [PKG_CHECK_MODULES_STATIC(MAXMINDDB, libmaxminddb,
+        [
+            DOWNLOAD_GEOIP=1
+            AC_DEFINE_UNQUOTED(HAVE_MAXMINDDB, 1, [MaxMind DB support])
+        ],
+        [AC_MSG_ERROR(Please install libmaxminddb-dev (https://github.com/maxmind/libmaxminddb) and try again)]
+    )],
+    [PKG_CHECK_MODULES(MAXMINDDB, libmaxminddb,
+        [
+            DOWNLOAD_GEOIP=1
+            AC_DEFINE_UNQUOTED(HAVE_MAXMINDDB, 1, [MaxMind DB support])
+        ],
+        [AC_MSG_ERROR(Please install libmaxminddb-dev (https://github.com/maxmind/libmaxminddb) and try again)]
+    )]
+)
 
 AC_CHECK_LIB([sqlite3], [sqlite3_open], sqlite=true)
 if test x$sqlite = xtrue; then
@@ -653,11 +720,12 @@ else
   exit 1
 fi
 
-if test $SYSTEM = "FreeBSD"; then
-   MYSQL_LIB=/usr/local/lib/mysql/libmysqlclient.a
-    MYSQL_INC="-I /usr/local/include/mysql/"
-   AC_DEFINE_UNQUOTED(HAVE_MYSQL, 1, [use mysql])
-else
+dnl> FreeBSD
+dnl> MYSQL_LIB=/usr/local/lib/mysql/libmysqlclient.a
+dnl> MYSQL_INC="-I /usr/local/include/mysql/"
+dnl> AC_DEFINE_UNQUOTED(HAVE_MYSQL, 1, [use mysql])
+
+if test $SYSTEM != "FreeBSD"; then
  if test "${with_nedge+set}" != set; then
   AC_CHECK_TOOL(MARIADB, mariadb_config)
   if test "x$ac_cv_prog_ac_ct_MARIADB" = "xmariadb_config"; then
@@ -684,8 +752,7 @@ else
     AC_DEFINE_UNQUOTED(HAVE_MYSQL, 1, [use mysql])
     AC_CHECK_LIB([wrap], [main])
   else
-    echo "MySQL libraries not found. Please install them as specified in README.compilation"
-    exit 1
+    echo "Building without support for MySQL libraries."
   fi
  fi
 fi
@@ -710,22 +777,7 @@ if test x$radcli = xtrue; then
   fi
 fi
 
-AC_CACHE_CHECK([if pthread rwlocks are supported], [my_cv_rw_locks_supported], [
-  AC_TRY_RUN([
-  #include <pthread.h>
-
-  int main() {
-    pthread_rwlock_t t;
-    return 0;
-  }
-]
-, [my_cv_rw_locks_supported=yes], [my_cv_rw_locks_supported=no])
-]
-)
-
-if test "$my_cv_rw_locks_supported" = yes; then
-  AC_DEFINE_UNQUOTED(HAVE_RW_LOCK, 1, [pthread rwlocks supported])
-fi
+AC_CHECK_TYPES([pthread_spinlock_t, pthread_rwlock_t], AC_DEFINE_UNQUOTED(HAVE_RW_LOCK, 1, [pthread rwlocks supported]))
 
 if test -f /usr/bin/lsb_release; then
   LINUX_OS_RELEASE=`lsb_release -r | cut -f 2|cut -d '.' -f 1`
@@ -773,6 +825,11 @@ if test $GIT_BRANCH != "dev"; then
   STABLE_SUFFIX="-stable"
 fi
 
+if test $SYSTEM = "Darwin"; then
+   MYSQL_LIB=`echo $MYSQL_LIB | sed 's/openssl@1.1/openssl@1.1/g'`
+fi
+
+
 PWD=${HERE}
 AC_DEFINE_UNQUOTED(PACKAGE_RELEASE, "r$GIT_RELEASE", [GIT release of this package])
 AC_DEFINE_UNQUOTED(PACKAGE_MACHINE, "$MACHINE", [Architecture of this host])
@@ -788,7 +845,7 @@ AC_SUBST(GIT_RELEASE)
 AC_SUBST(LINK_OPTS)
 AC_SUBST(SQLITE_LIB)
 AC_SUBST(GMAKE)
-AC_SUBST(GPP)
+AC_SUBST(CPP)
 AC_SUBST(CXX)
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
@@ -807,7 +864,6 @@ AC_SUBST(NDPI_LIB)
 AC_SUBST(NDPI_LIB_DEP)
 AC_SUBST(HIREDIS_INC)
 AC_SUBST(HIREDIS_LIB)
-AC_SUBST(MAXMINDDB_LIB)
 AC_SUBST(EXPAT_LIB)
 AC_SUBST(RADCLI_LIB)
 AC_SUBST(SSL_INC)
@@ -822,8 +878,6 @@ AC_SUBST(REVISION)
 AC_SUBST(MYSQL_LIB)
 AC_SUBST(MYSQL_INC)
 AC_SUBST(MYSQL_DEP)
-AC_SUBST(JSON_INC)
-AC_SUBST(JSON_LIB)
 AC_SUBST(SNMP_INC)
 AC_SUBST(SNMP_LIB)
 AC_SUBST(PFRING_GIT_RELEASE)
@@ -840,12 +894,18 @@ AC_SUBST(RPM_SIGN_CMD)
 AC_SUBST(LIBRRD_LD_FLAGS)
 AC_SUBST(STABLE_SUFFIX)
 AC_SUBST(LIBS)
+AC_SUBST(FUZZ_MAKEFILE_INC)
+AC_SUBST(FUZZ_OBJECTS)
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_FILES(packages/ntopng.spec)
 AC_CONFIG_FILES(packages/ntopng-data.spec)
 AC_CONFIG_FILES(packages/FreeBSD/build.sh)
 AC_CONFIG_FILES(packages/OPNsense/build.sh)
+AC_CONFIG_FILES(packages/OPNsense/package/+MANIFEST)
+AC_CONFIG_FILES(packages/OPNsense/package/+POST_INSTALL)
+AC_CONFIG_FILES(packages/OPNsense/package/Makefile)
 AC_CONFIG_FILES(Makefile)
+AC_CONFIG_FILES(fuzz/Makefile)
 AC_CONFIG_FILES(tools/json2tlv/Makefile)
 AC_CONFIG_FILES(doc/doxygen.conf)
 AC_CONFIG_FILES(httpdocs/misc/ntopng-utils-manage-config)
@@ -853,6 +913,8 @@ AC_CONFIG_FILES(httpdocs/misc/ntopng-utils-manage-updates)
 AC_CONFIG_FILES(packages/wizard/ntopng-config)
 AC_CONFIG_FILES(packages/etc/systemd/system/ntopng.service)
 AC_CONFIG_FILES(packages/etc/systemd/system/ntopng@.service)
+AC_CONFIG_FILES(python/setup.py)
+AC_CONFIG_FILES(python/__init__.py)
 
 AC_OUTPUT
 
@@ -875,20 +937,26 @@ fi
 echo "
 This is the ntopng configuration:
 
-Compiler          : ${CXX}
-Preprocessor Flags: ${CPPFLAGS}
-C++ Flags         : ${CXXFLAGS}
-Linker Flags:     : ${LDFLAGS}
-System Libs       : ${LIBS}
-nDPI Lib:         : ${NDPI_LIB}
-JSON Lib:         : ${JSON_LIB}
-SSL Lib:          : ${SSL_LIB}
-SNMP Lib          : ${SNMP_LIB}
-Expat Lib         : ${EXPAT_LIB}
-SQLite Lib        : ${SQLITE_LIB}
-MySQL Lib         : ${MYSQL_LIB}
-PCAP Lib          : ${LIBPCAP}
-Install path      : ${INSTALL_DIR}
+C Compiler          : ${CC}
+C Flags             : ${CFLAGS}
+C++ Compiler        : ${CXX}
+C++ Flags           : ${CXXFLAGS}
+Preprocessor        : ${CPP}
+Preprocessor Flags  : ${CPPFLAGS}
+Linker Flags:       : ${LDFLAGS}
+System Libs         : ${LIBS}
+nDPI Lib:           : ${NDPI_LIB}
+JSON Lib:           : ${JSON_LIBS}
+SSL Lib:            : ${SSL_LIB}
+SNMP Lib            : ${SNMP_LIB}
+Expat Lib           : ${EXPAT_LIB}
+SQLite Lib          : ${SQLITE_LIB}
+MySQL Lib           : ${MYSQL_LIB}
+PCAP Lib            : ${LIBPCAP}
+ZMQ Lib             : ${ZMQ_LIBS}
+libprotobuf-mutator : ${LIBPROTOBUF_MUTATOR_LIBS}
+protobuf Lib        : ${PROTOBUF_LIBS}
+Install path        : ${INSTALL_DIR}
 
 You are now ready to compile typing 'make'
 "

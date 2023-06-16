@@ -1,8 +1,8 @@
 ![ntop][ntopng_logo] ![ntop][ntop_logo]
 # ntopng 
 
-[![Build Status](https://travis-ci.org/ntop/ntopng.png?branch=dev)](https://travis-ci.org/ntop/ntopng)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/g/ntop/ntopng.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/ntop/ntopng/alerts)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/ntop/ntopng/build.yml?branch=dev&logo=github)](https://github.com/ntop/ntopng/actions?query=workflow%3ABuild)
+[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/ntopng.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:ntopng)
 
 ### Introduction
 
@@ -13,10 +13,10 @@ While you can read more about ntopng on the ntop web site (http://www.ntop.org),
 If instead of source code you prefer to use a pre-built package, please go to http://packages.ntop.org
 
 We build binary packages for the following platforms:
-* Ubuntu Linux Server x64
-* CentOS/RedHat Linux x64
+* Debian/Ubuntu LTS x64
+* CentOS/RedHat/RockyLinux Linux x64
 * Windows x64
-* RaspberryPI/BeagleBoard ARM (based on Ubuntu Linux)
+* RaspberryPI
 
 Enjoy.
 

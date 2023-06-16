@@ -2,6 +2,24 @@
     (C) 2021 - ntop.org    
     Base template for datatables.
 #}
+<style>
+.table.dataTable {
+  padding: 0;
+}
+</style>
+<!--
+.table.dataTable th {
+    white-space: nowrap;
+    overflow: hidden;
+}
+ 
+
+.table.dataTable td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+-->
 <!-- vue3 -->
 <!-- <script src="{* ntop.getHttpPrefix() *}/vue/vue-dev.js?{* ntop.getStaticFileEpoch() *}"></script> 
 <script src="{* ntop.getHttpPrefix() *}/vue/vue3-sfc-loader.js?{* ntop.getStaticFileEpoch() *}"></script>
@@ -11,16 +29,17 @@
 <script type='text/javascript'>
   const base_path = '{* ntop.getHttpPrefix() *}';
   const default_ifid = '{* interface.getId() *}';
-  const show_permalink = '{* show_permalink *}';
-  const show_download = '{* show_download *}';
+  const show_permalink = '{* show_permalink *}' == 'true';
+  const show_download = '{* show_download *}' == 'true';
   const download_endpoint = '{* datatable.download.endpoint *}';
   const navbar_context = {* navbar *};
-  const show_pcap_download = '{* show_pcap_download *}';
+  const show_pcap_download = '{* show_pcap_download *}' == 'true';
+  const isNtopEnterpriseM = '{* ntop.isEnterpriseM() *}' == 'true';
+  const show_chart = '{* show_chart *}' == 'true';
 </script>
 <div id="navbar">
 <page-navbar
 	id="page_navbar"
-	:main_icon="navbar_context.main_icon"
 	:main_title="navbar_context.main_title"
 	:base_url="navbar_context.base_url"
 	:help_link="navbar_context.help_link"
@@ -35,13 +54,17 @@
       <div class="w-100">
 	<div clas="range-container d-flex flex-wrap">
 	  <div class="range-picker d-flex m-auto flex-wrap" id="rangepicker">
-	  <alert-info id="alert_info" ref="alert_info"></alert-info>
+	  <alert-info id="alert_info" :global="true" ref="alert_info"></alert-info>
 	  <modal-traffic-extraction id="modal_traffic_extraction" ref="modal_traffic_extraction"></modal-traffic-extraction>
+	  <modal-snapshot ref="modal_snapshot"
+	    :csrf="csrf">
+	  </modal-snapshot>
 	    <range-picker ref="range-picker-vue" :id="id_range_picker">
 	    <template v-slot:extra_range_buttons>
 	    <button v-if="show_permalink" class="btn btn-link btn-sm" @click="get_permanent_link" :title="i18n('graphs.get_permanent_link')" ref="permanet_link_button"><i class="fas fa-lg fa-link"></i></button>
 	    <a v-if="show_download" class="btn btn-link btn-sm" id="dt-btn-download" :title="i18n('graphs.download_records')" ><i class="fas fa-lg fa-file"></i></a>
 	    <button v-if="show_pcap_download" class="btn btn-link btn-sm" @click="show_modal_traffic_extraction" :title="i18n('traffic_recording.pcap_download')"><i class="fas fa-lg fa-download"></i></button>
+	    <button v-if="is_ntop_enterprise_m" class="btn btn-link btn-sm" @click="show_modal_snapshot" :title="i18n('datatable.manage_snapshots')"><i class="fas fa-lg fa-camera-retro"></i></button>
 	    </template>
 	    </range-picker>
 	  </div>
@@ -67,11 +90,21 @@
 
           <div class="col-12 mb-2" id="chart-vue">
             <div class="card h-100 overflow-hidden">
-	    <chart id="chart_0" :base_url_request="chart_base_url_request">
-	    </chart>
+              <chart ref="chart"
+	        id="chart_0"
+          :chart_type="chart_type"
+	        :base_url_request="chart_base_url_request"
+		:register_on_status_change="false">
+	      </chart>
+	      <modal-alerts-filter
+	        :alert="current_alert"
+		:page="page"
+		@exclude="add_exclude"
+		ref="modal_alerts_filter">
+	      </modal-alerts-filter>
             </div>
           </div>
-      {% end  %}
+      {% end  %}          
 
           <table id='{{ datatable.name }}' class='table table-striped table-bordered w-100'>
             <thead>
@@ -96,6 +129,7 @@
       {% end  %}
       </div>
 
+      {% if show_acknowledge_all or show_delete_all then %}
       <div class="card-footer">
 
         {% if show_acknowledge_all then %}
@@ -111,7 +145,13 @@
         {% end %}
 
       </div>
+      {% end %}
     </div>
+
+    {% if notes then %}
+      {* ui_utils.render_notes({ {content = notes} }) *}
+    {% end %}
+
   </div>
 </div>
 
@@ -132,7 +172,11 @@
   let $table;
   let RANGEPICKER_APP;
   let CHART_APP;
+  let datatable_columns;
+  const datatableButton = {* (datatable.buttons or '[]') *};
   const ifid = {{ ifid }}
+  const local_storage_order_key = "{* datatable.name *}_column" + ifid
+  const local_storage_order_asc_desc = "{* datatable.name *}_order" + ifid
 
     const INITIAL_ROWS_LENGTH = {{datatable.initialLength}};
 
@@ -167,7 +211,7 @@
         if (cache.cardsData == null) { cache.cardsData = cardsData; }
 	for (let i = 0; i < cardsData.length; i += 1) {
 	  let newTopData = cardsData[i];
-	  if (newTopData.value == null || newTopData.value[0] == null || newTopData.value[0].length == 0) {
+	  if (newTopData.value == null || newTopData.value.length == 0) {
 	    continue;
 	  }
 	  // update cache
@@ -230,21 +274,26 @@
 	  continue;
 	} else {
 	    let menuOptions = [];
-	    if (cardsData[i].value[0] != null) {
-	      for (j = 0; j < cardsData[i].value[0].length; j++) {
+	    if (cardsData[i].value != null) {
+	      for (j = 0; j < cardsData[i].value.length; j++) {
 	        // Concat the name with the percentage of the stat
 	        // NB: These name should be filters if available
-	        if(cardsData[i].value[0][j] != null){
-	          let restText = " (" + (cardsData[i].value[0][j].count).toFixed(1) + "%)";
-	          if(cardsData[i].value[0][j].count != 0 && cardsData[i].value[0][j].count < 0.1){restText = " (< 0.1%)";}
+	        if(cardsData[i].value[j] != null){
+	          let restText = " (" + (cardsData[i].value[j].count).toFixed(1) + "%)";
+	          if(cardsData[i].value[j].count != 0 && cardsData[i].value[j].count < 0.1){restText = " (< 0.1%)";}
 
-	          let a_tag = "<a class='tag-filter dropdown-item' data-tag-key='" + cardsData[i].value[0][j].key + 
-	            "' title='" + ( cardsData[i].value[0][j].title || cardsData[i].value[0][j].value) +
-		    "' data-tag-value='" + cardsData[i].value[0][j].value + 
-		    "' data-tag-label='" + cardsData[i].value[0][j].label + 
-		    "' href='#'>" + cardsData[i].value[0][j].label + "" + restText + "</a>";
+		  let operator = "";
+		  if (cardsData[i].value[j].operator != null) {
+		    operator = `  data-tag-operator='${cardsData[i].value[j].operator}' `;
+		  }
+	          let a_tag = "<a class='ntopng-truncate tag-filter dropdown-item' data-tag-key='" + cardsData[i].value[j].key + 
+	            "' title='" + ( cardsData[i].value[j].title || cardsData[i].value[j].value) +
+		    "' data-tag-value='" + cardsData[i].value[j].value + 
+		    "' data-tag-label='" + cardsData[i].value[j].label + "'" +
+		    operator +
+		    " href='#'>" + cardsData[i].value[j].label + "" + restText + "</a>";
 
-                  let itemText = '<li class="dropdown-item pointer">' + a_tag + '</li>';
+                  let itemText = '<li style="max-width:90rem;" class="dropdown-item pointer">' + a_tag + '</li>';
 		  menuOptions.push(itemText);
 		}
 	      }
@@ -282,21 +331,9 @@
       if ($table == null) {
 	  return;
       }
-      NtopUtils.showOverlays();
+      //NtopUtils.showOverlays();
       // reload the table
         $table.ajax.url(`{* datatable.datasource.name *}?` + url_params).load();
-
-	    {% if show_chart then %}
-/*
-        try {
-	  let widget = WidgetUtils.getWidgetByName("{{ chart.name }}");
-          widget.update(null);
-        }
-        catch(e) {
-            console.warn(e);
-        }
-*/
-	    {% end %}
 
         {% if show_cards then %}
         //updateCardStats();
@@ -343,10 +380,21 @@
 
         /* Actions Column */
         {% if show_actions then %}
-        columns.push({responsivePriority: 1, width: '5%', targets: -1, className: 'text-center text-nowrap', orderable: false, data: null, render: (_, type, dataRow) => {
+	let handlerId = "disableAlerts";
+        columns.push({responsivePriority: 1, width: '5%', targets: -1, className: 'text-center text-nowrap', orderable: false, data: null, handlerId, render: (rowData, type, dataRow) => {
+            let handlerDisableAlerts = {
+	      handlerId,
+	      onClick: () => {
+		CHART_APP.show_modal_alerts_filter(rowData);
+	      },
+	    };
             const buttons = [
                 {% if actions.show_info then %}
                 {icon: 'fa fa-search-plus', title: "{{ i18n('info') }}", href: '#check_info'},
+                {% end %}
+
+                {% if actions.show_snmp_info then %}
+                {icon: 'fa fa-search-plus', title: "{{ i18n('info') }}", href: '#check_snmp_info'},
                 {% end %}
 
                 {% if actions.show_alerts then %}
@@ -360,7 +408,7 @@
 		{% end %}
 
                 {% if actions.show_historical then %}
-		/* Button to jump to historical nIndex flows */
+		/* Button to jump to historical flows */
                 {icon: 'fa-stream', title: "{{ i18n('db_explorer.historical_data') }}", modal: '#past_flows'},
 		{% end %}
 
@@ -375,7 +423,7 @@
 
                 {% if actions.show_disable then %}
                 /* Bell button to disable alerts is only supported for hosts and flows */
-                {icon: 'fa-bell-slash', title: "{{ i18n('disable') }}", modal: '#alerts_filter_dialog'},
+                {icon: 'fa-bell-slash', class: "pointer", handler: handlerDisableAlerts, title: "{{ i18n('disable') }}"},
                 {% end %}
 
                 {% if actions.show_settings then %}
@@ -395,6 +443,52 @@
         return columns;
     }
 
+  function setUserColumnsDefWidths() {
+    let userColumnDef;
+    /* Get the settings for this table from localStorage */
+    let userColumnDefs = JSON.parse(localStorage.getItem('{{ datatable.name }}')) || [];
+
+    if (userColumnDefs.length === 0 ) return;
+    datatable_columns.forEach( function(columnDef, index) {
+      // Check if there is a width specified for this column
+      userColumnDef = userColumnDefs.find( function(column) {
+        return column.targets === index /* Column target */;
+      });
+
+      // If there is, set the width of this columnDef in px
+      if ( userColumnDef ) {
+        columnDef.width = userColumnDef.width + 'px';
+      }
+    });
+  }
+
+
+  function saveColumnSettings() {
+    let userColumnDefs = JSON.parse(localStorage.getItem('{{ datatable.name }}')) || [];
+    let width, header, existingSetting; 
+
+    $table.columns().every( function ( targets ) {
+      // Check if there is a setting for this column in localStorage
+      existingSetting = userColumnDefs.findIndex( function(column) { return column.targets === targets;});
+      // Get the width of this column
+      header = this.header();
+      width = $(header).width();
+
+      if ( existingSetting !== -1 ) {
+        // Update the width
+        userColumnDefs[existingSetting].width = width;
+      } else {
+        // Add the width for this column
+        userColumnDefs.push({
+          targets: targets,
+          width:  width,
+        });
+      }
+    });
+
+    // Save (or update) the settings in localStorage
+    localStorage.setItem('{{ datatable.name }}', JSON.stringify(userColumnDefs));
+  }
 
   function refreshTime() {
       let epoch_status = ntopng_status_manager.get_status();
@@ -445,17 +539,19 @@
 
   function start_chart() {
     let is_alert_stats_url = window.location.toString().match(/alert_stats.lua/) != null;
+    let page;
     let chart_data_url = `${base_path}/lua/pro/rest/v2/get/db/ts.lua`;
     if (is_alert_stats_url) {
-      let page = ntopng_url_manager.get_url_entry("page");
+      page = ntopng_url_manager.get_url_entry("page");
       if (page == null) { page = "all"; }
-      chart_data_url = `${base_path}/lua/rest/v2/get/${page}/alert/ts.lua`;
+      chart_data_url = (page == "snmp_device") ? `${base_path}/lua/pro/rest/v2/get/snmp/device/alert/ts.lua` : `${base_path}/lua/rest/v2/get/${page}/alert/ts.lua`;
     }
 
     let chart_vue_options = {
     	components: {
    	      // 'chart': Vue.defineAsyncComponent( () => ntopng_vue_loader.loadModule(`${base_path}/vue/components/chart.vue`, ntopng_vue_loader.loadOptions) ),
    	      'chart': ntopVue.Chart,
+	      'modal-alerts-filter': ntopVue.ModalAlertsFilter,
 	  },
 	  /**
 	   * First method called when the component is created.
@@ -464,11 +560,47 @@
 	  mounted() {},
 	  data() {
 	      return {
+	          csrf: pageCsrf,
+            chart_type: ntopChartApex.typeChart.TS_COLUMN,
 		  chart_base_url_request: chart_data_url,
+		  page: page,
+		  current_alert: null,
 		  i18n: (t) => { return i18n(t); },
 	      };
 	  },
 	  methods: {
+	    chart_options_converter: function(options) {
+	      
+	      let formatter = ntopChartOptionsUtility.getApexYFormatter()
+	      if (is_alert_stats_url) {
+	        
+	      }
+	    },
+	    show_modal_alerts_filter: function(alert) {
+	      this.current_alert = alert;
+	      this.$refs["modal_alerts_filter"].show();
+	    },
+	    register_status: function() {
+	      this.$refs["chart"].register_status();
+	    },
+	    add_exclude: async function(params) {
+	      params.csrf = pageCsrf;
+	      let url = `${http_prefix}/lua/pro/rest/v2/add/alert/exclusion.lua`;
+	      try {
+	        let headers = {
+		  'Content-Type': 'application/json'
+		};
+		await ntopng_utility.http_request(url, { method: 'post', headers, body: JSON.stringify(params) });
+		let url_params = ntopng_url_manager.get_url_params();
+		setTimeout(() => {
+		  reloadTable($table, url_params);
+		  ntopng_events_manager.emit_custom_event(ntopng_custom_events.SHOW_GLOBAL_ALERT_INFO, { text_html: i18n('check_exclusion.disable_warn'), type: "alert-info", timeout: 2 });
+		  
+		}, 1000);
+              } catch(err) {
+	        console.error(err);
+              }
+	    }
 	  },
       }; 
       const chart_vue = ntopVue.Vue.createApp(chart_vue_options);
@@ -487,6 +619,7 @@
    	      // 'alert-info': Vue.defineAsyncComponent( () => ntopng_vue_loader.loadModule(`${base_path}/vue/components/alert-info.vue`, ntopng_vue_loader.loadOptions) ),
    	      'range-picker': ntopVue.RangePicker,
    	      'modal-traffic-extraction': ntopVue.ModalTrafficExtraction,
+	      'modal-snapshot': ntopVue.ModalSnapshot,
    	      'alert-info': ntopVue.AlertInfo,
 	  },
 	  /**
@@ -496,6 +629,9 @@
 	  mounted() {},
 	  data() {
 	      return {
+	          csrf: pageCsrf,
+		  is_ntop_enterprise_m: isNtopEnterpriseM,
+            chart_type: ntopChartApex.typeChart.TS_COLUMN,
 		  chart_base_url_request: `${base_path}/lua/rest/v2/get/flow/alert/ts.lua`,
 		  show_download: show_download,
 		  show_permalink: show_permalink,
@@ -508,16 +644,19 @@
 	  show_modal_traffic_extraction: async function() {
 	  this.$refs["modal_traffic_extraction"].show();
 	  },
+	  show_modal_snapshot: function() {
+	    this.$refs["modal_snapshot"].show();
+	  },
 	  get_permanent_link: function() {
 	  const $this = $(this.$refs['permanet_link_button']);
-	  const dummyInput = document.createElement('input');
-	  dummyInput.value = location.href;
-	  document.body.appendChild(dummyInput);
-	  dummyInput.select();
+	  const placeholder = document.createElement('input');
+	  placeholder.value = location.href;
+	  document.body.appendChild(placeholder);
+	  placeholder.select();
 
-	  // copy the url to the clipboard from the dummy input
+	  // copy the url to the clipboard from the placeholder
 	  document.execCommand("copy");
-	  document.body.removeChild(dummyInput);
+	  document.body.removeChild(placeholder);
 
 	  $this.attr("title", "{{ i18n('copied') }}!")
 	  .tooltip("dispose")
@@ -549,10 +688,10 @@
       	 && ntopng_url_manager.get_url_entry("status") == "engaged") {
 	 ntopng_url_manager.set_key_to_url("status", "historical");
       }
-      
-      CHART_APP = start_chart();
+      if (show_chart) {
+        CHART_APP = start_chart();
+      }
       RANGEPICKER_APP = start_range_picker();
-    const datatableButton = {* (datatable.buttons or '[]') *};
     datatableButton.push({
         text: '<i class="fas fa-sync"></i>',
         action: async function (e, dt, node, config) {
@@ -560,101 +699,102 @@
         }
     });
     
-    const columns = loadColumns();
+    datatable_columns = loadColumns();
     const column_order_name = "{{ datatable.order_name }}";
     let column_order_id = 1;
-    columns.forEach((element, index) => {
+    datatable_columns.forEach((element, index) => {
         if(element.data && element.data == column_order_name) {
             column_order_id = index;
         }
     });
+    column_order_id = localStorage.getItem(local_storage_order_key) || column_order_id
+    const column_order_sorting = localStorage.getItem(local_storage_order_asc_desc) || "{* datatable.order_sorting *}"
+    
 
     /* Ordering the array in order to have the selected row length at the beginning of the array */
-    let length_array = [10, 50, 100, 250, 500];
-    const index = length_array.indexOf(INITIAL_ROWS_LENGTH);
-    length_array.splice(index, 1);
-    length_array.unshift(INITIAL_ROWS_LENGTH);
-    let url_params = ntopng_url_manager.get_url_params();
-    let config = DataTableUtils.getStdDatatableConfig(datatableButton);
-    config = DataTableUtils.extendConfig(config, {
-        autowidth: true,
-        serverSide: true,
-        searching: false,
-        info: false,
-        order: [[ column_order_id, "{* datatable.order_sorting *}" ]],
-        pagingType: '{{ datatable.pagination }}',
-        columnDefs: {},
-        ajax: {
-            method: 'get',
-            url: '{* datatable.datasource.name *}?' + url_params,
-            dataSrc: 'rsp.records',
-            data: (data, settings) => {
+    let length_array = NtopUtils.getNumTableRows();
+    let index = length_array.indexOf(INITIAL_ROWS_LENGTH);
+    /* Validate index */
+    (index >= 0) ? index = index : index = length_array.length - 1; /* Use the last index */
 
-                const tableApi = settings.oInstance.api();
-                const orderColumnIndex = data.order[0].column;
-                const orderColumnName = tableApi.column(orderColumnIndex).name() || undefined;
+      let url_params = ntopng_url_manager.get_url_params();
+      let config = DataTableUtils.getStdDatatableConfig(datatableButton);
+      config = DataTableUtils.extendConfig(config, {
+          serverSide: true,
+          searching: false,
+          info: false,
+          order: [[ column_order_id,  column_order_sorting]],
+          pagingType: '{{ datatable.pagination }}',
+          autoWidth: false,
+          destroy: false,
+          responsive: false,
+          scrollX: true,
+          ajax: {
+              method: 'get',
+              url: '{* datatable.datasource.name *}?' + url_params,
+              dataSrc: 'rsp.records',
+              data: (data, settings) => {
+
+                  const tableApi = settings.oInstance.api();
+                  const orderColumnIndex = data.order[0].column;
+                  const orderColumnName = tableApi.column(orderColumnIndex).name() || undefined;
+                  
+                  if (data.order) {
+                      data.order = data.order[0].dir;
+                      data.sort = orderColumnName;
+                      localStorage.setItem(local_storage_order_key, orderColumnIndex);
+                      localStorage.setItem(local_storage_order_asc_desc, data.order || "{* datatable.order_sorting *}")
+                  }
+
+                  if (data.columns !== undefined) {
+                      delete data.columns;
+                  }
+
+                  if (data.search !== undefined) {
+                      delete data.search;
+                  }
                 
-                if (data.order) {
-                    data.order = data.order[0].dir;
-                    data.sort = orderColumnName;
-                }
+                  data.visible_columns = getVisibleColumns(tableApi).join(',');
+                  return data;
+              },
+              beforeSend: function() {
+                NtopUtils.showOverlays();
+              },
+              complete: function() {
+                NtopUtils.hideOverlays();
+              }
+          },
+          drawCallback: () => {
+              updateDownloadButton();
+          },
+          lengthMenu: [length_array, length_array],
+          pageLength: INITIAL_ROWS_LENGTH,
+          columns: datatable_columns,
+      });
 
-                if (data.columns !== undefined) {
-                    delete data.columns;
-                }
+      $table = $(`#{{ datatable.name }}`).DataTable(config);
+      {% if datatable.refresh_rate and datatable.refresh_rate > 0 then %}
+      intervalId = setInterval(function() {
+    refreshTime();
+      }, {{ datatable.refresh_rate }});
+      {% end %}
 
-                if (data.search !== undefined) {
-                    delete data.search;
-                }
-               
-                data.visible_columns = getVisibleColumns(tableApi).join(',');
-                return data;
-            },
-            beforeSend: function() {
-              NtopUtils.showOverlays();
-            },
-            complete: function() {
-              NtopUtils.hideOverlays();
-            }
-        },
-        drawCallback: () => {
-            updateDownloadButton();
-        },
-        lengthMenu: [length_array, length_array],
-        pageLength: INITIAL_ROWS_LENGTH,
-        columns: loadColumns(),
-    });
+      let toggleColumnsDropdownAlreadyAdded = false;
 
-    $table = $(`#{{ datatable.name }}`).DataTable(config);
-
-    {% if datatable.refresh_rate and datatable.refresh_rate > 0 then %}
-    intervalId = setInterval(function() {
-	refreshTime();
-    }, {{ datatable.refresh_rate }});
-    {% end %}
-
-    let toggleColumnsDropdownAlreadyAdded = false;
-    $table.on("draw", () => {
-    if (toggleColumnsDropdownAlreadyAdded == true) { return; }
+      // on ajax request complete then print the query time
+      $table.on('xhr', function() {
+        printQueryTime($table);
+        $(this).css('table-layout', 'auto')
+        if (toggleColumnsDropdownAlreadyAdded == true) { return; }
         DataTableUtils.addToggleColumnsDropdown($table, function(col, visible) {
-            $table.ajax.reload();
+          $table.ajax.reload();
         });
-	toggleColumnsDropdownAlreadyAdded = true;
-    });
+        toggleColumnsDropdownAlreadyAdded = true;
+      });
 
-  // on ajax request
-    $table.on('preXhr', function() {
-      $(this).css('table-layout', 'auto')
-    });
-
-    // on ajax request complete then print the query time
-    $table.on('xhr', function() {
-      printQueryTime($table);
-    });
-
-    $table.on('click', `a.tag-filter`, async function (e) {
-        addFilter(e, $(this), $table);
-    });
+      $table.on('click', `a.tag-filter`, async function (e) {
+          addFilter(e, $(this), $table);
+      });
 
     /* Top Host and Top Alerts filters */
     {% if show_cards then %}
@@ -687,7 +827,7 @@
             displayValue  = NtopUtils.stripTags(displayValue);
             realValue = ((data.value != undefined) ? data.value : data);
 	}
-
+	
 	// Read tag key and value from the <a> itself if provided
 	if (a.data('tagKey')        != undefined) key          = a.data('tagKey');
 	if (a.data('tagLabel')      != undefined) displayValue = a.data('tagLabel');
@@ -723,16 +863,6 @@
 	// // notifies to all the updated status
 	// ntopng_status_manager.add_value_to_status("filters", filters);
     }    
-    /*
-    ChartWidget.registerEventCallback("{{ chart.name }}", 'zoomed', async (chartContext, { xaxis, yaxis }) => {
-        // the timestamps are in milliseconds, convert them into seconds
-        const begin = moment(xaxis.min);
-        const end = moment(xaxis.max);
-
-	let new_epoch_status = { epoch_begin: Number.parseInt(begin.unix()), epoch_end: Number.parseInt(end.unix()) };
-	ntopng_events_manager.emit_event(ntopng_events.EPOCH_CHANGE, new_epoch_status, "range-picker11");
-    });
-    */
     {% if show_cards then %}
     updateCardStats('overview');
     {% end %}
@@ -776,6 +906,9 @@
 
     // register to global event change status
     await ntopng_sync.on_ready("range_picker");
+    if (show_chart) {      
+      CHART_APP.register_status();
+    }
     updateDownloadButton();
     ntopng_status_manager.on_status_change("datatable", (new_status) => {
       let url_params = ntopng_url_manager.get_url_params();

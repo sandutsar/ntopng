@@ -19,12 +19,36 @@ local network_utils = require "network_utils"
 local json = require "dkjson"
 local pools = require "pools"
 local historical_flow_utils = require "historical_flow_utils"
+local flow_alert_keys = require "flow_alert_keys"
 
 local href_icon = "<i class='fas fa-laptop'></i>"
 
 -- ##############################################
 
 local flow_alert_store = classes.class(alert_store)
+
+-- ##############################################
+
+function flow_alert_store:format_traffic_direction(traffic_direction)
+  if traffic_direction then
+    local list = split(traffic_direction, ',')
+    local value = self:strip_filter_operator(list[1])
+
+    if value == "0" then
+      self:add_filter_condition_list("cli_location", traffic_direction, "string", "0") 
+      self:add_filter_condition_list("srv_location", traffic_direction, "string", "0") 
+    elseif value == "1" then
+      self:add_filter_condition_list("cli_location", traffic_direction, "string", "1") 
+      self:add_filter_condition_list("srv_location", traffic_direction, "string", "1") 
+    elseif value == "2" then
+      self:add_filter_condition_list("cli_location", traffic_direction, "string", "0") 
+      self:add_filter_condition_list("srv_location", traffic_direction, "string", "1") 
+    elseif value == "3" then
+      self:add_filter_condition_list("cli_location", traffic_direction, "string", "1") 
+      self:add_filter_condition_list("srv_location", traffic_direction, "string", "0") 
+    end
+  end
+end
 
 -- ##############################################
 
@@ -49,6 +73,7 @@ end
 -- and we write to the real table which has different column names)
 function flow_alert_store:get_column_name(field, is_write, value)
    local col = field
+
    if is_write and self._write_table_name then
       -- This is using the flow table, in write mode we have to remap columns
 
@@ -68,12 +93,16 @@ function flow_alert_store:get_column_name(field, is_write, value)
          col = historical_flow_utils.get_flow_column_by_tag(field)
       end
 
-      if col then
-         return col
+      if not col then
+         col = field
+      end
+   else
+      if field == 'flow_risk' then
+         col = 'flow_risk_bitmap'
       end
    end
 
-   return field
+   return col
 end
 
 -- ##############################################
@@ -174,9 +203,11 @@ function flow_alert_store:insert(alert)
       "is_cli_attacker, is_cli_victim, is_srv_attacker, is_srv_victim, proto, l7_proto, l7_master_proto, l7_cat, "..
       "cli_name, srv_name, cli_country, srv_country, cli_blacklisted, srv_blacklisted, cli_location, srv_location, "..
       "cli2srv_bytes, srv2cli_bytes, cli2srv_pkts, srv2cli_pkts, first_seen, community_id, score, "..
-      "flow_risk_bitmap, alerts_map, cli_host_pool_id, srv_host_pool_id, cli_network, srv_network, json, info) "..
+      "flow_risk_bitmap, alerts_map, cli_host_pool_id, srv_host_pool_id, cli_network, srv_network, probe_ip, input_snmp, output_snmp, "..
+      "json, info) "..
       "VALUES (%s%u, %u, %u, %u, %u, %u, '%s', '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s', '%s', '%s', "..
-      "'%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s', %u, %u, %s'%s', %u, %u, %u, %u, '%s', '%s'); ",
+      "'%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s', %u, %u, %s'%s', %u, %u, %u, %u, '%s', %u, %u, '%s', '%s'); ",
+
       self:get_write_table_name(),
       extra_columns,
       extra_values,
@@ -184,7 +215,7 @@ function flow_alert_store:insert(alert)
       self:_convert_ifid(interface.getId()),
       alert.first_seen,
       alert.tstamp,
-      ntop.mapScoreToSeverity(alert.score),
+      map_score_to_severity(alert.score),
       alert.ip_version,
       alert.cli_ip,
       alert.srv_ip,
@@ -221,6 +252,9 @@ function flow_alert_store:insert(alert)
       alert.srv_host_pool_id or pools.DEFAULT_POOL_ID,
       alert.cli_network or network_utils.UNKNOWN_NETWORK,
       alert.srv_network or network_utils.UNKNOWN_NETWORK,
+      alert.probe_ip,
+      alert.input_snmp,
+      alert.output_snmp,
       self:_escape(alert.json),
       self:_escape(alert.info or '')
    )
@@ -244,6 +278,23 @@ function flow_alert_store:top_l7_proto_historical()
    return q_res
 end
 
+-- ##############################################
+
+--@brief Performs a query for the top VLAN by alert count
+function flow_alert_store:top_vlan_historical()
+   if not interface.hasVLANs() then
+      return {}
+   end
+
+   -- Preserve all the filters currently set
+   local where_clause = self:build_where_clause()
+
+   local q = string.format("SELECT vlan_id, count(*) count FROM %s WHERE %s AND vlan_id != 0 GROUP BY vlan_id ORDER BY count DESC LIMIT %u",
+         self:get_table_name(), where_clause, self._top_limit)
+   local q_res = interface.alert_store_query(q) or {}
+
+   return q_res
+end
 
 -- ##############################################
 
@@ -283,6 +334,29 @@ function flow_alert_store:top_srv_ip_historical()
    end
 
    local q_res = interface.alert_store_query(q) or {}
+
+   return q_res
+end
+
+-- ##############################################
+
+--@brief Performs a query for the top domain named hosts for suspicious_dga_domain alerts by alert count
+function flow_alert_store:top_srv_ip_domain()
+   -- Preserve all the filters currently set
+   local where_clause = self:build_where_clause().." AND alert_id = 47 "
+   local field_to_search = self:get_column_name('json', false)
+   local q = nil
+   local q_res = {}
+   if ntop.isClickHouseEnabled() then
+      
+      q = string.format("SELECT '.' || arrayStringConcat(arraySlice(splitByString('.',"..  string.format('JSON_VALUE(%s, \'$.%s\')', field_to_search, "proto.tls.client_requested_server_name")
+.."),-2,2),'.') as domain_name_trunc_dot, vlan_id, '*.' || arrayStringConcat(arraySlice(splitByString('.',"..  string.format('JSON_VALUE(%s, \'$.%s\')', field_to_search, "proto.tls.client_requested_server_name")
+.."),-2,2),'.') as domain_name_trunc_star, count(*) count FROM %s WHERE %s GROUP BY vlan_id, '*.' || arrayStringConcat(arraySlice(splitByString('.',"..  string.format('JSON_VALUE(%s, \'$.%s\')', field_to_search, "proto.tls.client_requested_server_name")
+.."),-2,2),'.'), '.' || arrayStringConcat(arraySlice(splitByString('.',"..  string.format('JSON_VALUE(%s, \'$.%s\')', field_to_search, "proto.tls.client_requested_server_name")
+.."),-2,2),'.') ORDER BY count DESC LIMIT %u",self:get_table_name(), where_clause, self._top_limit)
+   
+      q_res = interface.alert_store_query(q)
+   end
 
    return q_res
 end
@@ -329,6 +403,75 @@ end
 
 -- ##############################################
 
+--@brief Performs a query for the top client hosts by alert count
+function flow_alert_store:top_cli_network_historical()
+   -- Preserve all the filters currently set
+   local where_clause = self:build_where_clause()
+
+   local q
+   if ntop.isClickHouseEnabled() then
+      q = string.format("SELECT cli_network, count(*) count FROM %s WHERE %s GROUP BY cli_network ORDER BY count DESC LIMIT %u",
+         self:get_table_name(), where_clause, self._top_limit)
+   else
+      q = string.format("SELECT cli_network, count(*) count FROM %s WHERE %s GROUP BY cli_network ORDER BY count DESC LIMIT %u",
+         self:get_table_name(), where_clause, self._top_limit)
+   end
+
+   local q_res = interface.alert_store_query(q) or {}
+
+   return q_res
+end
+
+-- ##############################################
+
+--@brief Performs a query for the top server hosts by alert count
+function flow_alert_store:top_srv_network_historical()
+   -- Preserve all the filters currently set
+   local where_clause = self:build_where_clause()
+
+   local q
+   if ntop.isClickHouseEnabled() then
+      q = string.format("SELECT srv_network, count(*) count FROM %s WHERE %s GROUP BY srv_network ORDER BY count DESC LIMIT %u",
+         self:get_table_name(), where_clause, self._top_limit)
+   else
+      q = string.format("SELECT srv_network, count(*) count FROM %s WHERE %s GROUP BY srv_network ORDER BY count DESC LIMIT %u",
+         self:get_table_name(), where_clause, self._top_limit)
+   end
+
+   local q_res = interface.alert_store_query(q) or {}
+
+   return q_res
+end
+
+-- ##############################################
+
+--@brief Merge top clients and top servers to build a top hosts 
+function flow_alert_store:top_network_merge(top_cli_network, top_srv_network)
+   local all_network = {}
+   local top_network = {}
+
+   for _, p in ipairs(top_cli_network) do
+      all_network[p.cli_network] = tonumber(p.count)
+      p.network = p.cli_network
+   end 
+   for _, p in ipairs(top_srv_network) do
+      all_network[p.srv_network] = (all_network[p.srv_network] or 0) + tonumber(p.count)
+      p.network = p.srv_network
+   end 
+
+   for network, count in pairsByValues(all_network, rev) do
+      top_network[#top_network + 1] = {
+         network = network,
+         count = count,
+      }
+      if #top_network >= self._top_limit then break end
+   end
+
+   return top_network
+end
+
+-- ##############################################
+
 --@brief Stats used by the dashboard
 function flow_alert_store:_get_additional_stats()
    local stats = {}
@@ -337,6 +480,11 @@ function flow_alert_store:_get_additional_stats()
    stats.top.srv_ip = self:top_srv_ip_historical()
    stats.top.ip = self:top_ip_merge(stats.top.cli_ip, stats.top.srv_ip)
    stats.top.l7_proto = self:top_l7_proto_historical()
+   stats.top.cli_network = self:top_cli_network_historical()
+   stats.top.srv_network = self:top_srv_network_historical()
+   stats.top.network = self:top_network_merge(stats.top.cli_network, stats.top.srv_network)
+   stats.top.vlan = self:top_vlan_historical()
+   stats.top.dga_domain = self:top_srv_ip_domain()
    return stats
 end
 
@@ -375,9 +523,14 @@ function flow_alert_store:_add_additional_request_filters()
    local srv_port = _GET["srv_port"]
    local vlan_id = _GET["vlan_id"]
    local l7proto = _GET["l7proto"]
+   local flow_risk = _GET["flow_risk"]
    local role = _GET["role"]
    local cli_country = _GET["cli_country"]
    local srv_country = _GET["srv_country"]
+   local probe_ip = _GET["probe_ip"]
+   local input_snmp = _GET["input_snmp"]
+   local output_snmp = _GET["output_snmp"]
+   local snmp_interface = _GET["snmp_interface"]
 
    local cli_host_pool_id = _GET["cli_host_pool_id"]
    local srv_host_pool_id = _GET["srv_host_pool_id"]
@@ -386,9 +539,16 @@ function flow_alert_store:_add_additional_request_filters()
    
    local error_code = _GET["l7_error_id"]
    local confidence = _GET["confidence"]
+   local community_id = _GET["community_id"]
+   local ja3_client = _GET["ja3_client"]
+   local ja3_server = _GET["ja3_server"]
+   local alert_domain = _GET["alert_domain"]
+   
+   self:format_traffic_direction(_GET["traffic_direction"])
    
    -- Filter out flows with no alert
-   self:add_filter_condition_list('alert_id', "0"..tag_utils.SEPARATOR.."neq", 'number')
+   -- Any reason we need this?
+   -- self:add_filter_condition_list('alert_id', "0"..tag_utils.SEPARATOR.."neq", 'number')
 
    self:add_filter_condition_list('vlan_id', vlan_id, 'number')
    self:add_filter_condition_list('ip_version', ip_version)
@@ -403,14 +563,24 @@ function flow_alert_store:_add_additional_request_filters()
    self:add_filter_condition_list('srv_port', srv_port, 'number')
    self:add_filter_condition_list('flow_role', role)
    self:add_filter_condition_list('l7proto', l7proto, 'number')
+   self:add_filter_condition_list('flow_risk', flow_risk, 'number')
 
    self:add_filter_condition_list('cli_host_pool_id', cli_host_pool_id, 'number')
    self:add_filter_condition_list('srv_host_pool_id', srv_host_pool_id, 'number')
    self:add_filter_condition_list('cli_network', cli_network, 'number')
    self:add_filter_condition_list('srv_network', srv_network, 'number')
 
-   self:add_filter_condition_list(format_query_json_value('alert', 'proto.l7_error_code'), error_code, 'string')
-   self:add_filter_condition_list(format_query_json_value('alert', 'proto.confidence'), confidence, 'string')
+   self:add_filter_condition_list('probe_ip', probe_ip)
+   self:add_filter_condition_list('input_snmp', input_snmp)
+   self:add_filter_condition_list('output_snmp', output_snmp)
+   self:add_filter_condition_list('snmp_interface', snmp_interface)
+   self:add_filter_condition_list('community_id', community_id)
+
+   self:add_filter_condition_list(self:format_query_json_value('proto.ja3.server_hash'), ja3_server, 'string')
+   self:add_filter_condition_list(self:format_query_json_value('proto.ja3.client_hash'), ja3_client, 'string')
+   self:add_filter_condition_list(self:format_query_json_value('proto.l7_error_code'), error_code, 'string')
+   self:add_filter_condition_list(self:format_query_json_value('proto.confidence'), confidence, 'string')
+   self:add_filter_condition_list(self:format_query_json_value('proto.tls.client_requested_server_name'), alert_domain, 'string')
 
 end
 
@@ -433,14 +603,25 @@ function flow_alert_store:_get_additional_available_filters()
       role       = tag_utils.defined_tags.role,
       l7proto    = tag_utils.defined_tags.l7proto,
       info       = tag_utils.defined_tags.info,
+      flow_risk  = tag_utils.defined_tags.flow_risk,
 
-      cli_host_pool_id       = tag_utils.defined_tags.cli_host_pool_id,
-      srv_host_pool_id       = tag_utils.defined_tags.srv_host_pool_id,
+      cli_host_pool_id  = tag_utils.defined_tags.cli_host_pool_id,
+      srv_host_pool_id  = tag_utils.defined_tags.srv_host_pool_id,
       cli_network       = tag_utils.defined_tags.cli_network,
       srv_network       = tag_utils.defined_tags.srv_network,
 
-      l7_error_id     = tag_utils.defined_tags.l7_error_id,
-      confidence      = tag_utils.defined_tags.confidence,
+      l7_error_id       = tag_utils.defined_tags.l7_error_id,
+      confidence        = tag_utils.defined_tags.confidence,
+      community_id      = tag_utils.defined_tags.community_id,
+      ja3_client        = tag_utils.defined_tags.ja3_client,
+      ja3_server        = tag_utils.defined_tags.ja3_server,
+      traffic_direction = tag_utils.defined_tags.traffic_direction,
+      alert_domain      = tag_utils.defined_tags.alert_domain,
+
+      probe_ip = tag_utils.defined_tags.probe_ip,
+      input_snmp = tag_utils.defined_tags.input_snmp,
+      output_snmp = tag_utils.defined_tags.output_snmp,
+      snmp_interface = tag_utils.defined_tags.snmp_interface,
   }
 
    return filters
@@ -465,6 +646,8 @@ local RNAME = {
    SRV_HOST_POOL_ID = { name = "srv_host_pool_id", export = false },
    CLI_NETWORK = { name = "cli_network", export = false },
    SRV_NETWORK = { name = "srv_network", export = false },
+   
+   PROBE_IP = { name = "probe_ip", export = true},
 
    INFO = { name = "info", export = true },
 }
@@ -494,8 +677,8 @@ end
 function flow_alert_store:format_record(value, no_html)
    local record = self:format_json_record_common(value, alert_entities.flow.entity_id, no_html)
    local alert_info = alert_utils.getAlertInfo(value)
-   local alert_name = alert_consts.alertTypeLabel(tonumber(value["alert_id"]), no_html, alert_entities.flow.entity_id)
-   local alert_fullname = alert_consts.alertTypeLabel(tonumber(value["alert_id"]), true, alert_entities.flow.entity_id)
+   local alert_name = alert_consts.alertTypeLabel(tonumber(value["alert_id"]), true --[[ no_html --]], alert_entities.flow.entity_id)
+   local alert_risk = ntop.getFlowAlertRisk(tonumber(value.alert_id))
    local l4_protocol = l4_proto_to_string(value["proto"])
    local l7_protocol =  interface.getnDPIFullProtoName(tonumber(value["l7_master_proto"]), tonumber(value["l7_proto"]))
    local show_cli_port = (value["cli_port"] ~= '' and value["cli_port"] ~= '0')
@@ -508,9 +691,22 @@ function flow_alert_store:format_record(value, no_html)
    local alert_json = json.decode(value.json)
   
    local flow_related_info = addExtraFlowInfo(alert_json, value)
-    
-   if not no_html and alert_json then
+
+   -- TLS IssuerDN
+   local flow_tls_issuerdn = nil
+   if alert_risk and alert_risk > 0 and 
+     --record.script_key == 'tls_certificate_selfsigned'
+     tonumber(value.alert_id) == flow_alert_keys.flow_alert_tls_certificate_selfsigned
+   then
+     flow_tls_issuerdn = alert_utils.get_flow_risk_info(alert_risk, alert_info)
+   end
+   if isEmptyString(flow_tls_issuerdn) then
+     flow_tls_issuerdn = getExtraFlowInfoTLSIssuerDN(alert_json)
+   end
+
+   if not no_html and alert_json and (alert_json["ntopng.key"]) and (alert_json["hash_entry_id"]) then
       local active_flow = interface.findFlowByKeyAndHashId(alert_json["ntopng.key"], alert_json["hash_entry_id"])
+
       if active_flow and active_flow["seen.first"] < tonumber(value["tstamp_end"]) then
 	 local href = string.format("%s/lua/flow_details.lua?flow_key=%u&flow_hash_id=%u",
             ntop.getHttpPrefix(), active_flow["ntopng.key"], active_flow["hash_entry_id"])
@@ -560,15 +756,22 @@ function flow_alert_store:format_record(value, no_html)
       }
    end
    local proto = string.lower(interface.getnDPIProtoName(tonumber(value["l7_master_proto"])))
-   
-   local info = format_external_link(value["info"], value["info"], no_html, proto)
+
+   local flow_server_name = getExtraFlowInfoServerName(alert_json)
+   local flow_domain
+   if hostnameIsDomain(flow_server_name) then
+     flow_domain = flow_server_name
+   end
+
    record[RNAME.INFO.name] = {
-     descr = info
+      descr = format_external_link(value["info"], value["info"], no_html, proto, "no_external_link_url"),
+      value = flow_domain, -- Domain name used for alert exclusion
+      issuerdn = flow_tls_issuerdn, -- IssuerDN used for alert exclusion
    }
 
    record[RNAME.FLOW_RELATED_INFO.name] = {
-    descr = flow_related_info
-  }
+     descr = flow_related_info,
+   }
 
    record[RNAME.ALERT_NAME.name] = alert_name
 
@@ -613,7 +816,7 @@ function flow_alert_store:format_record(value, no_html)
 
    record[RNAME.MSG.name] = {
       name = noHtml(alert_name),
-      fullname = alert_fullname,
+      fullname = alert_name,
       value = tonumber(value["alert_id"]),
       description = msg,
       configset_ref = alert_utils.getConfigsetAlertLink(alert_info)
@@ -638,6 +841,11 @@ function flow_alert_store:format_record(value, no_html)
          country = host_info["country"] or ""
       end
    end
+
+   record["community_id"] = {
+      value = value["community_id"],
+      name = value["community_id"]
+   }
   
    local flow_cli_ip = {
       value = cli_ip,
@@ -647,25 +855,22 @@ function flow_alert_store:format_record(value, no_html)
       blacklisted = value["cli_blacklisted"]
    }
 
-   if no_html then
-      flow_cli_ip["label"] = cli_name_long
-   else
-      if not isEmptyString(value["cli_name"]) and value["cli_name"] ~= flow_cli_ip["value"] then
-         flow_cli_ip["name"] = value["cli_name"]
-      end
-
-      -- Shortened label if necessary for UI purposes
-      flow_cli_ip["label"] = hostinfo2label(self:_alert2hostinfo(value, true --[[ As client --]]), false --[[ Show VLAN --]], true --[[ Shorten --]])
-      flow_cli_ip["label_long"] = hostinfo2label(self:_alert2hostinfo(value, true --[[ As client --]]), false --[[ Show VLAN --]], false)
+   if not isEmptyString(value["cli_name"]) and value["cli_name"] ~= flow_cli_ip["value"] then
+      flow_cli_ip["name"] = value["cli_name"]
    end
 
+   local label = hostinfo2label(self:_alert2hostinfo(value, true --[[ As client --]]), false --[[ Show VLAN --]], false --[[ Shorten --]], true --[[ Skip Resolution ]])
+   -- Shortened label if necessary for UI purposes
+   flow_cli_ip["label"] = label
+   flow_cli_ip["label_long"] = label
+   
    -- Format Server
 
    reference_html = ""
    if not no_html then
       reference_html = hostinfo2detailshref({ip = value["srv_ip"], vlan = value["vlan_id"]}, nil, href_icon, "", true)
       if reference_html == href_icon then
-	 reference_html = ""
+	      reference_html = ""
       end
    end
 
@@ -687,17 +892,14 @@ function flow_alert_store:format_record(value, no_html)
       blacklisted = value["srv_blacklisted"]
    }
 
-   if no_html then
-      flow_srv_ip["label"] = srv_name_long
-   else
-      if not isEmptyString(value["srv_name"]) and value["srv_name"] ~= flow_srv_ip["value"] then
-         flow_srv_ip["name"] = value["srv_name"]
-      end
-      
-      -- Shortened label if necessary for UI purposes
-      flow_srv_ip["label"] = hostinfo2label(self:_alert2hostinfo(value, false --[[ As server --]]), false --[[ Show VLAN --]], true --[[ Shorten --]])
-      flow_srv_ip["label_long"] = hostinfo2label(self:_alert2hostinfo(value, false --[[ As server --]]), false --[[ Show VLAN --]], false)
+   if not isEmptyString(value["srv_name"]) and value["srv_name"] ~= flow_srv_ip["value"] then
+      flow_srv_ip["name"] = value["srv_name"]
    end
+   
+   label = hostinfo2label(self:_alert2hostinfo(value, false --[[ As server --]]), false --[[ Show VLAN --]], false --[[ Shorten --]], true --[[ Skip Resolution ]])
+   -- Shortened label if necessary for UI purposes
+   flow_srv_ip["label"] = label
+   flow_srv_ip["label_long"] = label
 
    local flow_cli_port = value["cli_port"]
    local flow_srv_port = value["srv_port"]
@@ -705,8 +907,8 @@ function flow_alert_store:format_record(value, no_html)
    local vlan 
    if value["vlan_id"] and tonumber(value["vlan_id"]) ~= 0 then
       vlan = {
-         label = value["vlan_id"],
-         title = value["vlan_id"],
+         label = getFullVlanName(value["vlan_id"], true --[[ Compact --]]),
+         title = getFullVlanName(value["vlan_id"], false --[[ non Compact --]]),
          value = tonumber(value["vlan_id"]),
       }
    end
@@ -731,11 +933,18 @@ function flow_alert_store:format_record(value, no_html)
    if value["is_srv_victim"]   == "1" then record["srv_role"] = { value = 'victim',   label = i18n("victim"),   tag_label = i18n("victim") } end
    if value["is_srv_attacker"] == "1" then record["srv_role"] = { value = 'attacker', label = i18n("attacker"), tag_label = i18n("attacker") } end
 
+   -- Check the two labels, otherwise an ICMP:ICMP label could be possible
+   local proto_label = l7_protocol
+
+   if l4_protocol ~= l7_protocol then
+    proto_label = l4_protocol..":"..l7_protocol
+   end
+
    record[RNAME.L7_PROTO.name] = {
       value = ternary(tonumber(value["l7_proto"]) ~= 0, value["l7_proto"], value["l7_master_proto"]),
       l4_label = l4_protocol,
       l7_label = l7_protocol,
-      label = l4_protocol..":"..l7_protocol,
+      label = proto_label,
       confidence = format_confidence_from_json(value)
    }
 
@@ -768,6 +977,17 @@ function flow_alert_store:format_record(value, no_html)
       epoch_begin = tonumber(value["tstamp"]), 
       epoch_end = tonumber(value["tstamp_end"]) + 1,
       bpf = table.concat(rules, " and "),
+   }
+
+   local probe_ip = ''
+   local probe_label = ''
+   if value["probe_ip"] and value["probe_ip"] ~= "0.0.0.0" then
+      probe_ip = value["probe_ip"]
+      probe_label = getProbeName(probe_ip)
+   end
+   record[RNAME.PROBE_IP.name] = {
+      value = probe_ip,
+      label = probe_label,
    }
 
    return record
@@ -851,6 +1071,12 @@ end
 --@brief Edit specifica proto info, like converting 
 --       timestamp to date/time for TLS Certificate Validity
 local function editProtoDetails(proto_info)
+  for key, value in pairs(proto_info) do
+    if type(value) ~= "table" then
+      proto_info[key] = nil
+    end
+  end
+
   for proto, info in pairs(proto_info) do
     if proto == "tls" then
       info = format_tls_info(info)
@@ -874,7 +1100,7 @@ end
 
 local function add_historical_link(value, flow_link)
   local historical_href = ""
-  
+
   if ntop.isClickHouseEnabled() then
     historical_href = "<a href=\"" .. ntop.getHttpPrefix() .. "/lua/pro/db_flow_details.lua?row_id=" .. value["rowid"] .. "&tstamp=" .. value["tstamp_epoch"] .. "\" title='" .. i18n('alert_details.flow_details') .. "' target='_blank'> <i class='fas fa fa-search-plus'></i> </a>"
   end

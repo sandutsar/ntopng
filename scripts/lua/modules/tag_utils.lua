@@ -8,16 +8,16 @@ package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 require "lua_utils"
 local alert_entities = require "alert_entities"
 local alert_consts = require "alert_consts"
-local alert_severities = require "alert_severities"
-local alert_utils = require "alert_utils"
 local host_pools = require "host_pools"
 local dscp_consts = require "dscp_consts"
 local country_codes = require "country_codes"
 
+local snmp_filter_options_cache
+
 local tag_utils = {}
 
 -- Operator Separator in query strings
-tag_utils.SEPARATOR = alert_utils.SEPARATOR
+tag_utils.SEPARATOR = alert_consts.SEPARATOR
 
 -- #####################################
 
@@ -74,22 +74,40 @@ tag_utils.defined_tags = {
       operators = {'eq','neq'},
    },
    ip = {
-      value_type = 'ip',
+      value_type = 'ip,cidr', -- Set to 'ip' to accept IP only
       i18n_label = i18n('db_search.tags.ip'),
       operators = {'eq', 'neq'},
       bpf_key = 'ip host',
    },
    cli_ip = {
-      value_type = 'ip',
+      value_type = 'ip,cidr', -- Set to 'ip' to accept IP only
       i18n_label = i18n('db_search.tags.cli_ip'),
       operators = {'eq', 'neq'},
       bpf_key = 'ip host',
    },
    srv_ip = {
-      value_type = 'ip',
+      value_type = 'ip,cidr', -- Set to 'ip' to accept IP only
       i18n_label = i18n('db_search.tags.srv_ip'),
       operators = {'eq', 'neq'},
       bpf_key = 'ip host',
+   },
+   network_cidr = {
+      value_type = 'cidr',
+      i18n_label = i18n('db_search.tags.network_cidr'),
+      operators = {'eq', 'neq'},
+      bpf_key = 'net',
+   },
+   cli_network_cidr = {
+      value_type = 'cidr',
+      i18n_label = i18n('db_search.tags.cli_network_cidr'),
+      operators = {'eq', 'neq'},
+      bpf_key = 'net',
+   },
+   srv_network_cidr = {
+      value_type = 'cidr',
+      i18n_label = i18n('db_search.tags.srv_network_cidr'),
+      operators = {'eq', 'neq'},
+      bpf_key = 'net',
    },
    traffic_direction = {
       value_type = 'traffic_direction',
@@ -179,7 +197,7 @@ tag_utils.defined_tags = {
       operators = {'eq', 'neq'}
    },
    probe_ip = {
-      value_type = 'ip',
+      value_type = 'probe_ip',
       i18n_label = i18n('db_search.tags.probe_ip'),
       operators = {'eq', 'neq'}
    },
@@ -266,9 +284,24 @@ tag_utils.defined_tags = {
       i18n_label = i18n('db_search.tags.bytes'),
       operators = {'eq', 'neq', 'lt', 'gt', 'gte', 'lte'}
    },
+   src2dst_bytes = {
+      value_type = 'bytes',
+      i18n_label = i18n('db_search.tags.sum_src2dst_bytes'),
+      operators = {'eq', 'neq', 'lt', 'gt', 'gte', 'lte'}
+   },
+   dst2src_bytes = {
+      value_type = 'bytes',
+      i18n_label = i18n('db_search.tags.sum_dst2src_bytes'),
+      operators = {'eq', 'neq', 'lt', 'gt', 'gte', 'lte'}
+   },
    number = {
       value_type = 'number',
       i18n_label = i18n('db_search.tags.number'),
+      operators = {'eq', 'neq', 'lt', 'gt', 'gte', 'lte'}
+   },
+   flows_number = {
+      value_type = 'number',
+      i18n_label = i18n('db_search.tags.flows_number'),
       operators = {'eq', 'neq', 'lt', 'gt', 'gte', 'lte'}
    },
    packets = {
@@ -316,6 +349,26 @@ tag_utils.defined_tags = {
       i18n_label = i18n('db_search.tags.confidence'),
       operators = {'eq', 'neq'},
    },
+   community_id = {
+      value_type = 'text',
+      i18n_label = i18n('db_search.tags.community_id'),
+      operators = {'eq', 'neq', 'in', 'nin'},
+   },
+   ja3_client = {
+      value_type = 'text',
+      i18n_label = i18n('ja3.client_hash'),
+      operators = {'eq', 'neq', 'in', 'nin'},
+   },
+   ja3_server = {
+      value_type = 'text',
+      i18n_label = i18n('ja3.server_hash'),
+      operators = {'eq', 'neq', 'in', 'nin'},
+   },
+   alert_domain = {
+      value_type = 'text',
+      i18n_label = i18n('db_search.tags.dga_domain_name'),
+      operators = {'eq', 'neq', 'in', 'nin'},
+   },
    cli_location = {
       value_type = 'location',
       i18n_label = i18n('db_search.tags.cli_location'),
@@ -325,6 +378,26 @@ tag_utils.defined_tags = {
       value_type = 'location',
       i18n_label = i18n('db_search.tags.srv_location'),
       operators = {'eq', 'neq'},
+   },
+   cli_proc_name = {
+      value_type = 'text',
+      i18n_label = i18n('db_search.tags.cli_proc_name'),
+      operators = {'eq','neq'},
+   },
+   srv_proc_name = {
+      value_type = 'text',
+      i18n_label = i18n('db_search.tags.srv_proc_name'),
+      operators = {'eq','neq'},
+   },
+   cli_user_name = {
+      value_type = 'text',
+      i18n_label = i18n('db_search.tags.cli_user_name'),
+      operators = {'eq','neq'},
+   },
+   srv_user_name = {
+      value_type = 'text',
+      i18n_label = i18n('db_search.tags.srv_user_name'),
+      operators = {'eq','neq'},
    },
 }
 
@@ -340,6 +413,7 @@ tag_utils.traffic_direction = {
 -- #####################################
 
 tag_utils.confidence = {
+   { label = i18n("confidence_unknown"),  id = -1 },
    { label = i18n("confidence_guessed"),  id = 0 },
    { label = i18n("confidence_dpi"), id = 1 },
 }
@@ -347,9 +421,9 @@ tag_utils.confidence = {
 -- #####################################
 
 tag_utils.location = {
-   { label = i18n("details.label_short_remote"),  id = 0 },
-   { label = i18n("details.label_short_local_host"), id = 1 },
-   { label = i18n("short_multicast"), id = 2 },
+   { label = i18n("details.label_remote"),  id = 0 },
+   { label = i18n("details.label_local_host"), id = 1 },
+   { label = i18n("multicast"), id = 2 },
 }
 
 -- #####################################
@@ -449,7 +523,7 @@ tag_utils.formatters = {
    l4proto = function(proto) return l4_proto_to_string(proto) end,
    l7_proto = function(proto) return interface.getnDPIProtoName(tonumber(proto)) end,
    l7proto  = function(proto) return interface.getnDPIProtoName(tonumber(proto)) end, 
-   l7cat = function(cat) return interface.getnDPICategoryName(tonumber(cat)) end,
+   l7cat = function(cat) return getCategoryLabel(interface.getnDPICategoryName(tonumber(cat)), tonumber(cat)) end,
    severity = function(severity) return (i18n(alert_consts.alertSeverityById(tonumber(severity)).i18n_title)) end,
    alert_id = function(status) return alert_consts.alertTypeLabel(status, true, alert_entities.flow.entity_id) end,
    role = function(role) return (i18n(role)) end,
@@ -464,7 +538,7 @@ tag_utils.formatters = {
 -- ######################################
 
 function tag_utils.get_tag_info(id, entity)
-
+   local alert_utils = require "alert_utils"
    local tag = tag_utils.defined_tags[id]
 
    if tag == nil then
@@ -489,7 +563,10 @@ function tag_utils.get_tag_info(id, entity)
 
    -- select (array of values)
    
-   if tag.value_type == "alert_type" and entity ~= nil then
+   if (tag.value_type == "alert_id" or
+       tag.value_type == "alert_type" --[[ alert_id should be used --]]) 
+      and entity ~= nil then
+
       filter.value_type = 'array'
       filter.options = {}
       local alert_types = alert_consts.getAlertTypesInfo(entity.entity_id)
@@ -567,9 +644,9 @@ function tag_utils.get_tag_info(id, entity)
    elseif tag.value_type == "l7_category" then
       filter.value_type = 'array'
       filter.options = {}
-      local l7_protocols = interface.getnDPICategories()
-      for name, id in pairsByKeys(l7_protocols, asc) do
-         filter.options[#filter.options+1] = { value = id, label = name }
+      local l7_categories = interface.getnDPICategories()
+      for name, id in pairsByKeys(l7_categories, asc) do
+         filter.options[#filter.options+1] = { value = id, label = getCategoryLabel(name, id) }
       end
 
    elseif tag.value_type == "network_id" then
@@ -592,16 +669,26 @@ function tag_utils.get_tag_info(id, entity)
          filter.options[#filter.options+1] = { value = v.id, label = v.alias }
       end
 
-   elseif tag.value_type == "country" then
-      filter.value_type = 'array'
-      filter.options = {}
-      for code, label in pairsByValues(country_codes, asc) do
-         local id = code
-         -- if entity == nil then -- historical flows
-         --   id = interface.convertCountryCode2U16(code)
-         -- end
-         filter.options[#filter.options+1] = { value = id, label = label }
-      end
+    elseif tag.value_type == "country" then
+       filter.value_type = 'array'
+       filter.options = {}
+       for code, label in pairsByValues(country_codes, asc) do
+          local id = code
+          -- if entity == nil then -- historical flows
+          --   id = interface.convertCountryCode2U16(code)
+          -- end
+          filter.options[#filter.options+1] = { value = id, label = label }
+       end
+
+    elseif tag.value_type == "probe_ip" then
+        filter.value_type = 'array'
+        filter.options = {}
+        if interface.getFlowDevices then -- Pro Only
+          for probe, _ in pairsByValues(interface.getFlowDevices() or {}, asc) do
+            local label = format_name_value(getProbeName(probe), probe)
+            filter.options[#filter.options+1] = { value = probe, label = label }
+          end
+        end
 
    elseif tag.value_type == "ip_version" then
       filter.value_type = 'array'
@@ -625,8 +712,7 @@ function tag_utils.get_tag_info(id, entity)
    elseif tag.value_type == "severity" then
       filter.value_type = 'array'
       filter.options = {}
-      local severities = alert_severities
-      for _, severity in pairsByValues(severities, alert_utils.severity_rev) do
+      for _, severity in pairsByField(alert_consts.get_printable_severities(), "severity_id", asc) do
          filter.options[#filter.options+1] = {
             value = severity.severity_id,
             label = i18n(severity.i18n_title),
@@ -637,34 +723,70 @@ function tag_utils.get_tag_info(id, entity)
 
       if ntop.isPro() then
          filter.value_type = 'array'
-         filter.options = {}
 
-         local snmp_config = require "snmp_config"
-         local devices = snmp_config.get_all_configured_devices()
-         local snmp_cached_dev = require "snmp_cached_dev"
+         if snmp_filter_options_cache then
+            filter.options = snmp_filter_options_cache
+         else
+            filter.options = {}
 
-         -- use pairsByKeys to impose order
-         for probe_ip, _ in pairsByKeys(devices) do
-            local cached_device = snmp_cached_dev:create(probe_ip)
-            if cached_device and cached_device["interfaces"] then
-               local interfaces = cached_device["interfaces"]
-               for interface_id, interface_info in pairs(interfaces) do
-                  local interface_name = interface_id
-                  if interface_info.name then
-                     interface_name = interface_info.name .. ' (' .. interface_id .. ')'
-                  end
-                  local label = probe_ip .. ' · ' .. interface_name
-                  --local label = format_portidx_name(probe_ip, tostring(interface_id))
+            -- Active flow devices
+            local flow_devices = interface.getFlowDevices()
+
+            -- SNMP devices
+            local snmp_config = require "snmp_config"
+            local devices = snmp_config.get_all_configured_devices()
+
+            local snmp_cached_dev = require "snmp_cached_dev"
+
+            -- use pairsByKeys to impose order
+            for probe_ip, _ in pairsByKeys(devices) do
+
+               if flow_devices[probe_ip] then 
+                  -- Use SNMP info, remove from flow devices list
+                  flow_devices[probe_ip] = nil
+               end
+
+               local cached_device = snmp_cached_dev:get_interface_names(probe_ip)
+
+               local probe_label
+               if not isEmptyString(probe_ip) then probe_label = getProbeName(probe_ip) end
+               if isEmptyString(probe_label)  then probe_label = probe_ip end
+
+               if cached_device and cached_device["interfaces"] then
+                  local interfaces = cached_device["interfaces"]
+                  for interface_id, interface_info in pairs(interfaces) do
+                     local interface_name = interface_id
+                     if interface_info.name then
+                        -- interface_name = interface_info.name .. ' (' .. interface_id .. ')'
+                        interface_name = interface_info.name
+                     end
+
+                     local label = probe_label .. ' · ' .. interface_name
+
+                     filter.options[#filter.options+1] = { 
+                        value = probe_ip .. "_" ..interface_id, 
+                        label = label,
+                     }
+                  end 
+
+               end
+            end
+
+            -- Add interfaces for flow devices which are not polled by SNMP
+            for probe_ip, info in pairs(flow_devices) do
+               local interfaces = interface.getFlowDeviceInfo(probe_ip)
+               for interface_id, interface_info in pairs(interfaces) do 
+                  local label = probe_ip .. ' · ' .. format_portidx_name(probe_ip, interface_id, true, true)
                   filter.options[#filter.options+1] = { 
                      value = probe_ip .. "_" ..interface_id, 
                      label = label,
                   }
-               end 
-
+               end
             end
+
+            snmp_filter_options_cache = filter.options
          end
       end
-
    end
 
    return filter

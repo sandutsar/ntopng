@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -11,23 +11,23 @@ local format_utils = require "format_utils"
 local json = require "dkjson"
 local have_nedge = ntop.isnEdge()
 
-sendHTTPContentTypeHeader('text/html')
+sendHTTPContentTypeHeader('text/json')
 
 -- Table parameters
-local all = _GET["all"]
-local currentPage = _GET["currentPage"]
-local perPage     = _GET["perPage"]
-local sortColumn  = _GET["sortColumn"]
-local sortOrder   = _GET["sortOrder"]
-local protocol    = _GET["protocol"]
+local all           = _GET["all"]
+local currentPage   = _GET["currentPage"]
+local perPage       = _GET["perPage"]
+local sortColumn    = _GET["sortColumn"]
+local sortOrder     = _GET["sortOrder"]
+local protocol      = _GET["protocol"]
 local custom_column = _GET["custom_column"]
-local traffic_type = _GET["traffic_type"]
-local device_ip   = _GET["deviceIP"]
+local traffic_type  = _GET["traffic_type"]
+local device_ip     = _GET["deviceIP"]
 
 -- Host comparison parameters
-local mode        = _GET["mode"]
-local tracked     = _GET["tracked"]
-local ipversion   = _GET["version"]
+local mode          = _GET["mode"]
+local tracked       = _GET["tracked"]
+local ipversion     = _GET["version"]
 
 -- Used when filtering by ASn, VLAN or network
 local asn          = _GET["asn"]
@@ -38,12 +38,10 @@ local pool         = _GET["pool"]
 local country      = _GET["country"]
 local os_          = tonumber(_GET["os"])
 local mac          = _GET["mac"]
-local top_hidden   = ternary(_GET["top_hidden"] == "1", true, nil)
 
 function update_host_name(h)
    if(h["name"] == nil) then
       if(h["ip"] ~= nil) then
-
          h["name"] = ip2label(h["ip"])
       else
 	 h["name"] = h["mac"]
@@ -114,10 +112,19 @@ local anomalous = false
 local dhcp_hosts = false
 
 local hosts_retrv_function = interface.getHostsInfo
+
 if mode == "local" then
    hosts_retrv_function = interface.getLocalHostsInfo
+elseif mode == "local_no_tx" then
+   hosts_retrv_function = interface.getLocalHostsInfoNoTX
+elseif mode == "local_no_tcp_tx" then
+   hosts_retrv_function = interface.getLocalHostsInfoNoTXTCP
 elseif mode == "remote" then
    hosts_retrv_function = interface.getRemoteHostsInfo
+elseif mode == "remote_no_tx" then
+   hosts_retrv_function = interface.getRemoteHostsInfoNoTX
+elseif mode == "remote_no_tcp_tx" then
+   hosts_retrv_function = interface.getRemoteHostsInfoNoTXTCP
 elseif mode == "broadcast_domain" then
    hosts_retrv_function = interface.getBroadcastDomainHostsInfo
 elseif mode == "filtered" then
@@ -133,7 +140,8 @@ local hosts_stats = hosts_retrv_function(false, sortColumn, perPage, to_skip, sO
 					 tonumber(network), mac,
 					 tonumber(pool), tonumber(ipversion),
 					 tonumber(protocol), traffic_type_filter,
-					 filtered_hosts, blacklisted_hosts, top_hidden, anomalous, dhcp_hosts, cidr, device_ip)
+					 filtered_hosts, blacklisted_hosts,
+					 anomalous, dhcp_hosts, cidr, device_ip)
 
 if(hosts_stats == nil) then total = 0 else total = hosts_stats["numHosts"] end
 hosts_stats = hosts_stats["hosts"]
@@ -147,8 +155,8 @@ end
 
 local now = os.time()
 local vals = {}
-
 local num = 0
+
 if(hosts_stats ~= nil) then
    for key, value in pairs(hosts_stats) do
       num = num + 1
@@ -158,15 +166,26 @@ if(hosts_stats ~= nil) then
       -- tprint(hosts_stats[key])
       -- io.write("==>"..hosts_stats[key]["bytes.sent"].."[" .. sortColumn .. "]["..key.."]\n")
 
+      -- Safety check (trace failure for debugging)
+      if type(value) ~= "table" then
+         traceError(TRACE_WARNING, TRACE_CONSOLE, "Unexpected value for key = "..key.." (not a table)")
+	 tprint(value)
+	 goto skip
+      end
+
       if(sortColumn == "column_") then
 	 vals[key] = key -- hosts_stats[key]["ipkey"]
       elseif(sortColumn == "column_name") then
 	 hosts_stats[key]["name"] = update_host_name(hosts_stats[key])
-	 vals[hosts_stats[key]["name"]..postfix] = key
+         vals[hosts_stats[key]["name"]..postfix] = key
       elseif(sortColumn == "column_since") then
-	 vals[hosts_stats[key]["seen.first"]+postfix] = key
+         vals[hosts_stats[key]["seen.first"]+postfix] = key
       elseif(sortColumn == "column_alerts") then
-	 vals[hosts_stats[key]["num_alerts"]+postfix] = key
+         vals[hosts_stats[key]["seen.first"]+postfix] = key
+      elseif(sortColumn == "column_score") then
+	 if(hosts_stats[key]["score"] ~= nil) then
+	    vals[hosts_stats[key]["score"]+postfix] = key
+	 end
       elseif(sortColumn == "column_last") then
 	 vals[hosts_stats[key]["seen.last"]+postfix] = key
       elseif(sortColumn == "column_country") then
@@ -182,15 +201,22 @@ if(hosts_stats ~= nil) then
       elseif(sortColumn == "column_traffic") then
 	 vals[hosts_stats[key]["bytes.sent"]+hosts_stats[key]["bytes.rcvd"]+postfix] = key
       elseif(sortColumn == "column_thpt") then
-	 vals[hosts_stats[key]["throughput_"..throughput_type]+postfix] = key
+	 local v = hosts_stats[key]["throughput_"..throughput_type]
+
+	 if(v ~= nil) then
+	    vals[v+postfix] = key
+	 end
       elseif(sortColumn == "column_queries") then
 	 vals[hosts_stats[key]["queries.rcvd"]+postfix] = key
       elseif(sortColumn == "column_ip") then
-	 vals[hosts_stats[key]["ipkey"]+postfix] = key
+	 vals[hosts_stats[key]["iphex"]..postfix] = key
       elseif custom_column_utils.isCustomColumn(sortColumn) then
 	 custom_column_key, custom_column_format = custom_column_utils.label2criteriakey(sortColumn)
 	 local val = custom_column_utils.hostStatsToColumnValue(hosts_stats[key], custom_column_key, false)
-	 if tonumber(val) then
+
+	 if(val == nil) then val = 0 end -- Just to avoid invalid table values
+	 
+	 if(tonumber(val)) then
 	    vals[val + postfix] = key
 	 else
 	    vals[val..postfix] = key
@@ -198,6 +224,8 @@ if(hosts_stats ~= nil) then
       else
 	 vals[key] = key
       end
+
+      ::skip::
    end
 end
 
@@ -260,7 +288,7 @@ for _key, _value in pairsByKeys(vals, funct) do
    local column_name = ''
    if host then
       if host["name"] then
-	 column_name = shortenString(host["name"])
+	 column_name = shortenString(host["name"], 36)
       end
 
       -- This is the label as set-up by the user
@@ -331,7 +359,8 @@ for _key, _value in pairsByKeys(vals, funct) do
 
    record["column_ip"] = column_ip .. column_location
 
-   record["column_num_flows"] = format_utils.formatValue(value["active_flows.as_client"] + value["active_flows.as_server"])
+   value["num_flows"] = value["active_flows.as_client"] + value["active_flows.as_server"]
+   record["column_num_flows"] = format_high_num_value_for_tables(value, "num_flows") 
 
    -- exists only for bridged interfaces
    if isBridgeInterface(interface.getStats()) then
@@ -340,6 +369,7 @@ for _key, _value in pairsByKeys(vals, funct) do
 
    local sent2rcvd = round((value["bytes.sent"] * 100) / (value["bytes.sent"]+value["bytes.rcvd"]), 0)
    if(sent2rcvd == nil) then sent2rcvd = 0 end
+   record["column_score"] = format_high_num_value_for_tables(value, "score") 
    record["column_breakdown"] = "<div class='progress'><div class='progress-bar bg-warning' style='width: "
 	     .. sent2rcvd .."%;'>Sent</div><div class='progress-bar bg-success' style='width: " .. (100-sent2rcvd) .. "%;'>Rcvd</div></div>"
 

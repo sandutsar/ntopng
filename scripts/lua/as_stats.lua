@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 dirs = ntop.getDirs()
@@ -85,17 +85,22 @@ print [[
 			     }
 
 				 },
-			     {
-			     title: "]] print(i18n("show_alerts.alerts")) print[[",
-				 field: "column_alerts",
-				 /* TODO: alerts not implemented */
-				 hidden: true,
-				 sortable: false,
-                             css: {
-			        textAlign: 'center'
-			     }
-
-				 },
+         {
+          title: "]] print(i18n("score")) print[[",
+          field: "column_score",
+          sortable: true,
+                      css: {
+          textAlign: 'center'
+            }
+          },
+          {
+           title: "]] print(i18n("host_score_ratio")) print[[",
+           field: "column_host_score_ratio",
+           sortable: false,
+                       css: {
+           textAlign: 'center'
+             }
+           },
 			     {
 			     title: "]] print(i18n("name")) print[[",
 				 field: "column_asname",
@@ -114,14 +119,14 @@ print [[
 			     }
 
 				 },
-                         {
-			     title: "]] print(i18n("score")) print[[",
-				 field: "column_score",
-				 sortable: true,
-                             css: {
-			        textAlign: 'center'
-			     }
-				 },
+         {
+         title: "]] print(i18n("flow_details.alerted_flows")) print[[",
+       field: "column_alerted_flows",
+       sortable: true,
+                           css: {
+            textAlign: 'center'
+         },
+       },
 ]]
 
 print [[

@@ -14,12 +14,12 @@ local template_utils = require "template_utils"
 local widget_gui_utils = require "widget_gui_utils"
 local tag_utils = require "tag_utils"
 local alert_entities = require "alert_entities"
-local alert_severities = require "alert_severities"
 local Datasource = widget_gui_utils.datasource
 local alert_store_utils = require "alert_store_utils"
 local alert_utils = require "alert_utils"
 local alert_store = require "alert_store"
 local recording_utils = require "recording_utils"
+local datatable_utils = require "datatable_utils"
 
 local ifid = interface.getId()
 local alert_store_instances = alert_store_utils.all_instances_factory()
@@ -31,14 +31,14 @@ local refresh_rate = ntop.getPref("ntopng.prefs.alert_page_refresh_rate")
 if (ntop.getPref("ntopng.prefs.alert_page_refresh_rate_enabled") == '1') 
    and refresh_rate 
    and not isEmptyString(refresh_rate) then
-       -- The js function that refresh periodically the page needs the time in microseconds
-       refresh_rate = tonumber(refresh_rate) * 1000
-       -- Refresh rate equals to 0, remove refresh rate
-       if refresh_rate == 0 then
-           refresh_rate = nil
-       end
+   -- The js function that refresh periodically the page needs the time in microseconds
+   refresh_rate = tonumber(refresh_rate) * 1000
+   -- Refresh rate equals to 0, remove refresh rate
+   if refresh_rate == 0 then
+      refresh_rate = nil
+   end
 else
-       refresh_rate = nil
+   refresh_rate = nil
 end
 
 local user = "no_user"
@@ -56,10 +56,35 @@ local CHART_NAME = "alert-timeseries"
 local page = _GET["page"] or 'all'
 local status = _GET["status"]
 
+local interface_stats = interface.getStats()
+
 -- Used to print badges next to navbar entries
-local num_alerts_engaged = interface.getStats()["num_alerts_engaged"]
-local num_alerts_engaged_by_entity = interface.getStats()["num_alerts_engaged_by_entity"]
-local num_alerts_engaged_cur_entity = (alert_entities[page] and num_alerts_engaged_by_entity[tostring(alert_entities[page].entity_id)]) or (page == 'all' and num_alerts_engaged) or 0
+local num_alerts_engaged = interface_stats["num_alerts_engaged"]
+local num_alerts_engaged_by_entity = interface_stats["num_alerts_engaged_by_entity"]
+
+-- Add system alerts to be displayed as badges in the interface page too
+if interface.getId() ~= tonumber(getSystemInterfaceId()) then
+   local system_interface_stats = ntop.getSystemAlertsStats()
+   local num_system_alerts_engaged_by_entity = system_interface_stats["num_alerts_engaged_by_entity"]
+
+   num_alerts_engaged = num_alerts_engaged + system_interface_stats["num_alerts_engaged"]
+
+   for entity_id, num in pairs(num_system_alerts_engaged_by_entity) do
+      if num_alerts_engaged_by_entity[entity_id] then
+         num_alerts_engaged_by_entity[entity_id] = num_alerts_engaged_by_entity[entity_id] + num
+      else
+         num_alerts_engaged_by_entity[entity_id] = num
+      end
+   end
+end
+
+local num_alerts_engaged_cur_entity = 0
+if alert_entities[page] then
+   local entity_id = tostring(alert_entities[page].entity_id)
+   num_alerts_engaged_cur_entity = num_alerts_engaged_by_entity[entity_id] or 0
+elseif page == 'all' and num_alerts_engaged then
+   num_alerts_engaged_cur_entity = num_alerts_engaged
+end
 
 -- If the status is not explicitly set, it is chosen between (engaged when there are engaged alerts) or historical when
 -- no engaged alert is currently active
@@ -124,10 +149,14 @@ local network_name = _GET["network_name"]
 local role = _GET["role"]
 local role_cli_srv = _GET["role_cli_srv"]
 local l7_error_id = _GET["l7_error_id"]
+local community_id = _GET["community_id"]
+local ja3_client = _GET["ja3_client"]
+local ja3_server = _GET["ja3_server"]
 local confidence = _GET["confidence"]
 local traffic_direction = _GET["traffic_direction"]
 local subtype = _GET["subtype"]
 local vlan_id = _GET["vlan_id"]
+local alert_domain = _GET["alert_domain"]
 
 --------------------------------------------------------------
 
@@ -235,7 +264,7 @@ local pages = {
       endpoint_delete = "/lua/rest/v2/delete/mac/alerts.lua",
       endpoint_acknowledge = "/lua/rest/v2/acknowledge/mac/alerts.lua",
       url = getPageUrl(base_url_historical_only, {page = "mac"}),
-      hidden = is_system_interface or not alert_store_instances["mac"]:has_alerts(),
+      hidden = is_system_interface,
       badge_num = num_alerts_engaged_by_entity[tostring(alert_entities.mac.entity_id)]
    },
    {
@@ -334,6 +363,70 @@ local url = ntop.getHttpPrefix() .. "/lua/alert_stats.lua?"
 --    })
 -- })
 
+-- ######################################
+
+-- Set visible columns by default (if not set by the user) 
+if page == 'flow' and not datatable_utils.has_saved_column_preferences(page .. "-alerts-table") then
+   local hidden_columns = ''
+   local js_columns_default_hidden = {
+      { 
+         name = tstamp,
+         default_hidden = false,
+      }, {
+         name = score,
+         default_hidden = false,
+      }, {
+         name = l7_proto,
+         default_hidden = false,
+      }, {
+         name = alert,
+         default_hidden = false,
+      }, {
+         name = flow,
+         default_hidden = false,
+      }, {
+         name = count,
+         default_hidden = false,
+      }, {
+         name = description,
+         default_hidden = false,
+      }, {
+         name = community_id,
+         default_hidden = true,
+      }, {
+         name = info,
+         default_hidden = false,
+      }, {
+         name = cli_host_pool_id,
+         default_hidden = true,
+      }, {
+         name = srv_host_pool_id,
+         default_hidden = true,
+      }, {
+         name = cli_network,
+         default_hidden = true,
+      }, {
+         name = srv_network,
+         default_hidden = true,
+      }, {
+         name = probe_ip,
+         default_hidden = true,
+      }
+   }
+   for index, data in pairs(js_columns_default_hidden) do
+      if data.default_hidden then
+         hidden_columns = hidden_columns .. (index - 1) .. ","
+      end
+   end
+
+   if not isEmptyString(hidden_columns) then
+      hidden_columns = hidden_columns:sub(1, -2)
+      datatable_utils.save_column_preferences(page .. "-alerts-table", hidden_columns)
+   end
+end
+
+-- ######################################
+
 local modals = {
    ["delete_alert_dialog"] = template_utils.gen("modal_confirm_dialog_form.template", {
        dialog = {
@@ -357,20 +450,20 @@ local modals = {
            no_confirm_id = true
        }
    }),
-   ["alerts_filter_dialog"] = template_utils.gen("pages/modals/modal_alerts_filter_dialog.html", {
-       dialog = {
-           id = "alerts_filter_dialog",
-           title = i18n("show_alerts.filter_alert"),
-           message      = i18n("show_alerts.confirm_filter_alert"),
-           delete_message = i18n("show_alerts.confirm_delete_filtered_alerts"),
-           delete_alerts = i18n("delete_disabled_alerts"),
-           alert_filter = "default_filter",
-           confirm = i18n("filter"),
-           confirm_button = "btn-warning",
-           custom_alert_class = "alert alert-danger",
-           entity = page
-       }
-   }),
+   -- ["alerts_filter_dialog"] = template_utils.gen("pages/modals/modal_alerts_filter_dialog.html", {
+   --     dialog = {
+   --         id = "alerts_filter_dialog",
+   --         title = i18n("show_alerts.filter_alert"),
+   --         message      = i18n("show_alerts.confirm_filter_alert"),
+   --         delete_message = i18n("show_alerts.confirm_delete_filtered_alerts"),
+   --         delete_alerts = i18n("delete_disabled_alerts"),
+   --         alert_filter = "default_filter",
+   --         confirm = i18n("filter"),
+   --         confirm_button = "btn-warning",
+   --         custom_alert_class = "alert alert-danger",
+   --         entity = page
+   --     }
+   -- }),
    ["release_single_alert"] = template_utils.gen("modal_confirm_dialog_form.template", {
        dialog = {
            id      = "release_single_alert",
@@ -426,6 +519,10 @@ local operators_by_filter = {
    role = {'eq'},
    role_cli_srv = {'eq'},
    l7_error_id = {'eq','neq'},
+   community_id = {'eq','neq', 'in', 'nin'},
+   ja3_client = {'eq','neq','in','nin'},
+   ja3_server = {'eq','neq','in','nin'},
+   alert_domain = {'eq','neq','in','nin'},
    confidence = {'eq','neq'},
    traffic_direction = {'eq','neq'},
    text = {'eq','neq'},
@@ -471,8 +568,12 @@ local defined_tags = {
       srv_port = operators_by_filter.port,
       role = operators_by_filter.role,
       l7_error_id = operators_by_filter.l7_error_id,
+      community_id = operators_by_filter.community_id,
+      ja3_client = operators_by_filter.ja3_client,
+      ja3_server = operators_by_filter.ja3_server,
       traffic_direction = operators_by_filter.traffic_direction,
       confidence = operators_by_filter.confidence,
+      alert_domain = operators_by_filter.alert_domain
    },
    ["system"] = {
       alert_id = operators_by_filter.alert_id,
@@ -581,7 +682,7 @@ local filters_context = {
    alert_utils = alert_utils,
    alert_consts = alert_consts,
    available_types = available_filter_types,
-   severities = alert_severities,
+   severities = alert_consts.get_printable_severities(),
    alert_types = all_alert_types,
    l7_protocols = interface.getnDPIProtocols(),
    operators_by_filter = operators_by_filter,
@@ -590,7 +691,7 @@ local filters_context = {
    traffic_direction_list = tag_utils.traffic_direction
 }
 
-template_utils.render("pages/modals/alerts/filters/add.template", filters_context)
+--template_utils.render("pages/modals/alerts/filters/add.template", filters_context)
 
 --------------------------------------------------------------
 
@@ -631,6 +732,10 @@ local datasource_data = {
    role = role,
    role_cli_srv = role_cli_srv,
    l7_error_id = l7_error_id,
+   community_id = community_id,
+   ja3_client = ja3_client,
+   ja3_server = ja3_server,
+   alert_domain = alert_domain,
    confidence = confidence,
    traffic_direction = traffic_direction,
    subtype = subtype,
@@ -663,18 +768,107 @@ local datatable = {
        disable = (page ~= "host" and page ~= "flow")
    },
 }
-   
+
+local notes = {}
+
+table.insert(notes, i18n("show_alerts.alerts_info"))
+
+if(status == "engaged") then
+   table.insert(notes, i18n("show_alerts.engaged_notes"))
+end
+
+local context_2 = {
+   ifid = ifid,
+   opsep = tag_utils.SEPARATOR,
+   isPro = ntop.isPro(),
+   is_ntop_enterprise_m = ntop.isEnterpriseM(),
+   notes = notes,
+   show_chart = true,
+   show_cards = (status ~= "engaged") and ntop.isPro(),
+   endpoint_cards = endpoint_cards,
+   -- buttons
+   show_permalink = (page ~= 'all'),
+   show_download = (page ~= 'all'),
+   show_acknowledge_all =  (page ~= 'all') and (status == "historical"),
+   show_delete_all = (page ~= 'all') and (status ~= "engaged"),
+   show_actions = (page ~= 'all'),
+   actions = {
+       show_settings = (page ~= 'system') and isAdministrator(),
+       show_flows = (page == 'host'),
+       show_historical = ((page == 'host') or (page == 'flow')) and ntop.isEnterpriseM() and hasClickHouseSupport(),
+       show_pcap_download = traffic_extraction_available and page == 'flow',
+       show_disable = ((page == 'host') or (page == 'flow')) and isAdministrator() and ntop.isEnterpriseM(),
+       show_acknowledge = (page ~= 'all') and (status == "historical") and isAdministrator(),
+       show_delete = (page ~= 'all') and (status ~= "engaged") and isAdministrator(),
+       show_info = (page == 'flow'),
+       show_snmp_info = (page == 'snmp_device')
+   },
+
+   show_tot_records = true,
+   range_picker = {
+       ifid = ifid,
+       default = status ~= "engaged" and "30min" or "1week",
+       earliest_available_epoch = earliest_available_epoch,
+       epoch_begin = epoch_begin,
+       epoch_end = epoch_end,
+       datasource_params = datasource.params,
+       refresh_enabled = checkbox_checked,
+       opsep = tag_utils.SEPARATOR,
+       dont_refresh_full_page = true,
+       show_auto_refresh = (page ~= 'all'),
+       tags = {
+           enabled = (page ~= 'all'),
+           tag_operators = tag_utils.tag_operators,
+           view_only = true,
+           defined_tags = defined_tags[page],
+           values = initial_tags,
+           i18n = {
+               auto_refresh_descr = i18n("auto_refresh_descr"),
+               enable_auto_refresh = auto_refresh_text,
+               alert_id = i18n("db_search.tags.alert_id"),
+               severity = i18n("db_search.tags.severity"),
+               score = i18n("db_search.tags.score"),
+               l7_proto = i18n("db_search.tags.l7proto"),
+               cli_ip = i18n("db_search.tags.cli_ip"),
+               srv_ip = i18n("db_search.tags.srv_ip"),
+               cli_name = i18n("db_search.tags.cli_name"),
+               srv_name = i18n("db_search.tags.srv_name"),
+               cli_port = i18n("db_search.tags.cli_port"),
+               srv_port = i18n("db_search.tags.srv_port"),
+               ip_version = i18n("db_search.tags.ip_version"),
+               ip = i18n("db_search.tags.ip"),
+               name = i18n("db_search.tags.name"),
+               network_name = i18n("db_search.tags.network_name"),
+               subtype = i18n("alerts_dashboard.element"),
+               role = i18n("db_search.tags.role"),
+               role_cli_srv = i18n("db_search.tags.role_cli_srv"),
+               l7_error_id = i18n("db_search.tags.error_code"),
+               community_id = i18n("db_search.tags.community_id"),
+               confidence = i18n("db_search.tags.confidence"),
+               traffic_direction = i18n("db_search.tags.traffic_direction"),
+          }
+       },
+       extra_range_buttons = extra_range_buttons,
+       extra_tags_buttons = extra_tags_buttons,
+   },
+   chart = {
+       name = CHART_NAME
+   },
+   alert_details_url = alert_details_url,
+   navbar = page_utils.get_new_navbar_context(i18n("alerts_dashboard.alerts"), url, pages),
+   csrf = ntop.getRandomCSRFValue(),
+}
+
 local context = {
    ifid = ifid,
    ui_utils = ui_utils,
    template_utils = template_utils,
-   -- widget_gui_utils = widget_gui_utils,
+   widget_gui_utils = widget_gui_utils,
    json = json,
    opsep = tag_utils.SEPARATOR,
    isPro = ntop.isPro(),
-
+   notes = notes,
    show_chart = true,
-
    show_cards = (status ~= "engaged") and ntop.isPro(),
    endpoint_cards = endpoint_cards,
 
@@ -689,10 +883,11 @@ local context = {
        show_flows = (page == 'host'),
        show_historical = ((page == 'host') or (page == 'flow')) and ntop.isEnterpriseM() and hasClickHouseSupport(),
        show_pcap_download = traffic_extraction_available and page == 'flow',
-       show_disable = ((page == 'host') or (page == 'flow')) and isAdministrator(),
+       show_disable = ((page == 'host') or (page == 'flow')) and isAdministrator() and ntop.isEnterpriseM(),
        show_acknowledge = (page ~= 'all') and (status == "historical") and isAdministrator(),
        show_delete = (page ~= 'all') and (status ~= "engaged") and isAdministrator(),
        show_info = (page == 'flow'),
+       show_snmp_info = (page == 'snmp_device')
    },
 
    show_tot_records = true,
@@ -735,6 +930,7 @@ local context = {
                role = i18n("db_search.tags.role"),
                role_cli_srv = i18n("db_search.tags.role_cli_srv"),
                l7_error_id = i18n("db_search.tags.error_code"),
+               community_id = i18n("db_search.tags.community_id"),
                confidence = i18n("db_search.tags.confidence"),
                traffic_direction = i18n("db_search.tags.traffic_direction"),
           }
@@ -751,7 +947,7 @@ local context = {
        name = CHART_NAME
    },
    datatable = datatable,
-   navbar = json.encode(page_utils.get_navbar_context(i18n("alerts_dashboard.alerts"), url, pages)),
+   navbar = json.encode(page_utils.get_new_navbar_context(i18n("alerts_dashboard.alerts"), url, pages)),
    extra_js = "pages/alerts/datatable.js.template",
    extra_js_context = {
        ifid = ifid,
@@ -762,7 +958,11 @@ local context = {
    }
 }
 
-template_utils.render("pages/components/datatable.template", context)
-
+if (page == "all" or page == "am_host" or page == "flow" or page == "interface" or page == "system" or page == "user" or page == "mac" or page == "host" or page == "snmp_device") and true then
+   local json_context = json.encode(context_2)
+   template_utils.render("pages/vue_page.template", { vue_page_name = "PageAlertStats", page_context = json_context })
+else
+   template_utils.render("pages/components/datatable.template", context)
+end
 -- append the menu down below the page
 dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")

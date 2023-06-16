@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local sys_utils = require("sys_utils")
@@ -66,9 +66,15 @@ function config.writeNetworkInterfaceConfig(f, iface, network_conf, dns_config, 
       if_config_iface = iface
       if_config = config._getInterfaceConfig(if_config_section, if_config_iface) 
     else
-      if_config_section = "ethernets"
-      if_config_iface = iface
-      if_config = config._getInterfaceConfig(if_config_section, if_config_iface) 
+      if vlan_id then
+        if_config_section = "vlans"
+        if_config_iface = iface
+        if_config = config._getInterfaceConfig(if_config_section, if_config_iface)
+      else
+        if_config_section = "ethernets"
+        if_config_iface = iface
+        if_config = config._getInterfaceConfig(if_config_section, if_config_iface)
+      end 
     end
 
   elseif vlan_raw_iface then
@@ -111,12 +117,21 @@ function config.writeNetworkInterfaceConfig(f, iface, network_conf, dns_config, 
     end
   elseif network_conf.mode == "dhcp" then
     if_config.dhcp4 = 'true'
+  elseif network_conf.mode == "vlan_trunk" then
+    -- nothing to configure for a vlan-trunk bridge interface
   end
 
   if vlan_raw_iface then
     if not if_config.extra_conf then
       if_config.extra_conf = {}
     end
+
+    if vlan_id then
+      -- Check if the vlan has the alias or not, in case remove it
+      -- Otherwise an the id section is going to be wrong, e.g. '11:2'
+      vlan_id = split(vlan_id, ":")[1]
+    end
+    
     if_config.extra_conf['accept-ra'] = 'no'
     if_config.extra_conf['id'] = vlan_id
     if_config.extra_conf['link'] = vlan_raw_iface
@@ -144,7 +159,7 @@ end
 
 -- ################################################################
 
-function config._writeInterfacesConfig(f, interfaces)
+function config._dumpInterfacesConfig(f, interfaces)
   for iface, if_config in pairs(interfaces) do
     f:write("    ".. iface ..":\n")
 
@@ -189,23 +204,23 @@ end
 
 -- ################################################################
 
-function config._writeNetworkInterfaceConfig(f)
+function config._dumpNetworkInterfaceConfig(f)
   f:write("network:\n")
   f:write("  version: " .. netplan_config.version .. "\n")
 
   if netplan_config.ethernets then
     f:write("  ethernets:\n")
-    config._writeInterfacesConfig(f, netplan_config.ethernets)
+    config._dumpInterfacesConfig(f, netplan_config.ethernets)
   end
 
   if netplan_config.bridges then
     f:write("  bridges:\n")
-    config._writeInterfacesConfig(f, netplan_config.bridges)
+    config._dumpInterfacesConfig(f, netplan_config.bridges)
   end
   
   if netplan_config.vlans then
     f:write("  vlans:\n")
-    config._writeInterfacesConfig(f, netplan_config.vlans)
+    config._dumpInterfacesConfig(f, netplan_config.vlans)
   end
 end
 
@@ -213,7 +228,7 @@ end
 
 function config.closeNetworkInterfacesConfigFile(f)
 
-  config._writeNetworkInterfaceConfig(f)
+  config._dumpNetworkInterfaceConfig(f)
 
   f:close()
 

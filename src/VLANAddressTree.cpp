@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2017-22 - ntop.org
+ * (C) 2017-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,25 +23,29 @@
 
 /* **************************************** */
 
-VLANAddressTree::VLANAddressTree() {
-  tree = new (std::nothrow) AddressTree*[MAX_NUM_VLAN];
-  memset(tree, 0, sizeof(AddressTree*) * MAX_NUM_VLAN);
+VLANAddressTree::VLANAddressTree(ndpi_void_fn_t data_free_func) {
+  free_func = data_free_func;
+  tree = new (std::nothrow) AddressTree *[MAX_NUM_VLAN];
+  memset(tree, 0, sizeof(AddressTree *) * MAX_NUM_VLAN);
 }
 
 /* **************************************** */
 
 VLANAddressTree::~VLANAddressTree() {
-  for(int i = 0; i < MAX_NUM_VLAN; i++)
-    if(tree[i])
-      delete tree[i];
+  for (int i = 0; i < MAX_NUM_VLAN; i++)
+    if (tree[i]) delete tree[i];
 
-  delete [] tree;
+  delete[] tree;
 }
 
 /* **************************************** */
 
-bool VLANAddressTree::addAddress(VLANid vlan_id, char *_net, const int16_t user_data) {
-  if(tree[vlan_id] || (tree[vlan_id] = new (std::nothrow) AddressTree()))
+bool VLANAddressTree::addAddress(u_int16_t vlan_id, char *_net,
+                                 const int16_t user_data) {
+  vlan_id &= 0xFFF; /* Make sure we use 12 bits */
+
+  if (tree[vlan_id] ||
+      (tree[vlan_id] = new (std::nothrow) AddressTree(true, free_func)))
     return tree[vlan_id]->addAddress(_net, user_data);
 
   return false;
@@ -49,8 +53,13 @@ bool VLANAddressTree::addAddress(VLANid vlan_id, char *_net, const int16_t user_
 
 /* **************************************** */
 
-bool VLANAddressTree::addVLANAddressAndData(VLANid vlan_id, const char *_what, void *user_data) {
-  if(tree[vlan_id] || (tree[vlan_id] = new (std::nothrow) AddressTree()))
+bool VLANAddressTree::addVLANAddressAndData(u_int16_t vlan_id,
+                                            const char *_what,
+                                            void *user_data) {
+  vlan_id &= 0xFFF; /* Make sure we use 12 bits */
+
+  if (tree[vlan_id] ||
+      (tree[vlan_id] = new (std::nothrow) AddressTree(true, free_func)))
     return tree[vlan_id]->addAddressAndData(_what, user_data);
 
   return false;
@@ -58,8 +67,12 @@ bool VLANAddressTree::addVLANAddressAndData(VLANid vlan_id, const char *_what, v
 
 /* **************************************** */
 
-bool VLANAddressTree::addAddresses(VLANid vlan_id, char *net, const int16_t user_data) {
-  if(tree[vlan_id] || (tree[vlan_id] = new (std::nothrow) AddressTree()))
+bool VLANAddressTree::addAddresses(u_int16_t vlan_id, char *net,
+                                   const int16_t user_data) {
+  vlan_id &= 0xFFF; /* Make sure we use 12 bits */
+
+  if (tree[vlan_id] ||
+      (tree[vlan_id] = new (std::nothrow) AddressTree(true, free_func)))
     return tree[vlan_id]->addAddresses(net, user_data);
 
   return false;
@@ -67,22 +80,30 @@ bool VLANAddressTree::addAddresses(VLANid vlan_id, char *net, const int16_t user
 
 /* **************************************** */
 
-int16_t VLANAddressTree::findAddress(VLANid vlan_id, int family, void *addr, u_int8_t *network_mask_bits) {
-  if(! tree[vlan_id]) return -1;
+int16_t VLANAddressTree::findAddress(u_int16_t vlan_id, int family, void *addr,
+                                     u_int8_t *network_mask_bits) {
+  vlan_id &= 0xFFF; /* Make sure we use 12 bits */
+
+  if (!tree[vlan_id]) return -1;
   return tree[vlan_id]->findAddress(family, addr, network_mask_bits);
 }
 
 /* **************************************** */
 
-int16_t VLANAddressTree::findMac(VLANid vlan_id, const u_int8_t addr[]) {
-  if(! tree[vlan_id]) return -1;
+int16_t VLANAddressTree::findMac(u_int16_t vlan_id, const u_int8_t addr[]) {
+  vlan_id &= 0xFFF; /* Make sure we use 12 bits */
+
+  if (!tree[vlan_id]) return -1;
   return tree[vlan_id]->findMac(addr);
 }
 
 /* **************************************** */
 
-void *VLANAddressTree::findAndGetData(VLANid vlan_id, const IpAddress * const ipa) const {
-  if(! tree[vlan_id]) return NULL;
+void *VLANAddressTree::findAndGetData(u_int16_t vlan_id,
+                                      const IpAddress *const ipa) const {
+  vlan_id &= 0xFFF; /* Make sure we use 12 bits */
+
+  if (!tree[vlan_id]) return NULL;
   return tree[vlan_id]->matchAndGetData(ipa);
 }
 

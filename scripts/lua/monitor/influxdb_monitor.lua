@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -15,23 +15,15 @@ local influxdb_export_api = require "influxdb_export_api"
 
 sendHTTPContentTypeHeader('text/html')
 
+local charts_available = script_manager.systemTimeseriesEnabled()
+local page = _GET["page"] or "overview"
+local url = script_manager.getMonitorUrl("influxdb_monitor.lua") .. "?ifid=" .. interface.getId()
+
 page_utils.set_active_menu_entry(page_utils.menu_entries.influxdb_status)
 
 dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
 
-local charts_available = script_manager.systemTimeseriesEnabled()
-
-if not isAllowedSystemInterface() or (ts_utils.getDriverName() ~= "influxdb") then
-   local url = ntop.getHttpPrefix().."/lua/admin/prefs.lua?tab=on_disk_ts"
-   print('<div class="alert alert-danger">'..i18n("alert_messages.no_influxdb", { url=url })..'</div>')
-   return
-end
-
-local page = _GET["page"] or "overview"
-local url = script_manager.getMonitorUrl("influxdb_monitor.lua") .. "?ifid=" .. interface.getId()
-local title = "InfluxDB"
-
-page_utils.print_navbar(title, url,
+page_utils.print_navbar("InfluxDB", url,
 			{
 			   {
 			      active = page == "overview" or not page,
@@ -95,50 +87,55 @@ if(page == "overview") then
  };
 
  function refreshInfluxStats() {
-  $.get("]] print(ntop.getHttpPrefix()) print[[/lua/get_influxdb_info.lua", function(info) {
-     $(".influxdb-info-load").hide();
+  $.get("]] print(ntop.getHttpPrefix()) print[[/lua/rest/v2/get/system/health/influxdb.lua", function(info) {
+    const rsp = info.rsp 
+    $(".influxdb-info-load").hide();
 
-     if(typeof info.health !== "undefined" && health_descr[info.health]) {
-       $("#influxdb-health").html(health_descr[info.health]["status"] + "<br>" + health_descr[info.health]["descr"]);
+     let influxdb_status = health_descr['green']["status"] + "<br>" + health_descr['green']["descr"]
+     if(typeof rsp.health !== "undefined" && health_descr[rsp.health]) {
+      influxdb_status = health_descr[rsp.health]["status"] + "<br>" + health_descr[rsp.health]["descr"]
      }
-     if(typeof info.db_bytes !== "undefined") {
-       $("#influxdb-info-text").html(NtopUtils.bytesToVolume(info.db_bytes) + " ");
+
+     $("#influxdb-health").html(influxdb_status);
+
+     if(typeof rsp.db_bytes !== "undefined") {
+       $("#influxdb-info-text").html(NtopUtils.bytesToVolume(rsp.db_bytes) + " ");
        if(typeof last_db_bytes !== "undefined")
-         $("#influxdb-info-text").append(NtopUtils.drawTrend(info.db_bytes, last_db_bytes));
-       last_db_bytes = info.db_bytes;
+         $("#influxdb-info-text").append(NtopUtils.drawTrend(rsp.db_bytes, last_db_bytes));
+       last_db_bytes = rsp.db_bytes;
      }
-     if(typeof info.memory !== "undefined") {
-       $("#influxdb-info-memory").html(NtopUtils.bytesToVolume(info.memory) + " ");
+     if(typeof rsp.memory !== "undefined") {
+       $("#influxdb-info-memory").html(NtopUtils.bytesToVolume(rsp.memory) + " ");
        if(typeof last_memory !== "undefined")
-         $("#influxdb-info-memory").append(NtopUtils.drawTrend(info.memory, last_memory));
-       last_memory = info.memory;
+         $("#influxdb-info-memory").append(NtopUtils.drawTrend(rsp.memory, last_memory));
+       last_memory = rsp.memory;
      }
-     if(typeof info.num_series !== "undefined") {
-       $("#influxdb-info-series").html(NtopUtils.addCommas(info.num_series) + " ");
+     if(typeof rsp.num_series !== "undefined") {
+       $("#influxdb-info-series").html(NtopUtils.addCommas(rsp.num_series) + " ");
        if(typeof last_num_series !== "undefined")
-         $("#influxdb-info-series").append(NtopUtils.drawTrend(info.num_series, last_num_series));
-       last_num_series = info.num_series;
+         $("#influxdb-info-series").append(NtopUtils.drawTrend(rsp.num_series, last_num_series));
+       last_num_series = rsp.num_series;
      }
-     if(typeof info.points_exported !== "undefined") {
-       $("#influxdb-exported-points").html(NtopUtils.addCommas(info.points_exported) + " ");
+     if(typeof rsp.points_exported !== "undefined") {
+       $("#influxdb-exported-points").html(NtopUtils.addCommas(rsp.points_exported) + " ");
        if(typeof last_exported_points !== "undefined")
-         $("#influxdb-exported-points").append(NtopUtils.drawTrend(info.points_exported, last_exported_points));
-       last_exported_points = info.points_exported;
+         $("#influxdb-exported-points").append(NtopUtils.drawTrend(rsp.points_exported, last_exported_points));
+       last_exported_points = rsp.points_exported;
      }
-     if(typeof info.points_dropped !== "undefined") {
-       $("#influxdb-dropped-points").html(NtopUtils.addCommas(info.points_dropped) + " ");
+     if(typeof rsp.points_dropped !== "undefined") {
+       $("#influxdb-dropped-points").html(NtopUtils.addCommas(rsp.points_dropped) + " ");
        if(typeof last_dropped_points !== "undefined")
-         $("#influxdb-dropped-points").append(NtopUtils.drawTrend(info.points_dropped, last_dropped_points, " style=\"color: #B94A48;\""));
-       last_dropped_points = info.points_dropped;
+         $("#influxdb-dropped-points").append(NtopUtils.drawTrend(rsp.points_dropped, last_dropped_points, " style=\"color: #B94A48;\""));
+       last_dropped_points = rsp.points_dropped;
      }
-     if(typeof info.exports !== "undefined") {
-       $("#influxdb-exports").html(NtopUtils.addCommas(info.exports) + " ");
+     if(typeof rsp.exports !== "undefined") {
+       $("#influxdb-exports").html(NtopUtils.addCommas(rsp.exports) + " ");
        if(typeof last_exports !== "undefined")
-         $("#influxdb-exports").append(NtopUtils.drawTrend(info.exports, last_exports));
-       last_exports = info.exports;
+         $("#influxdb-exports").append(NtopUtils.drawTrend(rsp.exports, last_exports));
+       last_exports = rsp.exports;
      }
 
-     if(info.num_series >= 950000)
+     if(rsp.num_series >= 950000)
        $("#high-cardinality-warn").show();
   }).fail(function() {
      $(".influxdb-info-load").hide();
@@ -156,30 +153,7 @@ refreshInfluxStats();
        print("</ul>")
 
 elseif(page == "historical" and charts_available) then
-   local schema = _GET["ts_schema"] or "influxdb:storage_size"
-   local selected_epoch = _GET["epoch"] or ""
-   local tags = {ifid = getSystemInterfaceId()}
-   url = url.."&page=historical"
-
-   graph_utils.drawGraphs(getSystemInterfaceId(), schema, tags, _GET["zoom"], url, selected_epoch, {
-      timeseries = {
-      {schema="influxdb:storage_size",                      label=i18n("traffic_recording.storage_utilization")},
-      {schema="influxdb:memory_size",                       label=i18n("about.ram_memory")},
-      {schema="influxdb:write_successes",                   label=i18n("system_stats.write_througput")},
-      {schema="influxdb:exports",                           label=i18n("system_stats.exports_label"),
-       value_formatter = {"NtopUtils.export_rate", "NtopUtils.exports_format"},
-       metrics_labels = {i18n("system_stats.exports_label")}},
-      {schema="influxdb:exported_points",                   label=i18n("system_stats.exported_points")},
-      {schema="influxdb:dropped_points",                    label=i18n("system_stats.dropped_points")},
-      {schema="custom:infludb_exported_vs_dropped_points",  label=i18n("system_stats.exported_vs_dropped_points"),
-       custom_schema = {
-	  bases = {"influxdb:exported_points", "influxdb:dropped_points"},
-	  types = {"area", "line"}, axis = {1,2},
-       },
-       metrics_labels = {i18n("system_stats.exported_points"), i18n("system_stats.dropped_points")},
-      },
-      {schema="influxdb:rtt",                               label=i18n("graphs.num_ms_rtt")},
-   }})
+   graph_utils.drawNewGraphs({ ifid = -1})
 end
 
 -- #######################################################

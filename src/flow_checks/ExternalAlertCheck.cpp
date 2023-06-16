@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,15 +36,11 @@ void ExternalAlertCheck::checkExternalAlert(Flow *f) {
 
 /* ***************************************************** */
 
-void ExternalAlertCheck::protocolDetected(Flow *f) {
-  checkExternalAlert(f);
-}
+void ExternalAlertCheck::protocolDetected(Flow *f) { checkExternalAlert(f); }
 
 /* ***************************************************** */
 
-void ExternalAlertCheck::flowEnd(Flow *f) {
-  checkExternalAlert(f);
-}
+void ExternalAlertCheck::flowEnd(Flow *f) { checkExternalAlert(f); }
 
 /* ***************************************************** */
 

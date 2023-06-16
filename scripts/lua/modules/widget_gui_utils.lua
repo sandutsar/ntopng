@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/pools/?.lua;" .. package.path
@@ -40,6 +40,8 @@ local function check_widget_existance(widgets, name)
 end
 
 local color_palette = { 
+    "#C6D9FD",
+    "#90EE90",
     "#EE8434",
     "#C95D63", 
     "#AE8799", 

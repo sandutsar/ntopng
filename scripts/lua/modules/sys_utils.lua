@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local sys_utils = {}
@@ -66,13 +66,13 @@ end
 
 -- Execute a system command
 function sys_utils.execCmd(cmd)
-   if(REAL_EXEC) then
-    -- traceError(TRACE_NORMAL, TRACE_CONSOLE, "[execCmd] ".. cmd)
+  if(REAL_EXEC) then
+    -- traceError(TRACE_NORMAL, TRACE_CONSOLE, "[>] ".. cmd)
     return(os.execute(cmd))
-   else
+  else
     traceError(TRACE_NORMAL, TRACE_CONSOLE, "[execCmd] ".. cmd)
     return 0
-   end
+  end
 end
 
 -- ################################################################
@@ -107,14 +107,19 @@ end
 -- ################################################################
 
 local function _isServiceStatus(service_name, status)
+  require "lua_utils"
   local check_cmd = "systemctl is-"..status.." " .. service_name
   local is_active = sys_utils.execShellCmd(check_cmd)
 
-  return ternary(string.match(is_active, "^"..status), true, false)
+  return ternary(string.match(tostring(is_active), "^"..status), true, false)
 end
 
 function sys_utils.isActiveService(service_name)
    return _isServiceStatus(service_name, "active")
+end
+
+function sys_utils.isEnabledService(service_name)
+   return _isServiceStatus(service_name, "enabled")
 end
 
 function sys_utils.isFailedService(service_name)
@@ -122,10 +127,12 @@ function sys_utils.isFailedService(service_name)
 end
 
 function sys_utils.isActiveFailedService(service_name)
+  require "lua_utils"
+  
   local check_cmd = "systemctl is-active " .. service_name
   local is_active = sys_utils.execShellCmd(check_cmd)
 
-  return ternary(string.match(is_active, "inactive"), false, true)
+  return ternary(string.match(tostring(is_active), "inactive"), false, true)
 end
 
 -- ################################################################

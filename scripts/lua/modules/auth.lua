@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 ---------------------------------------------------------------------------------------
@@ -17,6 +17,8 @@
 -- Here, we have privileged users (admins) which can perform every operation	     --
 -- and unprivileged users (non admins) which can only perform a subset of operations --
 ---------------------------------------------------------------------------------------
+
+local clock_start = os.clock()
 
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
@@ -67,5 +69,23 @@ function auth.has_capability(capability)
 end
 
 -- #######################
+
+-- @brief Returns the list of allowed networks or nil if all networks are allowed
+function auth.allowed_networks()
+   if isAdministrator()
+      or isEmptyString(_SESSION["allowed_nets"])
+      or _SESSION["allowed_nets"] == '0.0.0.0/0,::/0' -- See CONST_DEFAULT_ALL_NETS
+   then
+      return nil
+   end
+
+   return _SESSION["allowed_nets"]
+end
+
+-- #######################
+
+if(trace_script_duration ~= nil) then
+   io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end
 
 return auth

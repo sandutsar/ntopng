@@ -18,7 +18,7 @@ local other_alert_keys = {
    alert_gateway_unreachable            =  OTHER_BASE_KEY + 4 ,
    alert_flow_flood                     =  OTHER_BASE_KEY + 5 , -- No longer used, check alert_flow_flood_attacker and alert_flow_flood_victim
    alert_ghost_network                  =  OTHER_BASE_KEY + 6 ,
-   alert_host_pool_connection           =  OTHER_BASE_KEY + 7 ,
+   alert_host_pool_connection           =  OTHER_BASE_KEY + 7 , -- No longer used
    alert_host_pool_disconnection        =  OTHER_BASE_KEY + 8 ,
    alert_influxdb_dropped_points        =  OTHER_BASE_KEY + 9 ,
    alert_influxdb_error                 =  OTHER_BASE_KEY + 10,
@@ -61,7 +61,7 @@ local other_alert_keys = {
    alert_lateral_movement               =  OTHER_BASE_KEY + 48, -- No longer user (moved to the flows)
    alert_list_download_succeeded        =  OTHER_BASE_KEY + 49,
    alert_no_if_activity                 =  OTHER_BASE_KEY + 50, 
-   alert_unexpected_new_device          =  OTHER_BASE_KEY + 51, 
+   alert_device_connection_disconnection =  OTHER_BASE_KEY + 51, 
    alert_shell_script_executed          =  OTHER_BASE_KEY + 52, 
    alert_periodicity_update             =  OTHER_BASE_KEY + 53, -- No longer user (moved to the flows)
    alert_dns_positive_error_ratio       =  OTHER_BASE_KEY + 54, 
@@ -90,6 +90,12 @@ local other_alert_keys = {
    alert_port_mac_disappeared           =  OTHER_BASE_KEY + 77,
    alert_network_score_per_host         =  OTHER_BASE_KEY + 78,
    alert_dhcp_storm                     =  OTHER_BASE_KEY + 79,
+   alert_snmp_interface_errors          =  OTHER_BASE_KEY + 80,
+   alert_snmp_device_traffic_change     =  OTHER_BASE_KEY + 81,
+   alert_local_host_blacklisted         =  OTHER_BASE_KEY + 82,
+   alert_network_issues                 =  OTHER_BASE_KEY + 83,
+   alert_network_rule_threshold_cross   =  OTHER_BASE_KEY + 84,
+   alert_snmp_interface_threshold_crossed = OTHER_BASE_KEY + 85,
 }
 
 -- ##############################################

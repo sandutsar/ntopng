@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,13 +26,14 @@
 
 class NotPurgedAlert : public FlowAlert {
  private:
-  
  public:
-  static FlowAlertType getClassType() { return { flow_alert_internals, alert_category_internals }; }
-  static u_int8_t      getDefaultScore() { return SCORE_LEVEL_WARNING; };
+  static FlowAlertType getClassType() {
+    return {flow_alert_internals, alert_category_internals};
+  }
+  static u_int8_t getDefaultScore() { return SCORE_LEVEL_WARNING; };
 
- NotPurgedAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f) {};
-  ~NotPurgedAlert() {};
+  NotPurgedAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  ~NotPurgedAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }
 };

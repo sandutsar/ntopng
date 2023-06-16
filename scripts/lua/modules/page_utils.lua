@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -24,8 +24,15 @@ local active_sub_entry = nil
 
 local zoneinfo = 'null'
 local temp_zoneinfo = ntop.getInfo().zoneinfo
+local newline = string.find(temp_zoneinfo, "\n")
+
+-- WARNING: in FreeBSD,	the zoneinfo ends with a newline character, so remove the newline and everything works fine
+if newline then
+  temp_zoneinfo = string.sub(temp_zoneinfo, 1, newline - 1)
+end
+
 if temp_zoneinfo ~= nil then
-   zoneinfo = "( /^[\\x00-\\xFF]*$/.test('" .. temp_zoneinfo .."') && moment.tz.zone('" .. temp_zoneinfo .."') != null ? '".. temp_zoneinfo .. "' : function() { console.warn('zoneinfo not valid:' + (/^[\\x00-\\xFF]*$/.test('" .. temp_zoneinfo .."') ? '" .. temp_zoneinfo .."' : 'Invalid string') ); return null; }())"
+  zoneinfo = "( /^[\\x00-\\xFF]*$/.test('" .. temp_zoneinfo .."') && moment.tz.zone('" .. temp_zoneinfo .."') != null ? '".. temp_zoneinfo .. "' : function() { console.warn('zoneinfo not valid:' + (/^[\\x00-\\xFF]*$/.test('" .. temp_zoneinfo .."') ? '" .. temp_zoneinfo .."' : 'Invalid string') ); return null; }())"
 end
 
 -- #################################
@@ -42,6 +49,7 @@ page_utils.menu_sections = {
    system_stats  = {key = "system_stats", i18n_title = "system", icon = "fas fa-desktop"},
    admin         = {key = "admin", i18n_title = "settings", icon = "fas fa-cog"},
    alert_exclusions = {key = "alert_exclusions", i18n_title = "edit_check.exclusion_list", icon = "fas fa-bell-slash"},
+   device_exclusions = {key = "device_exclusions", i18n_title = "edit_check.device_exclusions", icon = "fas fa-bell-slash"},
    dev           = {key = "dev", i18n_title = "developer", icon = "fas fa-code"},
    about         = {key = "about", i18n_title = "help", icon = "fas fa-life-ring"},
    health        = {key = "health", i18n_title = "health", icon = "fas fa-laptop-medical"},
@@ -72,7 +80,9 @@ page_utils.menu_entries = {
     detected_alerts       = {key = "detected_alerts", i18n_title = "show_alerts.detected_alerts", section = "alerts", help_link = "https://www.ntop.org/guides/ntopng/web_gui/alerts.html"},
     alerts_dashboard      = {key = "alerts_dashboard", i18n_title = "alerts_dashboard.alerts_dashboard", section = "alerts"},
     flow_alerts_explorer  = {key = "flow_alerts_explorer", i18n_title = "flow_alerts_explorer.label", section = "alerts"},
-
+    alerts_list           = {key = "alerts_list", i18n_title = "details.alerts_list", section = "alerts"},
+    alerts_analysis       = {key = "alerts_analysis", i18n_title = "details.alerts_analysis", section = "alerts"},
+    
     -- Flows
     flows                 = {key = "flows", i18n_title = "flows", section = "flows", help_link = "https://www.ntop.org/guides/ntopng/web_gui/flows.html"},
     active_flows          = {key = "active_flows", i18n_title = "active_flows", section = "flows" },
@@ -88,14 +98,17 @@ page_utils.menu_entries = {
     autonomous_systems    = {key = "autonomous_systems", i18n_title = "as_stats.autonomous_systems", section = "hosts", help_link = "https://www.ntop.org/guides/ntopng/web_gui/hosts.html?#autonomous-systems"},
     countries             = {key = "countries", i18n_title = "countries", section = "hosts", help_link = "https://www.ntop.org/guides/ntopng/web_gui/hosts.html?#countries"},
     operating_systems     = {key = "operating_systems", i18n_title = "operating_systems", section = "hosts", help_link = "https://www.ntop.org/guides/ntopng/web_gui/hosts.html?#operating-systems"},
-    http_servers          = {key = "http_servers", i18n_title = "http_servers_stats.http_servers", section = "hosts", help_link = "https://www.ntop.org/guides/ntopng/web_gui/hosts.html?#http-servers-local"},
+    http_servers          = {key = "http_servers", i18n_title = "http_servers_stats.local_http_servers", section = "hosts", help_link = "https://www.ntop.org/guides/ntopng/web_gui/hosts.html?#http-servers-local"},
+    server_ports_analysis = {key = "server_ports_analysis", i18n_title = "server_ports_analysis", section = "hosts", help_link = "https://www.ntop.org/guides/ntopng/web_gui/hosts.html?#http-servers-local"},
     top_hosts             = {key = "top_hosts", i18n_title = "processes_stats.top_hosts", section = "hosts", help_link = "https://www.ntop.org/guides/ntopng/web_gui/hosts.html?#top-hosts-local"},
     hosts_treemap         = {key = "hosts_treemap", i18n_title = "tree_map.hosts_treemap", section = "hosts"},
     containers            = {key = "containers", i18n_title = "containers_stats.containers", section = "hosts"},
     pods                  = {key = "pods", i18n_title = "containers_stats.pods", section = "hosts"},
-
+    
     -- Interface
-    interface             = {key = "interface", i18n_title = "interface_ifname", section = "if_stats"},
+    interface             = {key = "interface", i18n_title = "interface_details", section = "if_stats"},
+    ports_analysis        = {key = "ports_analysis", i18n_title = "ports_analysis.server_ports", section = "if_stats"},
+    host_rules            = {key = "host_rules", i18n_title = "if_stats_config.traffic_rules", section = "if_stats", help_link = "https://www.ntop.org/guides/ntopng/advanced_features/host_rules.html"},
 
     -- Pollers
     snmp                  = {key = "snmp", i18n_title = "prefs.snmp", section = "pollers"},
@@ -105,7 +118,7 @@ page_utils.menu_entries = {
     system_status         = {key = "system_status", i18n_title = "system_status", section = "health"},
     interfaces_status     = {key = "interfaces_status", i18n_title = "system_interfaces_status", section = "health"},
     alerts_status         = {key = "alerts_status", i18n_title = "system_alerts_status", section = "health"},
-    influxdb_status       = {key = "influxdb", i18n_title = "InfluxDB", section = "health"},
+    influxdb_status       = {key = "influxdb_status", i18n_title = "InfluxDB", section = "health"},
     redis_status          = {key = "redis_monitor", i18n_title = "Redis", section = "health"},
     clickhouse_status     = {key = "clickhouse", i18n_title = "ClickHouse", section = "health"},
 
@@ -116,8 +129,7 @@ page_utils.menu_entries = {
     observation_points    = {key = "observation_points", i18n_title = "flow_devices.observation_points", section = "collection", help_link = "https://www.ntop.org"},
 
    -- Map
-   service_map            = {key = "service_map", i18n_title="service", section = "maps"},
-   periodicity_map        = {key = "periodicity_map", i18n_title="periodicity", section = "maps"},
+   analysis_map           = {key = "analysis_map", i18n_title="analysis", section = "maps"},
    geo_map                = {key = "geo_map", i18n_title = "geo_map.geo_map", section = "maps", help_link = "https://www.ntop.org/guides/ntopng/web_gui/hosts.html?#geo-map"},
    hosts_map              = {key = "hosts_map", i18n_title = "flows_page.hosts", section = "maps"},
    
@@ -134,6 +146,7 @@ page_utils.menu_entries = {
    scripts_config_flows   = {key = "scripts_config", subkey="flows", i18n_title = alert_entities.flow.i18n_label, section = "admin", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
    scripts_config_system  = {key = "scripts_config", subkey="system", i18n_title = alert_entities.system.i18n_label, section = "admin", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
    scripts_config_syslog  = {key = "scripts_config", subkey="syslog", i18n_title = "syslog.syslog", section = "admin", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
+   device_exclusions      = {key = "device_exclusions", i18n_title = "edit_check.device_exclusion", section = "device_exclusions"},
    alert_exclusions       = {key = "alert_exclusions", i18n_title = "edit_check.exclusion_list", section = "alert_exclusions", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
    alert_exclusions_hosts = {key = "alert_exclusions", subkey="hosts", i18n_title = alert_entities.host.i18n_label, section = "alert_exclusions", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
    alert_exclusions_flows = {key = "alert_exclusions", subkey="flows", i18n_title = alert_entities.flow.i18n_label, section = "alert_exclusions", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
@@ -165,12 +178,13 @@ page_utils.menu_entries = {
    -- Developer
    directories            = {key = "directories", i18n_title = "about.directories", section = "dev", help_link = "https://www.ntop.org/guides/ntopng/scripts/distributing_scripts.html"},
    checks_dev             = {key = "checks_dev", i18n_title = "about.checks", section = "dev", help_link = "https://www.ntop.org/guides/ntopng/scripts/checks.html"},
+   analyze_pcap           = {key = "analyze_pcap", i18n_title = "about.analyze_pcap", section = "dev", help_link = "https://www.ntop.org/guides/ntopng/advanced_features/index.html"},
    alert_definitions      = {key = "alert_definitions", i18n_title = "about.alert_defines", section = "dev", help_link = "https://www.ntop.org/guides/ntopng/scripts/alert_definitions.html"},
    api                    = {key = "api", i18n_title = "lua_c_api", section = "dev"},
+   rest_api               = {key = "rest_api", i18n_title = "swagger_api", section = "dev"},
    
    -- Help
    about                  = {key = "about", i18n_title = "about.about", section = "about", help_link = "https://www.ntop.org/guides/ntopng/web_gui/help_menu.html?#about"},
-   telemetry              = {key = "telemetry", i18n_title = "telemetry", section = "about"},
    blog                   = {key = "blog", i18n_title = "about.ntop_blog", section = "about"},
    telegram               = {key = "telegram", i18n_title = "about.telegram", section = "about"},
    report_issue           = {key = "report_issue", i18n_title = "about.report_issue", section = "about"},
@@ -189,6 +203,8 @@ page_utils.menu_entries = {
    dhcp_static_leases     = {key = "dhcp_static_leases", i18n_title = "nedge.static_dhcp_leases", section = "system_stats"},
    dhcp_active_leases     = {key = "dhcp_active_leases", i18n_title = "nedge.active_dhcp_leases", section = "system_stats"},
    port_forwarding        = {key = "port_forwarding", i18n_title = "nedge.port_forwarding", section = "system_stats"},
+   rules_config           = {key = "rules_config", i18n_title = "nedge.rules_config_title", section = "system_stats"},
+   forwarders_config       = {key = "forwarders_config", i18n_title = "nedge.repeaters_config_title", section = "system_stats"}
 }
 
 -- Extend the menu entries with the scripts
@@ -204,12 +220,16 @@ end
 -- #################################
 
 -- NOTE: this function must be called after page_utils.set_active_menu_entry
-function page_utils.print_page_title(title)
+function page_utils.print_page_title(title, mini_title)
    local help_link = page_utils.menu_entries[active_entry].help_link or ""
    print("<header class='mb-3 d-flex align-items-center'>")
    print("<h2 class='d-inline-block'>".. title .."</h2>")
    if (not isEmptyString(help_link)) then
       print("<a data-bs-toggle='tooltip' title='".. i18n("open_documentation") .."' target='_newtab' href='".. help_link .."' class='text-muted ms-auto'><i class='fas fa-question-circle'></i></a>")
+   end
+   
+   if mini_title and not isEmptyString(mini_title) then
+    print("<small style='margin-left: auto;'>" .. mini_title .. "</small>")
    end
    print("</header>")
 
@@ -342,16 +362,20 @@ function page_utils.print_header(title, addLoginJS)
     ]]
           
     if addLoginJS then
-      print[[<script type="text/javascript" src="]] print(http_prefix) print[[/dist/login.js?]] print(static_file_epoch) print[["></script>]]
+      print[[<script type="application/javascript" src="]] print(http_prefix) print[[/dist/login.js?]] print(static_file_epoch) print[["></script>]]
     end
 
+    if(ntop.isPro() and ntop.exists(dirs.installdir.."/css/custom-theme.css")) then
+      print [[
+        <link href="]] print(http_prefix) print[[/css/custom-theme.css?]] print(static_file_epoch) print[[" rel="stylesheet">
+      ]]
+    end
     
     print[[
-    <link href="]] print(http_prefix) print[[/dist/custom-theme.css?]] print(static_file_epoch) print[[" rel="stylesheet">
-    <script type="text/javascript" src="]] print(http_prefix) print("/lua/locale.lua?"..locale_when .. "&user_language=" ..language); print[["> </script>
-    <script type="text/javascript" src="]] print(http_prefix) print[[/dist/third-party.js?]] print(static_file_epoch) print[["></script>
-    <script type="text/javascript" src="]] print(http_prefix) print[[/dist/ntopng.js?]] print(static_file_epoch) print[["></script>
-<script> const ntop_zoneinfo = ]] print(zoneinfo) print[[;</script>
+    <script type="application/javascript" src="]] print(http_prefix) print("/lua/locale.lua?"..locale_when .. "&user_language=" ..language); print[["> </script>
+    <script type="application/javascript" src="]] print(http_prefix) print[[/dist/third-party.js?]] print(static_file_epoch) print[["></script>
+    <script type="application/javascript" src="]] print(http_prefix) print[[/dist/ntopng.js?]] print(static_file_epoch) print[["></script>
+    <script> var ntop_zoneinfo = ]] print(zoneinfo) print[[;</script>
     </head>]]
   print([[
      <body class="body ]].. (dark_mode and "dark" or "") ..[[">
@@ -403,10 +427,11 @@ function page_utils.print_header_minimal(title, addLoginJS)
             margin-top: -5px;
             background:url(]] print(http_prefix) print[[/dist/images/flags.png) no-repeat
           }
-          <script type="text/javascript" src="]] print(http_prefix) print("/lua/locale.lua?"..locale_when .. "&user_language=" ..language); print[["> </script>
-          <script type="text/javascript" src="]] print(http_prefix) print[[/dist/third-party.js?]] print(static_file_epoch) print[["></script>
-          <script type="text/javascript" src="]] print(http_prefix) print[[/dist/ntopng.js?]] print(static_file_epoch) print[["></script>
-          
+          </style>
+          <script type="application/javascript" src="]] print(http_prefix) print("/lua/locale.lua?"..locale_when .. "&user_language=" ..language); print[["> </script>
+          <script type="application/javascript" src="]] print(http_prefix) print[[/dist/third-party.js?]] print(static_file_epoch) print[["></script>
+          <script type="application/javascript" src="]] print(http_prefix) print[[/dist/ntopng.js?]] print(static_file_epoch) print[["></script>
+          <script> const ntop_zoneinfo = ]] print(zoneinfo) print[[;</script>          
       </head>
       <body>
 
@@ -430,9 +455,29 @@ function page_utils.get_navbar_context(title, base_url, items_table, label_url, 
    }
    return navbar
 end
+
 -- #################################
 
-function page_utils.print_navbar(title, base_url, items_table, label_url, back_url)
+function page_utils.get_new_navbar_context(title, base_url, items_table, label_url, back_url)
+   local help_link = page_utils.menu_entries[active_entry].help_link or nil
+   local icon = page_utils.menu_sections[active_section].icon or ""
+
+   local navbar = {
+    main_title = { 
+      icon = icon,
+      label  = title,
+    },
+    base_url    = base_url,
+    items_table = items_table,
+    label_url   = label_url,
+    back_url    = back_url,
+    help_link   = help_link
+   }
+   return navbar
+end
+-- #################################
+
+function page_utils.print_navbar(title, base_url, items_table, label_url, back_url, end_items)
    local help_link = page_utils.menu_entries[active_entry].help_link or nil
    local icon = page_utils.menu_sections[active_section].icon or ""
 
@@ -443,7 +488,8 @@ function page_utils.print_navbar(title, base_url, items_table, label_url, back_u
          items_table = items_table,
          label_url   = label_url,
          back_url    = back_url,
-         help_link   = help_link
+         help_link   = help_link,
+         end_items   = end_items
       }
    }
    print(template_utils.gen("pages/components/page-navbar.template", context))
@@ -851,7 +897,7 @@ function page_utils.generate_info_stats()
    else
       return ([[
          <a href=']].. ntop.getHttpPrefix() ..[[/lua/if_stats.lua'>
-            <span style='display: none;' class="network-load-chart-total">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</span>
+            <span style='display: none;' class="network-load-chart-total">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</span>
             <span class="text-end chart-total-text"></span>
          </a>
       ]])

@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -201,7 +201,7 @@ if not is_system_interface and not hosts_only then
 
          results[#results + 1] = {
 	    name = name,
-            type="network",
+            type = "network",
             network = network_id,
             links = links,
          }
@@ -240,7 +240,7 @@ if not is_system_interface and not hosts_only then
       elseif string.containsIgnoreCase(asn, query) then
          results[#results + 1] = {
             name = asn,
-	    type="asn",
+	    type = "asn",
             asn = as.asn,
             links = links,
             badges = badges,
@@ -288,6 +288,7 @@ if not hosts_only then
 	    name = matching_mac .. ' '..title,
             type = "snmp",
 	    ip = snmp_device_ip,
+            snmp = snmp_device_ip,
             snmp_port_idx = snmp_port_idx,
             links = links,
          }
@@ -324,6 +325,7 @@ if not hosts_only then
 	    name = title,
             type = "snmp",
 	    ip = snmp_device_ip,
+            snmp = snmp_device_ip,
             snmp_port_idx = snmp_port_idx,
             links = links,
          }
@@ -353,6 +355,7 @@ if not hosts_only then
 	    name = title,
             type = "snmp_device",
 	    ip = snmp_device["ip"],
+            snmp_device = snmp_device["ip"],
             links = links,
          }
          res_count = res_count + 1
@@ -374,8 +377,8 @@ if not is_system_interface then
       local badges = {}
       local links = {}
 
-      local name = host_key
-      local ip = host_key
+      local ip = nil
+      local mac = nil
 
       local label = host_key
       if host_key ~= k then
@@ -383,25 +386,29 @@ if not is_system_interface then
       end
 
       if isMacAddress(host_key) then -- MAC
+         mac = host_key
          add_device_link(links)
          add_historical_flows_link(links, 'mac', host_key)
       elseif isIPv6(host_key) then -- IP
+         ip = host_key
          add_host_link(links)
          add_historical_flows_link(links, 'ip', host_key)
          add_badge(badges, 'IPv6')
       elseif k == host_key then -- IP
+         ip = host_key
          add_host_link(links)
          add_historical_flows_link(links, 'ip', host_key)
       else -- Name
+         ip = k
          add_host_link(links)
          add_historical_flows_link(links, 'name', host_key)
-         ip = k
       end
 
       hosts[k] = {
          label = label,
          name = host_key,
          ip = ip,
+         mac = mac,
          links = links,
          badges = badges,
       }
@@ -578,10 +585,11 @@ if not is_system_interface then
 
    if #results == 0 and not isEmptyString(query) then
       -- No results - add shortcut to search in historical data
+      --tprint(query)
       if hasClickHouseSupport() then
          local label = ""
          local what = ""
-         if isIPv6(query) or isIPv4(query) then
+         if isHostKey(query) then
             what = "ip"
             label = i18n("db_search.find_in_historical", {what=what, query=query})
             query = query .. tag_utils.SEPARATOR .. "eq"
@@ -589,11 +597,27 @@ if not is_system_interface then
             what = "mac"
             label = i18n("db_search.find_in_historical", {what=what, query=query})
             query = query .. tag_utils.SEPARATOR .. "eq"
+         elseif isCommunityId(query) then
+         --tprint("HERE")
+            what = "community_id"
+            label = i18n("db_search.find_in_historical", {what=what, query=query})
+            query = query .. tag_utils.SEPARATOR .. "eq"
+         elseif isJA3(query) then
+         --tprint("HERE")
+            what = "ja3_client"
+            label = i18n("db_search.find_in_historical", {what=what, query=query})
+            query = query .. tag_utils.SEPARATOR .. "eq"
+            results[#results + 1] = build_result(label, query, what, nil, nil, "historical")
+            what = "ja3_server"
+            label = i18n("db_search.find_in_historical", {what=what, query=query})
+            query = query .. tag_utils.SEPARATOR .. "eq"
          else
             what = "hostname"
             label = i18n("db_search.find_in_historical", {what=what, query=query})
             query = query .. tag_utils.SEPARATOR .. "in"
          end
+
+         --tprint(query)
          results[#results + 1] = build_result(label, query, what, nil, nil, "historical")
       end
    end

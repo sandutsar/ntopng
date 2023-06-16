@@ -464,6 +464,7 @@ local lang = {
     ["traffic_sent_received"] = "Gesendeter / erhaltener Datenverkehr",
     ["vlan_id"] = "VLAN ID",
     ["whois_lookup"] = "Whois Lookup",
+    ["ripestat_lookup"] = "RIPEstat Lookup",
   },
   ["device_types"] = {
     ["iot"] = "IoT",
@@ -621,8 +622,6 @@ local lang = {
     ["slow_tcp_connection"] = "Slow TCP Verbingung",
     ["son_of_father_process"] = "son of <a href ='%{url}'>%{proc_father_pid}/%{proc_father_name}</a>",
     ["ssh_signature"] = "SSH Unterschrift",
-    ["suspicious_tcp_probing"] = "Suspicious TCP Probing",
-    ["suspicious_tcp_syn_probing"] = "Suspicious TCP SYN probing",
     ["sync_source_id"] = "Sync Source ID",
     ["tcp_connection_issues"] = "TCP Connection Issues (Retransmission, OOO, Lost)",
     ["tcp_packet_analysis"] = "TCP Paketanalyse",
@@ -1234,7 +1233,7 @@ local lang = {
     ["filtered_hosts_only"] = "Hosts mit blockiertem Datenverkehr",
     ["host_pool"] = "Host Pool %{pool_name}",
     ["hosts"] = "Hosts",
-    ["hosts_page_title"] = "%{all} %{local_remote} %{protocol} %{network} %{ip_version} %{os} Hosts %{country_asn_or_mac} %{vlan}",
+    ["hosts_page_title"] = "%{all} %{vlan_name} %{traffic_type} %{device_ip} %{local_remote} %{protocol} %{network_cidr} %{network} %{ip_version} %{os} Hosts %{country_asn_or_mac} %{vlan} %{charts_icon} %{wheel}",
     ["idle_hosts_not_listed"] = "Idle hosts nicht aufgeführt.",
     ["in_network"] = "in %{network}",
     ["ipver_title"] = "IPv%{version_num}",
@@ -1900,6 +1899,16 @@ local lang = {
     ["reset_alert_database"] = "Flush Alerts Data",
     ["reset_alert_database_message"] = "Diese Handlung entfert alle Alarme in Bezug der Daten, einschlietlsich<ul><li>Runtime alerts status</li><li>Alerts configuration</li><li>Persistent alerts SQLite storage</li></ul><br>Do you really want to proceed",
     ["startup"] = "Startup",
+    ["presets"] = {
+      ["day"] = "Letzte Tag",
+      ["hour"] = "Letzte Stunlang.",
+      ["month"] = "Letzte Monat",
+      ["week"] = "Letzte Woche",
+      ["year"] = "Letzte Jahr",
+      ["30_min"] = "Letzte 30 Minuten",
+      ["5_min"] = "Letzte 5 Minuten",
+      ["custom"] = "Custom",
+    }
   },
   ["snmp"] = {
     ["bound_interface_description"] = "Eine Verbingung zwischen eine Netzwerk interface und eine SNMP interface ist nützlich um den durch ntopng überwachten Netzwerkverkehr mit dem von SNMP gemeldeteten Netzwerkverkehr zu vergleichen",

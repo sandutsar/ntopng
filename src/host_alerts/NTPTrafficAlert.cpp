@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,20 +23,21 @@
 
 /* ***************************************************** */
 
-NTPTrafficAlert::NTPTrafficAlert(HostCheck *c, Host *f, risk_percentage cli_pctg, u_int64_t _ntp_bytes, u_int64_t _ntp_bytes_threshold) : HostAlert(c, f, cli_pctg) {
-  ntp_bytes = _ntp_bytes,
-    ntp_bytes_threshold = _ntp_bytes_threshold;
+NTPTrafficAlert::NTPTrafficAlert(HostCheck* c, Host* f,
+                                 risk_percentage cli_pctg, u_int64_t _ntp_bytes,
+                                 u_int64_t _ntp_bytes_threshold)
+    : HostAlert(c, f, cli_pctg) {
+  ntp_bytes = _ntp_bytes, ntp_bytes_threshold = _ntp_bytes_threshold;
 };
 
 /* ***************************************************** */
 
 ndpi_serializer* NTPTrafficAlert::getAlertJSON(ndpi_serializer* serializer) {
-  if(serializer == NULL)
-    return NULL;
+  if (serializer == NULL) return NULL;
 
   ndpi_serialize_string_uint64(serializer, "value", ntp_bytes);
   ndpi_serialize_string_uint64(serializer, "threshold", ntp_bytes_threshold);
-  
+
   return serializer;
 }
 

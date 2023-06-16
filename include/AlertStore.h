@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,8 +28,8 @@ class AlertStore {
  public:
   AlertStore() { ; };
   virtual ~AlertStore() { ; };
-  
-  virtual bool query(lua_State *vm, const char * query) { return false; };
+
+  virtual bool query(lua_State *vm, const char *query) { return false; };
 };
 
 #endif /* _ALERT_STORE_H_ */

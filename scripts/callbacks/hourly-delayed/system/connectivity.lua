@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -11,7 +11,7 @@ local lists_utils = require "lists_utils"
 
 -- Check ntopng connectivity
 -- If ntopng is in offline mode, retry checking connectivity
-if ntop.isOffline() then
+if ntop.isOffline() and not ntop.isForcedOffline() then
    local connectivity_utils = require "connectivity_utils"
    local online = connectivity_utils.checkConnectivity()
    if online then

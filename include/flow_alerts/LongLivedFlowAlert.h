@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,16 +28,19 @@ class LongLivedFlowAlert : public FlowAlert {
  private:
   u_int64_t longlived_th;
 
-  ndpi_serializer *getAlertJSON(ndpi_serializer* serializer);
+  ndpi_serializer *getAlertJSON(ndpi_serializer *serializer);
 
  public:
-  static FlowAlertType getClassType() { return { flow_alert_longlived, alert_category_security }; }
-  static u_int8_t      getDefaultScore() { return SCORE_LEVEL_NOTICE; };
+  static FlowAlertType getClassType() {
+    return {flow_alert_longlived, alert_category_security};
+  }
+  static u_int8_t getDefaultScore() { return SCORE_LEVEL_NOTICE; };
 
-  LongLivedFlowAlert(FlowCheck *c, Flow *f, u_int64_t _longlived_th) : FlowAlert(c, f) {
+  LongLivedFlowAlert(FlowCheck *c, Flow *f, u_int64_t _longlived_th)
+      : FlowAlert(c, f) {
     longlived_th = _longlived_th;
   };
-  ~LongLivedFlowAlert() { };
+  ~LongLivedFlowAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }
 };

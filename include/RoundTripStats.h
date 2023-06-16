@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2019 - ntop.org
+ * (C) 2019-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,21 +22,21 @@
 #ifndef _ROUND_TRIP_STATS_H_
 #define _ROUND_TRIP_STATS_H_
 
-#define ROUND_TRIP_LENGTH 20
+#define ROUND_TRIP_LENGTH 30
 
 class RoundTripStats {
  private:
-   u_int32_t stats[ROUND_TRIP_LENGTH];
-   u_int8_t stats_it;
+  u_int32_t stats[ROUND_TRIP_LENGTH];
+  u_int8_t stats_it;
 
  public:
-   RoundTripStats();
-   ~RoundTripStats();
-    
-   void addPoint(u_int32_t thpt);
-   void sum(RoundTripStats *_stats);    
-   void luaRTStats(lua_State* vm, const char *stats_name);
-   inline u_int32_t *getStats() { return(stats); };
+  RoundTripStats();
+  ~RoundTripStats();
+
+  void addPoint(u_int32_t thpt);
+  void sum(RoundTripStats *_stats);
+  void luaRTStats(lua_State *vm, const char *stats_name);
+  inline u_int32_t *getStats() { return (stats); };
 };
 
 #endif /* _ROUND_TRIP_STATS_H_ */

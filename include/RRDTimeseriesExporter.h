@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2020 - ntop.org
+ * (C) 2020-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ class RRDTimeseriesExporter : public TimeseriesExporter {
   RRDTimeseriesExporter(NetworkInterface *_if);
   ~RRDTimeseriesExporter();
 
-  bool enqueueData(lua_State* vm, bool do_lock = true);
+  bool enqueueData(lua_State *vm, bool do_lock = true);
   char *dequeueData();
   u_int64_t queueLength() const;
   void flush();

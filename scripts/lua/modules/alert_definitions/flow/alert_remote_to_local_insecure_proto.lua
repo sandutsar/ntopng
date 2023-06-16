@@ -21,7 +21,7 @@ local alert_remote_to_local_insecure_proto = classes.class(alert)
 
 alert_remote_to_local_insecure_proto.meta = {
    alert_key = flow_alert_keys.flow_alert_remote_to_local_insecure_proto,
-   i18n_title = "alerts_dashboard.remote_to_local_insecure_proto",
+   i18n_title = "flow_checks_config.remote_to_local_insecure_proto_title",
    icon = "fas fa-fw fa-exclamation",
 
    has_victim = true,
@@ -42,10 +42,25 @@ end
 -- #######################################################
 
 function alert_remote_to_local_insecure_proto.format(ifid, alert, alert_type_params)
-   return i18n("alert_messages.remote_to_local_insecure_proto", {
-		  ndpi_breed = formatBreed(alert_type_params.ndpi_breed_name),
-		  ndpi_category = alert_type_params.ndpi_category_name,
-   })
+   
+   local alert_message = i18n("alert_messages.remote_to_local_insecure_proto")
+   local ndpi_breed = formatBreed(alert_type_params.ndpi_breed_name)
+   local ndpi_cateogory = alert_type_params.ndpi_category_name;
+
+   if(not isEmptyString(ndpi_cateogory)) then
+      alert_message = alert_message .. i18n("alert_messages.remote_to_local_insecure_proto_category_info", {
+         ndpi_category = ndpi_cateogory
+      })
+   end
+
+   if(not isEmptyString(ndpi_breed)) then
+      alert_message = alert_message .. i18n("alert_messages.remote_to_local_insecure_proto_breed_info", {
+         ndpi_breed = ndpi_breed
+      })
+   end
+
+   return alert_message
+   
 end
 
 -- #######################################################

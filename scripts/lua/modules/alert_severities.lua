@@ -15,23 +15,23 @@ local dirs = ntop.getDirs()
 -- each table entry is an array as:
 -- {"alert html string", "alert C enum value", "plain string", "syslog severity"}
 local alert_severities = {
-  none = {
-    severity_id = 0,
-    label = "bg-info",
-    color = "#a8e4ef",
-    icon = "",
-    i18n_title = "alerts_dashboard.none",
-    syslog_severity = 10,
-  },
-  debug = {
-     severity_id = 1,
-     label = "bg-info",
-     icon = "fas fa-bug text-info",
-     color = "#a8e4ef",
-     i18n_title = "alerts_dashboard.debug",
-     syslog_severity = 7,
-     emoji = "\xE2\x84\xB9"
-  },
+   none = {
+      severity_id = 0,
+      label = "bg-info",
+      color = "#a8e4ef",
+      icon = "",
+      i18n_title = "alerts_dashboard.none",
+      syslog_severity = 10,
+   },
+   debug = {
+      severity_id = 1,
+      label = "bg-info",
+      icon = "fas fa-bug text-info",
+      color = "#a8e4ef",
+      i18n_title = "alerts_dashboard.debug",
+      syslog_severity = 7,
+      emoji = "\xE2\x84\xB9"
+   },
    info = {
       severity_id = 2,
       label = "bg-info",
@@ -80,15 +80,6 @@ local alert_severities = {
       i18n_title = "alerts_dashboard.critical",
       syslog_severity = 2,
       emoji = "\xE2\x9D\x97"
-   },
-   alert = {
-      severity_id = 7,
-      label = "bg-danger",
-      icon = "fas fa-bomb text-danger",
-      color = "#fb6962",
-      i18n_title = "alerts_dashboard.alert",
-      syslog_severity = 1,
-      emoji = "\xF0\x9F\x9A\xA9"
    },
    emergency = {
       severity_id = 8,

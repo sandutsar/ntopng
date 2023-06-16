@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 require "lua_utils"
@@ -56,7 +56,7 @@ local function format_historical_last_first_seen(flow, info)
   return {
     label = i18n("db_explorer.date_time"),
     content = {
-      [1] = info.first_seen,
+      [1] = info.first_seen.time,
       [2] = info.last_seen,
     }
   }
@@ -136,7 +136,7 @@ end
 local function format_historical_score(flow)
   local alert_consts = require "alert_consts"
   local format_utils = require "format_utils"
-  local severity_id = ntop.mapScoreToSeverity(tonumber(flow["SCORE"]))
+  local severity_id = map_score_to_severity(tonumber(flow["SCORE"]))
   local severity = alert_consts.alertSeverityById(severity_id)
 
   return {
@@ -204,6 +204,29 @@ end
 
 -- ###############################################
 
+local function format_historical_probe(flow, info)
+  local historical_flow_utils = require "historical_flow_utils"
+  local format_utils = require "format_utils"
+  local info_field = {
+    device_ip = historical_flow_utils.get_historical_url(format_name_value(info["probe_ip"]["value"], info["probe_ip"]["label"], true), "probe_ip", info["probe_ip"]["value"], true, info["probe_ip"]["title"])
+  }
+
+  if (flow["INPUT_SNMP"]) and (tonumber(flow["INPUT_SNMP"]) ~= 0) then
+    info_field["input_interface"] = historical_flow_utils.get_historical_url(format_utils.formatSNMPInterface(flow["PROBE_IP"], flow["INPUT_SNMP"]), "input_snmp", info["input_snmp"]["value"], true, info["input_snmp"]["title"])
+  end
+
+  if (flow["OUTPUT_SNMP"]) and (tonumber(flow["OUTPUT_SNMP"]) ~= 0) then
+    info_field["output_interface"] = historical_flow_utils.get_historical_url(format_utils.formatSNMPInterface(flow["PROBE_IP"], flow["OUTPUT_SNMP"]), "output_snmp", info["output_snmp"]["value"], true, info["output_snmp"]["title"])
+  end
+
+  return {
+    label = i18n("details.flow_snmp_localization"),
+    content = info_field,
+  }
+end
+
+-- ###############################################
+
 local function format_historical_latency(flow, value, cli_or_srv)
   return {
     label = i18n("db_explorer." .. cli_or_srv .. "_latency"),
@@ -232,6 +255,41 @@ local function format_historical_proto_info(proto_info)
     }
   end
 end
+-- ###############################################
+
+
+local function  format_historical_flow_traffic_stats(rowspan, cli2srv_retr, srv2cli_retr, cli2srv_ooo, srv2cli_ooo, cli2srv_lost, srv2cli_lost) 
+  local content = "<tr><th width=30% rowspan="..rowspan..">"..i18n("flow_details.tcp_packet_analysis").."</th><th></th><th>"..i18n("client").." <i class=\"fas fa-long-arrow-alt-right\" ></i> "..i18n("server").." / "..i18n("client").." <i class=\"fas fa-long-arrow-alt-left\"></i> "..i18n("server").."</th></tr>\n"
+  
+  if (cli2srv_retr ~= 0 or srv2cli_retr ~= 0) then
+    content = content .. "<tr><th>"..i18n("details.retransmissions").."</th><td align=right><span id=c2sretr>".. formatPackets(cli2srv_retr) .."</span> / <span id=s2cretr>".. formatPackets(srv2cli_retr) .."</span></td></tr>\n"
+  end
+
+  if (cli2srv_ooo ~= 0 or srv2cli_ooo ~= 0) then
+    content = content .. "<tr><th>"..i18n("details.out_of_order").."</th><td align=right><span id=c2sOOO>".. formatPackets(cli2srv_ooo) .."</span> / <span id=s2cOOO>".. formatPackets(srv2cli_ooo) .."</span></td></tr>\n"
+  end
+
+  if (cli2srv_lost ~= 0 or srv2cli_lost ~= 0) then
+    content = content .. "<tr><th>"..i18n("details.lost").."</th><td align=right><span id=c2slost>".. formatPackets(cli2srv_lost) .."</span> / <span id=s2clost>".. formatPackets(srv2cli_lost) .."</span></td></tr>\n"
+  end
+  return {
+    content = content    
+  }
+
+end
+
+local function format_historical_flow_rtt(client_nw_latency, server_nw_latency)
+  local rtt = client_nw_latency + server_nw_latency
+  local cli2srv = round(client_nw_latency, 3)
+  local srv2cli = round(server_nw_latency, 3)
+  local content = '<div class="progress"><div class="progress-bar bg-warning" style="width: ' .. (cli2srv * 100 / rtt) .. '%;">'.. cli2srv ..' ms (client)</div>'
+         ..'<div class="progress-bar bg-success" style="width: ' .. (srv2cli * 100 / rtt) .. '%;">' .. srv2cli .. ' ms (server)</div></div>'
+  return {
+    label = i18n("flow_details.rtt_breakdown"),
+    content = content
+  }
+  
+end
 
 -- ###############################################
 
@@ -242,7 +300,6 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
   
   if flow then
     local info = historical_flow_utils.format_clickhouse_record(flow)
-
     -- Format main flow information
     if (info['alert_id']) and (info['alert_id']['value'] ~= 0) then
       flow_details[#flow_details + 1] = format_historical_main_issue(flow)
@@ -253,8 +310,10 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
     flow_details[#flow_details + 1] = format_historical_total_traffic(flow)
     flow_details[#flow_details + 1] = format_historical_client_server_bytes(flow)
     flow_details[#flow_details + 1] = format_historical_bytes_progress_bar(flow, info)
+    flow_details[#flow_details + 1] = format_historical_flow_rtt(tonumber(flow["SERVER_NW_LATENCY_US"]), tonumber(flow["CLIENT_NW_LATENCY_US"]))
+
         
-    if (info['dst2src_dscp']) and (info['dst2src_dscp']['value'] ~= 0) and (info['src2dst_dscp']['value'] ~= 0) then
+    if (info['dst2src_dscp']) and (info['src2dst_dscp']) then
       flow_details[#flow_details + 1] = format_historical_tos(flow)
     end
     
@@ -295,6 +354,10 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
     if (info['info']) and (not isEmptyString(info['info']["title"])) then
       flow_details[#flow_details + 1] = format_historical_info(flow)
     end
+
+    if (flow["PROBE_IP"] and not isEmptyString(flow['PROBE_IP']) and (flow['PROBE_IP'] ~= '0.0.0.0')) then
+      flow_details[#flow_details + 1] = format_historical_probe(flow, info)
+    end
         
     if tonumber(flow["CLIENT_NW_LATENCY_US"]) ~= 0 then
       flow_details[#flow_details + 1] = format_historical_latency(flow, "CLIENT_NW_LATENCY_US", "cli")
@@ -303,12 +366,36 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
     if tonumber(flow["SERVER_NW_LATENCY_US"]) ~= 0 then
       flow_details[#flow_details + 1] = format_historical_latency(flow, "SERVER_NW_LATENCY_US", "srv")
     end
-    
+    local alert_json = json.decode(flow["ALERT_JSON"] or '') or {}
+
+    if alert_json["traffic_stats"] then
+      local rowspan = 1;
+      if (alert_json["traffic_stats"]["cli2srv.retransmissions"] ~= 0 or alert_json["traffic_stats"]["srv2cli.retransmissions"] ~= 0) then
+        rowspan = rowspan + 1
+        
+      end
+
+      if (alert_json["traffic_stats"]["cli2srv.out_of_order"] ~= 0 or alert_json["traffic_stats"]["srv2cli.out_of_order"] ~= 0 ) then
+        rowspan = rowspan + 1
+      end
+
+      if (alert_json["traffic_stats"]["cli2srv.lost"] ~= 0 or alert_json["traffic_stats"]["srv2cli.lost"] ~= 0 ) then
+        rowspan = rowspan + 1
+      end
+
+      flow_details[#flow_details+1] = format_historical_flow_traffic_stats( rowspan,
+                                                                            alert_json["traffic_stats"]["cli2srv.retransmissions"], 
+                                                                            alert_json["traffic_stats"]["srv2cli.retransmissions"],
+                                                                            alert_json["traffic_stats"]["cli2srv.out_of_order"],
+                                                                            alert_json["traffic_stats"]["srv2cli.out_of_order"],
+                                                                            alert_json["traffic_stats"]["cli2srv.lost"],
+                                                                            alert_json["traffic_stats"]["srv2cli.lost"]
+                                                                          )
+    end                                                                     
     if tonumber(flow["OBSERVATION_POINT_ID"]) ~= 0 then
       flow_details[#flow_details + 1] = format_historical_obs_point(flow)
     end
 
-    local alert_json = json.decode(flow["ALERT_JSON"] or '') or {}
     if table.len(alert_json["proto"]) > 0 then
 
       flow_details[#flow_details + 1] = format_historical_proto_info(alert_json["proto"])

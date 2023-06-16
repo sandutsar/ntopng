@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,11 +23,12 @@
 #define _HOST_ALERTS_INCLUDES_H_
 
 #include "host_alerts/CountriesContactsAlert.h"
-
+#include "host_alerts/CustomHostLuaScriptAlert.h"
 #include "host_alerts/FlowHitsAlert.h"
 #include "host_alerts/FlowFloodAlert.h"
 #include "host_alerts/SYNScanAlert.h"
 #include "host_alerts/FINScanAlert.h"
+#include "host_alerts/RSTScanAlert.h"
 #include "host_alerts/SYNFloodAlert.h"
 #include "host_alerts/ServerContactsAlert.h"
 #include "host_alerts/DNSServerContactsAlert.h"
@@ -38,14 +39,16 @@
 #include "host_alerts/DNSTrafficAlert.h"
 #include "host_alerts/ScoreThresholdAlert.h"
 #include "host_alerts/ICMPFloodAlert.h"
+#include "host_alerts/DNSFloodAlert.h"
+#include "host_alerts/SNMPFloodAlert.h"
 #include "host_alerts/PktThresholdAlert.h"
-
 #include "host_alerts/FlowAnomalyAlert.h"
 #include "host_alerts/DangerousHostAlert.h"
 #include "host_alerts/RemoteConnectionAlert.h"
 #include "host_alerts/ScoreAnomalyAlert.h"
 #include "host_alerts/DomainNamesContactsAlert.h"
 #include "host_alerts/ScanDetectionAlert.h"
+#include "host_alerts/TrafficVolumeAlert.h"
 
 /* Pro Alerts - do NOT use #ifdef as alerts must always be available */
 

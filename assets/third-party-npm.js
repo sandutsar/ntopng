@@ -13,15 +13,25 @@ window.moment = moment
 window.ApexCharts = ApexCharts
 
 import 'jquery-ui-bundle'
+import './scripts/vendors/jquery/jquery.resizableColumns.js';
+
+import * as store from 'store-js';
+window.store = store;
 
 /* See https://datatables.net/forums/discussion/comment/103356 */
-import 'datatables.net'
 import dt from 'datatables.net-dt'
-
+import 'datatables.net-buttons-dt'
+import 'datatables.net-responsive-dt'
 window.dt = dt
 
-import 'datatables.net-buttons'
-import 'datatables.net-responsive'
+/*
+NOTE: It seemes that bs5 datatable components are not correctly working on MacOS
+
+import 'datatables.net'
+import 'datatables.net-buttons-bs'
+import 'datatables.net-responsive-bs'
+import 'datatables.net-bs'
+*/
 
 import 'peity'
 import * as L from 'leaflet'
@@ -68,15 +78,13 @@ import 'select2'
 */
 
 /* regeneratorRuntime error, check https://github.com/babel/babel/issues/9849 */
-import regeneratorRuntime from "regenerator-runtime" 
+import regeneratorRuntime from "regenerator-runtime"
 import ToastUtils from '../http_src/utilities/toast-utils'
-import NtopUtils from '../http_src/utilities/ntop-utils'
 import '../http_src/utilities/string-utils'
 
 /* Generic ntopng Utils */
 window.regeneratorRuntime = regeneratorRuntime
 window.ToastUtils = ToastUtils
-window.NtopUtils = NtopUtils
 
 import '../http_src/utilities/datatable/datatable-plugins/api-extension'
 import '../http_src/utilities/datatable/datatable-plugins/jquery-extension'
@@ -92,3 +100,16 @@ window.aysHandleForm = aysHandleForm
 window.aysResetForm = aysResetForm
 window.aysUpdateForm = aysUpdateForm
 window.aysRecheckForm = aysRecheckForm
+
+import * as d3v7 from "d3v7";
+import * as sankey from "d3-sankey";
+import { chord } from "d3-chord";
+import Dygraph from 'dygraphs';
+window.Dygraph = Dygraph;
+
+window.d3v7 = {
+  ...d3v7,
+  ...sankey,
+  ...chord,
+};
+

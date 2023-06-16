@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,17 +26,19 @@
 
 class ICMPFlood : public FlowHits {
  private:
-
  public:
-  ICMPFlood() : FlowHits() {};
-  ~ICMPFlood() {};
+  ICMPFlood() : FlowHits(){};
+  ~ICMPFlood(){};
 
-  FlowHitsAlert *allocAlert(Host *h, risk_percentage cli_pctg, u_int16_t hits, u_int64_t threshold, bool attacker) { return new ICMPFloodAlert(this, h, cli_pctg, hits, threshold, attacker); };
+  FlowHitsAlert *allocAlert(Host *h, risk_percentage cli_pctg, u_int16_t hits,
+                            u_int64_t threshold, bool attacker) {
+    return new ICMPFloodAlert(this, h, cli_pctg, hits, threshold, attacker);
+  };
 
   void periodicUpdate(Host *h, HostAlert *engaged_alert);
 
   HostCheckID getID() const { return host_check_icmp_flood; }
-  std::string getName()        const { return(std::string("icmp_flood")); }
+  std::string getName() const { return (std::string("icmp_flood")); }
 };
 
 #endif

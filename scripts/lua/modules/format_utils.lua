@@ -4,6 +4,8 @@
 
 local format_utils = {}
 
+local clock_start = os.clock()
+
 function format_utils.round(num, idp)
    num = tonumber(num)
    local res
@@ -50,8 +52,13 @@ function format_utils.secondsToTime(seconds)
       if(years > 0) then
 	 days = days % 365
 
-	 msg = years .. " year"
-	 if(years > 1) then msg = msg .. "s" end
+	 msg = years .. " "
+
+	 if(years == 1) then
+	    msg = msg .. i18n("year")
+	 else
+	    msg = msg .. i18n("years")
+	 end
       end
 
       if(days > 0) then
@@ -169,20 +176,24 @@ function format_utils.bitsToSizeMultiplier(bits, multiplier)
    local terabit = gigabit * multiplier;
 
    if((bits >= kilobit) and (bits < megabit)) then
-      return round(bits / kilobit, precision) .. ' kbit/s';
+      return round(bits / kilobit, precision) .. ' kbps';
    elseif((bits >= megabit) and (bits < gigabit)) then
-      return round(bits / megabit, precision) .. ' Mbit/s';
+      return round(bits / megabit, precision) .. ' Mbps';
    elseif((bits >= gigabit) and (bits < terabit)) then
-      return round(bits / gigabit, precision) .. ' Gbit/s';
+      return round(bits / gigabit, precision) .. ' Gbps';
    elseif(bits >= terabit) then
-      return round(bits / terabit, precision) .. ' Tbit/s';
+      return round(bits / terabit, precision) .. ' Tbps';
    else
-      return round(bits, precision) .. ' bit/s';
+      return round(bits, precision) .. ' bps';
    end
 end
 
 function format_utils.bitsToSize(bits)
    return(bitsToSizeMultiplier(bits, 1000))
+end
+
+function format_utils.bytesToBPS(bytes)
+   return(bitsToSizeMultiplier(bytes * 8, 1000))
 end
 
 -- parse a SQL DATETIME date and convert to epoch
@@ -204,9 +215,9 @@ function format_utils.formatEpochISO8601(epoch)
 
   if epoch == 0 then
     return("")
-  else
-     return os.date("!%Y-%m-%dT%TZ", epoch)
   end
+
+  return os.date("!%Y-%m-%dT%TZ", epoch)
 end
 
 -- format an epoch
@@ -218,7 +229,7 @@ function format_utils.formatEpoch(epoch, full_time)
   if epoch == 0 then
     return("")
   else
-   local t = epoch + getFrontendTzSeconds()
+   local t = epoch
    local key = ""
    local time = ""
 
@@ -227,14 +238,14 @@ function format_utils.formatEpoch(epoch, full_time)
    end
 
    if(key == "big_endian") then
-      -- specify the ! to indicate UTC time so that adding getFrontendTzSeconds() will give expected results
-      time = "!%Y/%m/%d"
+      -- do NOT specify the ! to indicate UTC time; the time must be in Local Server Time
+      time = "%Y/%m/%d"
    elseif( key == "middle_endian") then
-      -- specify the ! to indicate UTC time so that adding getFrontendTzSeconds() will give expected results
-      time = "!%m/%d/%Y"
+      -- do NOT specify the ! to indicate UTC time; the time must be in Local Server Time
+      time = "%m/%d/%Y"
    else
-      -- specify the ! to indicate UTC time so that adding getFrontendTzSeconds() will give expected results
-      time = "!%d/%m/%Y"
+      -- do NOT specify the ! to indicate UTC time; the time must be in Local Server Time
+      time = "%d/%m/%Y"
    end
    
    if(full_time == nil) or (full_time == true) then      
@@ -248,11 +259,11 @@ end
 function format_utils.formatPastEpochShort(input_epoch)
    local epoch_now = os.time()
    local epoch = input_epoch or epoch_now
-   local day = os.date("!%d", epoch + getFrontendTzSeconds())
-   local day_now = os.date("!%d", epoch_now + getFrontendTzSeconds())
+   local day = os.date("!%d", epoch)
+   local day_now = os.date("!%d", epoch_now)
 
    if day == day_now then
-      return os.date("!%X", epoch + getFrontendTzSeconds())
+      return os.date("%X", epoch)
    end
 
    return format_utils.formatEpoch(epoch)
@@ -395,7 +406,7 @@ function format_utils.formatFullAddressCategory(host)
          addr_category = addr_category .. ' <i class=\"fas fa-bolt\" title=\"'..i18n("details.label_dhcp")..'\"></i>'
       end
    end
-
+   
    return addr_category
 end
 
@@ -423,6 +434,10 @@ function format_utils.formatMainAddressCategory(host)
       else 
          addr_category = addr_category .. ' <abbr title=\"'.. i18n("details.label_remote") ..'\"><span class="badge bg-secondary">'..i18n("details.label_short_remote")..'</span></abbr>'
       end
+
+      if(host.is_blackhole == true) then
+	 addr_category = addr_category .. ' <abbr title=\"'.. i18n("details.label_blackhole") ..'\"><span class="badge bg-info">'..i18n("details.label_short_blackhole")..'</span></abbr>'
+      end
    end
 
    return addr_category
@@ -440,4 +455,8 @@ function format_utils.formatHostNameAndAddress(hostname, address)
    return res
 end
    
+if(trace_script_duration ~= nil) then
+   io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end
+
 return format_utils

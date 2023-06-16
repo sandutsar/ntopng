@@ -1,12 +1,11 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 
 require "lua_utils"
-local json = require("dkjson")
 local callback_utils = require "callback_utils"
 local rest_utils = require("rest_utils")
 

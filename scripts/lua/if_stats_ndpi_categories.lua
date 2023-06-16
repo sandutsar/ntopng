@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -37,7 +37,7 @@ if(json_format) then print('[\n') end
 
 local num = 0
 for k, v in pairsByKeys(ifstats["ndpi_categories"], asc) do
-  local label = getCategoryLabel(k)
+  local label = getCategoryLabel(k, v.category)
 
   if(not(json_format)) then
      print('<tr id="t_protocol_'..k..'">')
@@ -50,7 +50,7 @@ for k, v in pairsByKeys(ifstats["ndpi_categories"], asc) do
 
   if(areInterfaceCategoriesTimeseriesEnabled(ifid)) then
      if(not(json_format)) then
-	print("<A HREF=\""..ntop.getHttpPrefix().."/lua/if_stats.lua?ifid=" .. ifid .. "&page=historical&ts_schema=iface:ndpi_categories&category=".. k .."\">".. label .." </A>")
+	print("<A HREF=\""..interface2detailhref(ifid, {page = "historical", ts_schema = "top:iface:ndpi_categories", ts_query = "ifid:" .. ifid .. ",category:" .. k, zoom = '1d'}) .. "\">".. label .." </A>")
      else
 	print('{ "proto": "'..k..'", ')
      end

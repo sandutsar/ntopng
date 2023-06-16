@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,16 +26,25 @@
 
 class FlowRiskTLSNotCarryingHTTPS : public FlowRiskTLS {
  private:
-  FlowAlertType getAlertType() const { return FlowRiskTLSNotCarryingHTTPSAlert::getClassType(); }
+  FlowAlertType getAlertType() const {
+    return FlowRiskTLSNotCarryingHTTPSAlert::getClassType();
+  }
 
  public:
-  FlowRiskTLSNotCarryingHTTPS() : FlowRiskTLS() {};
-  ~FlowRiskTLSNotCarryingHTTPS() {};
+  FlowRiskTLSNotCarryingHTTPS() : FlowRiskTLS(){};
+  ~FlowRiskTLSNotCarryingHTTPS(){};
 
-  FlowAlert *buildAlert(Flow *f)  { return new FlowRiskTLSNotCarryingHTTPSAlert(this, f); }
+  FlowAlert *buildAlert(Flow *f) {
+    return new FlowRiskTLSNotCarryingHTTPSAlert(this, f);
+  }
 
-  std::string getName()        const { return(FlowRiskAlerts::getCheckName(FlowRiskTLSNotCarryingHTTPSAlert::getClassRisk())); }
-  ndpi_risk_enum handledRisk()       { return FlowRiskTLSNotCarryingHTTPSAlert::getClassRisk(); }
+  std::string getName() const {
+    return (FlowRiskAlerts::getCheckName(
+        FlowRiskTLSNotCarryingHTTPSAlert::getClassRisk()));
+  }
+  ndpi_risk_enum handledRisk() {
+    return FlowRiskTLSNotCarryingHTTPSAlert::getClassRisk();
+  }
 };
 
 #endif

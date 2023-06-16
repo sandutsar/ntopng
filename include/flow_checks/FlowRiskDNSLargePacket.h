@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,16 +26,25 @@
 
 class FlowRiskDNSLargePacket : public FlowRisk {
  private:
-  FlowAlertType getAlertType() const { return FlowRiskDNSLargePacketAlert::getClassType(); }
+  FlowAlertType getAlertType() const {
+    return FlowRiskDNSLargePacketAlert::getClassType();
+  }
 
  public:
-  FlowRiskDNSLargePacket() : FlowRisk() {};
-  ~FlowRiskDNSLargePacket() {};
+  FlowRiskDNSLargePacket() : FlowRisk(){};
+  ~FlowRiskDNSLargePacket(){};
 
-  FlowAlert *buildAlert(Flow *f) { return new FlowRiskDNSLargePacketAlert(this, f); }
+  FlowAlert *buildAlert(Flow *f) {
+    return new FlowRiskDNSLargePacketAlert(this, f);
+  }
 
-  std::string getName()        const { return(FlowRiskAlerts::getCheckName(FlowRiskDNSLargePacketAlert::getClassRisk())); }
-  ndpi_risk_enum handledRisk()       { return FlowRiskDNSLargePacketAlert::getClassRisk(); }
+  std::string getName() const {
+    return (FlowRiskAlerts::getCheckName(
+        FlowRiskDNSLargePacketAlert::getClassRisk()));
+  }
+  ndpi_risk_enum handledRisk() {
+    return FlowRiskDNSLargePacketAlert::getClassRisk();
+  }
 };
 
 #endif

@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
 
 /* **************************************************** */
 
-ChecksLoader::ChecksLoader(){
+ChecksLoader::ChecksLoader() {
   /* Set the ntopng version matching the loaded checks */
   if (ntop->getPrefs()->is_enterprise_l_edition())
     checks_edition = ntopng_edition_enterprise_l;
-  else if (ntop->getPrefs()->is_enterprise_m_edition())	  
+  else if (ntop->getPrefs()->is_enterprise_m_edition())
     checks_edition = ntopng_edition_enterprise_m;
   else if (ntop->getPrefs()->is_pro_edition())
     checks_edition = ntopng_edition_pro;
@@ -38,5 +38,4 @@ ChecksLoader::ChecksLoader(){
 
 /* **************************************************** */
 
-ChecksLoader::~ChecksLoader() {
-}
+ChecksLoader::~ChecksLoader() {}

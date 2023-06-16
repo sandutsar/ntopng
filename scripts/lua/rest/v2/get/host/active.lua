@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -43,7 +43,6 @@ local pool         = _GET["pool"]
 local country      = _GET["country"]
 local os_          = tonumber(_GET["os"])
 local mac          = _GET["mac"]
-local top_hidden   = ternary(_GET["top_hidden"] == "1", true, nil)
 
 if isEmptyString(ifid) then
    rc = rest_utils.consts.err.invalid_interface
@@ -110,14 +109,17 @@ elseif mode == "dhcp" then
    dhcp_hosts = true
 end
 
-
+if all ~= nil then
+   perPage = -1
+   currentPage = 0
+end
 
 local hosts_stats = hosts_retrv_function(false, sortColumn, perPage, to_skip, sOrder,
                           country, os_, tonumber(vlan), tonumber(asn),
                           tonumber(network), mac,
                           tonumber(pool), tonumber(ipversion),
                           tonumber(protocol), traffic_type_filter,
-                          filtered_hosts, blacklisted_hosts, top_hidden, anomalous, dhcp_hosts, cidr)
+                          filtered_hosts, blacklisted_hosts, anomalous, dhcp_hosts, cidr)
 
 if hosts_stats == nil then
    rest_utils.answer(rest_utils.consts.err.not_found)
@@ -129,11 +131,6 @@ hosts_stats = hosts_stats["hosts"]
 if hosts_stats == nil then
    rest_utils.answer(rest_utils.consts.err.internal_error)
    return
-end
-
-if all ~= nil then
-   perPage = 0
-   currentPage = 0
 end
 
 function get_host_name(h)
@@ -232,6 +229,10 @@ for _key, _value in pairsByKeys(vals, funct) do
 
    record["name"] = name
 
+   record["score"] = {}
+   record["score"]["total"] = value["score"]
+   record["score"]["as_client"] = value["score.as_client"]
+   record["score"]["as_server"] = value["score.as_server"]
    record["thpt"] = {}
    record["thpt"]["pps"] = value["throughput_pps"]
    record["thpt"]["bps"] = value["throughput_bps"]*8

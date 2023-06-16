@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -104,7 +104,8 @@ local mac_info = interface.getMacInfo(mac)
 
 local only_historical = (mac_info == nil) and (page == "historical")
 local serialize_by_mac = ntop.getPref(string.format("ntopng.prefs.ifid_" .. ifId .. ".serialize_local_broadcast_hosts_as_macs")) == "1"
-
+local historical_flow_link = ntop.getHttpPrefix() .. "/lua/db_search.lua?ifid=" .. ifId .. ";eq&mac=" .. mac ..
+                                     ";eq"
 if(mac_info == nil) and not only_historical then
    print('<div class=\"alert alert-danger\"><i class="fas fa-exclamation-triangle fa-lg fa-ntopng-warning"></i>'..' '..i18n("mac_details.mac_cannot_be_found_message",{mac=mac}))
    print("</div>")
@@ -142,6 +143,13 @@ page_utils.print_navbar(title, url,
 			      page_name = "historical",
 			      label = "<i class='fas fa-lg fa-chart-area'></i>",
 			   },
+            {
+               hidden = not prefs.is_dump_flows_to_clickhouse_enabled,
+               active = page == "db_search",
+               page_name = "db_search",
+               label = "<i class=\"fas fa-search-plus\" title='" .. i18n("db_explorer.historical_data_explorer") .. "'\"></i>",
+               url = historical_flow_link
+            },
 			   {
 			      hidden = not isAdministrator() or interface.isPcapDumpInterface(),
 			      active = page == "config",
@@ -255,9 +263,9 @@ if((page == "overview") or (page == nil)) then
       print("</td></tr>\n")
    end
 
-   local first_observed = ntop.getHashCache(getFirstSeenDevicesHashKey(ifId), mac_info["mac"])
+   local first_observed = ntop.getHashCache(getDevicesHashMapKey(ifId), mac_info["mac"])
 
-   if(not isEmptyString(first_observed)) then
+   if(not isEmptyString(first_observed)) and (tonumber(first_observed)) then
       print("<tr><th>" .. i18n("details.first_observed_on") .. "</th><td colspan=2>")
       print(formatEpoch(first_observed))
       print("</td></tr>\n")
@@ -395,23 +403,8 @@ elseif(page == "snmp" and has_snmp_location) then
    snmp_location.print_host_snmp_localization_table_entry(mac)
    print[[</table>]]
 elseif(page == "historical") then
-   local schema = _GET["ts_schema"] or "mac:traffic"
-   local selected_epoch = _GET["epoch"] or ""
-   url = url..'&page=historical'
-
-   local tags = {
-      ifid = ifId,
-      mac = mac,
-      category = _GET["category"],
-   }
-
-   graph_utils.drawGraphs(ifId, schema, tags, _GET["zoom"], url, selected_epoch, {
-      top_categories = "top:mac:ndpi_categories",
-      timeseries = table.merge({
-         {schema="mac:traffic",                 label=i18n("traffic"), split_directions = true --[[ split RX and TX directions ]]},
-      }, graph_utils.getDeviceCommonTimeseries())
-   })
-
+   local source_value_object = { ifid = interface.getId() }
+   graph_utils.drawNewGraphs(source_value_object)
 elseif(page == "config") then
    if(not isAdministrator()) then
       return

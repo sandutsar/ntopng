@@ -1,3 +1,6 @@
+import NtopUtils from './ntop-utils'
+window.NtopUtils = NtopUtils
+
 import { datatableInitRefreshRows, datatableForEachRow, datatableIsEmpty, datatableRemoveEmptyRow, datatableAddEmptyRow, datatableGetNumDisplayedItems, datatableGetByForm, datatableUndoAddRow, datatableAddButtonCallback, datatableAddDeleteButtonCallback, datatableAddActionButtonCallback, datatableAddFilterButtonCallback, datatableAddLinkButtonCallback, datatableMakeSelectUnique, datatableIsLastPage, datatableGetColumn, datatableGetColumnIndex } from './datatable/bootstrap-datatable-utils'
 
 window.datatableInitRefreshRows = datatableInitRefreshRows
@@ -19,7 +22,6 @@ window.datatableGetColumn = datatableGetColumn
 window.datatableGetColumnIndex = datatableGetColumnIndex
 
 import './ebpf-utils'
-import './graph/graph-utils'
 import modalHandler from './modal/modal-utils'
 
 window.$.fn.modalHandler = modalHandler
@@ -28,3 +30,6 @@ import './sequence_sunburst'
 import * as ebpfUtils from './ebpf-utils'
 
 window.ebpfUtils = ebpfUtils
+
+import formatterUtils from "./formatter-utils";
+window.ntopFormatterUtils = formatterUtils;

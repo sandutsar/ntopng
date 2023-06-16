@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -23,6 +23,7 @@ local subpages = {
    { name = "mode",               nedge = true,  appliance = true,                       url = "mode.lua",           label = i18n("nedge.setup_mode")                  },
    { name = "wifi",               nedge = false, appliance = true,                       url = "wifi.lua",           label = i18n("prefs.wifi")                        },
    { name = "network_interfaces", nedge = true,  appliance = true,                       url = "interfaces.lua",     label = i18n("prefs.network_interfaces")          },
+   { name = "vlan",               nedge = true,  appliance = false,                       url = "vlan.lua",           label = i18n("nedge.vlan_configuration")          },
    { name = "network_setup",      nedge = true,  appliance = true,                       url = "network.lua",        label = i18n("nedge.interfaces_configuration")    },
    { name = "dhcp",               nedge = true,  appliance = false, routing_only = true, url = "dhcp.lua",           label = i18n("nedge.dhcp_server")                 },
    { name = "dns",                nedge = true,  appliance = false, vlan_trunk = false,  url = "dns.lua",            label = i18n("nedge.dns_configuration")           },
@@ -85,13 +86,24 @@ function system_setup_ui_utils.printConfigChange(sys_config, warnings)
    if config_changed or first_start then
 
       if is_nedge then
-         local dhcp_config = sys_config:getDhcpServerConfig()
+        local lan_networks = sys_config:getLanNetworks()
+        local dhcp_config = sys_config:getDhcpServerConfig()
 
-         if dhcp_config.enabled then
-            if not sys_config:hasValidDhcpRange(dhcp_config.subnet.first_ip, dhcp_config.subnet.last_ip) then
-               warnings[#warnings + 1] = i18n("nedge.invalid_dhcp_range")
+          if dhcp_config.enabled then
+            local warn_dhcp_range = false
+            for _, lan_config in pairs(lan_networks) do
+              local lan_name = lan_config.iface
+              if (not lan_name) or (not dhcp_config["subnet"][lan_name]) then
+                goto continue
+              end
+
+              if not sys_config:hasValidDhcpRange(dhcp_config["subnet"][lan_name]["first_ip"], dhcp_config["subnet"][lan_name]["last_ip"]) and not warn_dhcp_range then
+                warnings[#warnings + 1] = i18n("nedge.invalid_dhcp_range")
+                warn_dhcp_range = true -- warn once in case of multiple interfaces
+              end
+              ::continue::
             end
-         end
+          end
       end
 
       print(
@@ -128,13 +140,13 @@ function system_setup_ui_utils.printConfigChange(sys_config, warnings)
       print[[<button style="visibility:hidden;">&nbsp;</button>]]
       print[[<div style="display: inline-block; float: right;">]]
 
-   if config_changed then
-     print[[<form name="modifyNedgeConfig" class="form-inline" style="display:inline;" method="POST">
+      if config_changed then
+        print[[<form name="modifyNedgeConfig" class="form-inline" style="display:inline;" method="POST">
     <input name="csrf" type="hidden" value="]] print(ntop.getRandomCSRFValue()) print [["/>
     <input type="hidden" name="nedge_config_action" value="discard">
     <button type="submit" class="btn btn-secondary">]] print(i18n("nedge.setup_discard")) print[[</button>
   </form>]]
-  end
+      end
 
       print[[
 <form id="applyNedgeConfig" name="modifyNedgeConfig" class="form-inline" style="display:inline;" method="POST">

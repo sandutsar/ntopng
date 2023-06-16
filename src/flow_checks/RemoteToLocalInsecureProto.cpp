@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,47 +25,48 @@
 /* ***************************************************** */
 
 void RemoteToLocalInsecureProto::protocolDetected(Flow *f) {
-  if(f->isRemoteToLocal()) {
+  if (f->isRemoteToLocal()) {
     risk_percentage cli_score_pctg = CLIENT_FAIR_RISK_PERCENTAGE;
     /* Remote to local */
     bool unsafe;
-    
-    switch(f->get_protocol_breed()) {
-    case NDPI_PROTOCOL_UNSAFE:
-      unsafe = true;
-      cli_score_pctg = CLIENT_HIGH_RISK_PERCENTAGE;
-      break;
 
-    case NDPI_PROTOCOL_POTENTIALLY_DANGEROUS:
-      unsafe = true;
-      cli_score_pctg = CLIENT_LOW_RISK_PERCENTAGE;
-      break;
-      
-    case NDPI_PROTOCOL_DANGEROUS:
-      unsafe = true;
-      cli_score_pctg = CLIENT_LOW_RISK_PERCENTAGE;
-      break;
+    switch (f->get_protocol_breed()) {
+      case NDPI_PROTOCOL_UNSAFE:
+        unsafe = true;
+        cli_score_pctg = CLIENT_HIGH_RISK_PERCENTAGE;
+        break;
 
-    default:
-      unsafe = false;
-      break;
-    }  
+      case NDPI_PROTOCOL_POTENTIALLY_DANGEROUS:
+        unsafe = true;
+        cli_score_pctg = CLIENT_LOW_RISK_PERCENTAGE;
+        break;
 
-    if(!unsafe) {
-      switch(f->get_protocol_category()) {
-      case CUSTOM_CATEGORY_MALWARE:
-      case CUSTOM_CATEGORY_BANNED_SITE:
-	cli_score_pctg = CLIENT_LOW_RISK_PERCENTAGE;
-	unsafe = true;
-	break;
+      case NDPI_PROTOCOL_DANGEROUS:
+        unsafe = true;
+        cli_score_pctg = CLIENT_LOW_RISK_PERCENTAGE;
+        break;
 
       default:
-	break;
+        unsafe = false;
+        break;
+    }
+
+    if (!unsafe) {
+      switch (f->get_protocol_category()) {
+        case CUSTOM_CATEGORY_MALWARE:
+        case CUSTOM_CATEGORY_BANNED_SITE:
+          cli_score_pctg = CLIENT_LOW_RISK_PERCENTAGE;
+          unsafe = true;
+          break;
+
+        default:
+          break;
       }
     }
-  
-    if(unsafe) {
-      FlowAlertType alert_type = RemoteToLocalInsecureProtoAlert::getClassType();
+
+    if (unsafe) {
+      FlowAlertType alert_type =
+          RemoteToLocalInsecureProtoAlert::getClassType();
       u_int8_t c_score, s_score;
 
       computeCliSrvScore(alert_type, cli_score_pctg, &c_score, &s_score);
@@ -78,10 +79,14 @@ void RemoteToLocalInsecureProto::protocolDetected(Flow *f) {
 /* ***************************************************** */
 
 FlowAlert *RemoteToLocalInsecureProto::buildAlert(Flow *f) {
-  RemoteToLocalInsecureProtoAlert *alert = new RemoteToLocalInsecureProtoAlert(this, f);
+  RemoteToLocalInsecureProtoAlert *alert =
+      new (std::nothrow) RemoteToLocalInsecureProtoAlert(this, f);
 
-  /* The remote client is considered the attacker. The victim is the local server */
-  alert->setCliAttacker(), alert->setSrvVictim();
+  if (alert) {
+    /* The remote client is considered the attacker. The victim is the local
+     * server */
+    alert->setCliAttacker(), alert->setSrvVictim();
+  }
 
   return alert;
 }

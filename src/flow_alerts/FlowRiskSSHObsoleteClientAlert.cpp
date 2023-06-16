@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,10 +21,9 @@
 
 #include "flow_alerts_includes.h"
 
-ndpi_serializer* FlowRiskSSHObsoleteClientAlert::getAlertJSON(ndpi_serializer* serializer) {
-  if(serializer == NULL)
-    return NULL;
+ndpi_serializer* FlowRiskSSHObsoleteClientAlert::getAlertJSON(
+    ndpi_serializer* serializer) {
+  if (serializer == NULL) return NULL;
 
   return serializer;
 }
-

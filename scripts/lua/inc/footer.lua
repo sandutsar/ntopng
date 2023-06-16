@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 require "os"
@@ -30,39 +30,39 @@ end -- closes interface.isPcapDumpInterface() == false
 
 if not info.oem then
 
-print ([[
-<hr>
-<footer id="n-footer">
-	<div class="container-fluid">
-		<div class="row mt-2">
-			<div class="col-12 col-md-4 pl-md-0 text-center text-md-start">
-				<small>
-					<a href="https://www.ntop.org/products/traffic-analysis/ntop/" target="_blank">
-				  		]] .. getNtopngRelease(info) ..[[
-					</a>
-				</small>
-			</div>
-			<div class="col-12 col-md-4 text-center">
-				<small>]].. ntop.getInfo()["copyright"] ..[[</small>
-]])
-print [[
-			</div>
-			<div class="col-12 col-md-4 text-center text-md-end pr-md-0">
-				<small>
-						<i class="fas fa-clock" title="]] print(i18n("about.server_time")) print[["></i> <div class="d-inline-block" id='network-clock'></div> | ]] print(i18n("about.uptime")) print[[: <div class="d-inline-block" id='network-uptime'></div>
-				</small>
-			</div>
-     	</div>
-   </div>
-</footer>
-]]
+-- print ([[
+-- <hr>
+-- <footer id="n-footer">
+-- 	<div class="container-fluid">
+-- 		<div class="row mt-2">
+-- 			<div class="col-12 col-md-4 pl-md-0 text-center text-md-start">
+-- 				<small>
+-- 					<a href="https://www.ntop.org/products/traffic-analysis/ntop/" target="_blank">
+-- 				  		]] .. getNtopngRelease(info) ..[[
+-- 					</a>
+-- 				</small>
+-- 			</div>
+-- 			<div class="col-12 col-md-4 text-center">
+-- 				<small>]].. ntop.getInfo()["copyright"] ..[[</small>
+-- ]])
+-- print [[
+-- 			</div>
+-- 			<div class="col-12 col-md-4 text-center text-md-end pr-md-0">
+-- 				<small>
+-- 						<i class="fas fa-clock" title="]] print(i18n("about.server_time")) print[["></i> <div class="d-inline-block" id='network-clock'></div> ]] if(info.tzname ~= nil) then print(info.tzname) end print(" | ") print(i18n("about.uptime")) print[[: <div class="d-inline-block" id='network-uptime'></div>
+-- 				</small>
+-- 			</div>
+--      	</div>
+--    </div>
+-- </footer>
+-- ]]
 
-else -- info.oem
-  print[[<div class="col-12 text-end">
-    <small>
-		<i class="fas fa-clock"></i> <div class="d-inline-block" id='network-clock' title="]] print(i18n("about.server_time")) print[["></div> | ]] print(i18n("about.uptime")) print[[: <div class="d-inline-block" id='network-uptime'></div>
-    </small>
-</div>]]
+-- else -- info.oem
+--   print[[<div class="col-12 text-end">
+--     <small>
+-- 		<i class="fas fa-clock"></i> <div class="d-inline-block" id='network-clock' title="]] print(i18n("about.server_time")) print[["></div> | ]] print(i18n("about.uptime")) print[[: <div class="d-inline-block" id='network-uptime'></div>
+--     </small>
+-- </div>]]
 end
 
 local traffic_peity_width = "96"
@@ -185,13 +185,6 @@ print [[
 
 print[[
 var is_historical = false;
-
-$(`[data-toast-id='0'`).on('hide.bs.toast', function() {
-	$.post(']] print(ntop.getHttpPrefix()) print[[/lua/update_prefs.lua', {
-		csrf: ']] print(ntop.getRandomCSRFValue()) print[[', action: 'disable-telemetry-data'
-	});
-});
-
 let updatingChart_uploads = [
 	$("#n-navbar .network-load-chart-upload").show().peity("line", { width: ]] print(traffic_peity_width) print[[, max: null }),
 	$(".mobile-menu-stats .network-load-chart-upload").show().peity("line", { width: ]] print(traffic_peity_width) print[[, max: null }),
@@ -231,6 +224,7 @@ const footerRefresh = function() {
 			const rsp = content["rsp"];
 
       try {
+ntopng_events_manager.emit_custom_event(ntopng_custom_events.GET_INTERFACE_DATA, rsp);
         let bps_upload = rsp.throughput.upload * 8;
         let bps_download = rsp.throughput.download * 8;
 
@@ -267,8 +261,8 @@ end
 
 -- systemInterfaceEnabled is defined inside menu.lua
 print[[
-				$('#network-clock').html(`${rsp.localtime}`);
-				$('#network-uptime').html(`${rsp.uptime}`);
+				//$('#network-clock').html(`${rsp.localtime}`);
+				//$('#network-uptime').html(`${rsp.uptime}`);
 
 				let msg = `<div class='m-2'><div class='d-flex flex-wrap navbar-main-badges'>`;
 				
@@ -301,7 +295,7 @@ print[[
 					}
 
 					if(rsp.alerted_flows_error > 0 && !(systemInterfaceEnabled)) {
-						msg += "<a href=\"]] print (ntop.getHttpPrefix()) print [[/lua/flows_stats.lua?alert_type_severity=error_or_higher\">"
+						msg += "<a href=\"]] print (ntop.getHttpPrefix()) print [[/lua/flows_stats.lua?alert_type_severity=error\">"
 						msg += "<span class=\"badge bg-danger\" title=']] print(i18n("flow_details.dangerous_flows")) print[['>"+NtopUtils.formatValue(rsp.alerted_flows_error, 1)+ " <i class=\"fas fa-stream\"></i> ]] print[[ <i class=\"fas fa-exclamation-triangle\"></i></span></a>";
 					}
 
@@ -327,7 +321,9 @@ print[[
 				if(rsp.num_local_hosts > 0 && (!systemInterfaceEnabled)) {
 					msg += "<a href=\"]] print (ntop.getHttpPrefix()) print [[/lua/hosts_stats.lua?mode=local\">";
 					msg += "<span title=\"]] print(i18n("local_hosts")) print[[\" class=\"badge bg-success\">";
-					msg += NtopUtils.formatValue(rsp.num_local_hosts, 1)+" <i class=\"fas fa-laptop\" aria-hidden=\"true\"></i></span></a>";
+					msg += NtopUtils.formatValue(rsp.num_local_hosts, 1);
+					if(rsp.num_local_rcvd_only_hosts > 0) msg += " ("+NtopUtils.formatValue(rsp.num_local_rcvd_only_hosts, 1)+")";
+					msg += " <i class=\"fas fa-laptop\" aria-hidden=\"true\"></i></span></a>";
 				}
 
 				const num_remote_hosts = rsp.num_hosts - rsp.num_local_hosts;
@@ -345,7 +341,9 @@ print[[
 						msg += "<span title=\"" + remote_hosts_label +"\" class=\"badge bg-danger\">";
 					}
 
-					msg += NtopUtils.formatValue(num_remote_hosts, 1)+" <i class=\"fas fa-laptop\" aria-hidden=\"true\"></i></span></a>";
+					msg += NtopUtils.formatValue(num_remote_hosts, 1);
+					if(rsp.num_rcvd_only_hosts > 0) msg += " ("+NtopUtils.formatValue(rsp.num_rcvd_only_hosts, 1)+")";
+					msg += " <i class=\"fas fa-laptop\" aria-hidden=\"true\"></i></span></a>";
 				}
 
 				if(rsp.num_devices > 0 && (!systemInterfaceEnabled)) {
@@ -366,16 +364,16 @@ print[[
 				}
 
 				if(rsp.num_flows > 0 && (!systemInterfaceEnabled)) {
-    					msg += "<a href=\"]] print (ntop.getHttpPrefix()) print [[/lua/flows_stats.lua\">";
-
+          msg += "<a href=\"]] print (ntop.getHttpPrefix()) print [[/lua/flows_stats.lua\">";
+          const flows_label = "]] print(i18n("live_flows")) print[["
 					if (rsp.flows_pctg < alarm_threshold_low) {
-						msg += "<span class=\"badge bg-secondary\">";
+						msg += "<span title=\"" + flows_label +"\" class=\"badge bg-secondary\">";
 					} else if(rsp.flows_pctg < alarm_threshold_high) {
 						alert = 1;
-						msg += "<span class=\"badge bg-warning\">";
+						msg += "<span title=\"" + flows_label +"\" class=\"badge bg-warning\">";
 					} else {
 						alert = 1;
-						msg += "<span class=\"badge bg-danger\">";
+						msg += "<span title=\"" + flows_label +"\" class=\"badge bg-danger\">";
 					}
 
 					msg += NtopUtils.formatValue(rsp.num_flows, 1)+" <i class=\"fas fa-stream\"></i>  </span> </a>";
@@ -458,7 +456,7 @@ $(document).ajaxError(function(err, response, ajaxSettings, thrownError) {
 
 footerRefresh();  /* call immediately to give the UI a more responsive look */
 
-setInterval(footerRefresh, 5000); /* re-schedule every [interface-rate] seconds */
+setInterval(footerRefresh, 7000); /* re-schedule every [interface-rate] seconds */
 
 //Automatically open dropdown-menu
 $(document).ready(function(){

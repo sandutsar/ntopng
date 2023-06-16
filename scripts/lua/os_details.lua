@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 dirs = ntop.getDirs()
@@ -40,7 +40,7 @@ end
 --[[
 Create Menu Bar with buttons
 --]]
-local nav_url = ntop.getHttpPrefix().."/lua/os_details.lua?country="..OS
+local nav_url = ntop.getHttpPrefix().."/lua/os_details.lua?os="..OS
 local title = i18n("os_details.os") .. ": "..OS
 
    page_utils.print_navbar(title, nav_url,
@@ -57,20 +57,8 @@ local title = i18n("os_details.os") .. ": "..OS
 Selectively render information pages
 --]]
 if page == "historical" then
-    local schema = _GET["ts_schema"] or "os:traffic"
-    local selected_epoch = _GET["epoch"] or ""
-    local url = ntop.getHttpPrefix()..'/lua/os_details.lua?ifid='..ifId..'&os='..OS..'&page=historical'
-
-    local tags = {
-      ifid = ifId,
-      os = OS,
-    }
-
-    graph_utils.drawGraphs(ifId, schema, tags, _GET["zoom"], url, selected_epoch, {
-      timeseries = {
-        {schema="os:traffic", label=i18n("traffic"), split_directions = true},
-      }
-    })
+   local source_value_object = { os = tonumber(os), ifid = interface.getId() }
+   graph_utils.drawNewGraphs(source_value_object)
 end
 
 dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")

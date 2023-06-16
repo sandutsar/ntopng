@@ -1031,6 +1031,8 @@ static void send_http_error(struct mg_connection *conn, int status,
 	    "Connection: %s\r\n\r\n", status, reason, len,
 	    suggest_connection_header(conn));
   conn->num_bytes_sent += mg_printf(conn, "%s", buf);
+
+  traceHTTP(conn, (u_int16_t)status);
 }
 
 #if defined(_WIN32) && !defined(__SYMBIAN32__)
@@ -4269,12 +4271,14 @@ static void handle_lsp_request(struct mg_connection *conn, const char *path,
 }
 #endif // MONGOOSE_USE_LUA
 
-int mg_upload(struct mg_connection *conn, const char *destination_dir) {
+int mg_upload(struct mg_connection *conn, const char *destination_dir,
+	      char *fname, u_int fname_len) {
   const char *content_type_header, *boundary_start;
-  char buf[MG_BUF_LEN], path[PATH_MAX], fname[1024], boundary[100], *s;
+  char buf[MG_BUF_LEN], path[PATH_MAX], boundary[100], *s;
   FILE *fp;
   int bl, n, i, j, headers_len, boundary_len, len = 0, num_uploaded_files = 0;
 
+  fname[0] = '\0';
   // Request looks like this:
   //
   // POST /upload HTTP/1.1
@@ -5170,6 +5174,9 @@ static void process_new_connection(struct mg_connection *conn) {
       if (conn->ctx->callbacks.end_request != NULL) {
 	conn->ctx->callbacks.end_request(conn, conn->status_code);
       }
+#if 1 /* NTOP */
+      if(conn->status_code == 200) traceHTTP(conn, conn->status_code);
+#endif
       log_access(conn);
     }
     if (ri->remote_user != NULL) {

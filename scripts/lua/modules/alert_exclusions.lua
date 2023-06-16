@@ -6,6 +6,8 @@
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 
+local clock_start = os.clock()
+
 require "lua_utils"
 local alert_consts = require "alert_consts"
 local json = require "dkjson"
@@ -13,6 +15,8 @@ local json = require "dkjson"
 -- ##############################################
 
 local alert_exclusions = {}
+
+local exclusion_comment_map = "ntopng.cache.exclusion_alert_comment"
 
 -- ##############################################
 
@@ -106,7 +110,7 @@ end
 -- ##############################################
 
 --@brief Enables or disables an alert
-local function _toggle_alert_exclusion(subject_key, subject_type, alert_key, add_exclusion, is_flow_exclusion)
+local function _toggle_alert_exclusion(subject_key, subject_type, alert_key, add_exclusion, is_flow_exclusion, comment)
   local ret = false
   
   alert_key = tonumber(alert_key)
@@ -127,26 +131,37 @@ local function _toggle_alert_exclusion(subject_key, subject_type, alert_key, add
         exclusions[subject_key] = { 
           type = subject_type,
           flow_alerts = {}, 
-          host_alerts = {} 
+          host_alerts = {}
         }
       end
  
+      local exlusion_comment_map_key = ""
+
       if(is_flow_exclusion) then
         table.insert(exclusions[subject_key].flow_alerts, alert_key)
+        exlusion_comment_map_key = string.format('%s_%s_%s', "flow", subject_key, alert_key)
       else
         table.insert(exclusions[subject_key].host_alerts, alert_key)
+        exlusion_comment_map_key = string.format('%s_%s_%s', "host", subject_key, alert_key)
+
       end
+      
+      ntop.setHashCache(exclusion_comment_map, exlusion_comment_map_key, comment)
 
     else
       -- ip@vlan
       if exclusions[subject_key] then
         local r = {}
         local t = {}
-        
+
+        local exlusion_comment_map_key = ""
+
         if(is_flow_exclusion) then
           t = exclusions[subject_key].flow_alerts
+          exlusion_comment_map_key = string.format('%s_%s_%s', "flow", subject_key, alert_key)
         else
           t = exclusions[subject_key].host_alerts
+          exlusion_comment_map_key = string.format('%s_%s_%s', "host", subject_key, alert_key)
         end
 
         for i=0,table.len(t) do
@@ -160,9 +175,19 @@ local function _toggle_alert_exclusion(subject_key, subject_type, alert_key, add
         else
           exclusions[subject_key].host_alerts = r
         end
+
+        -- Delete empty subjects
+        if (          exclusions[subject_key].flow_alerts == nil or
+            table.len(exclusions[subject_key].flow_alerts) == 0) and
+           (          exclusions[subject_key].host_alerts == nil or
+            table.len(exclusions[subject_key].host_alerts) == 0) then
+          exclusions[subject_key] = nil
+        end
+
+        ntop.delHashCache(exclusion_comment_map, exlusion_comment_map_key)
+
       end
     end
-      
     _set_configured_alert_exclusions(exclusions)
     
     ret = true
@@ -175,7 +200,7 @@ end
 -- ##############################################
 
 --@brief Enables or disables an alert for an `host`, supports VLANs
-local function _toggle_alert_exclusion_by_host(is_flow_exclusion, host_ip, vlan_id, alert_key, add_exclusion)
+local function _toggle_alert_exclusion_by_host(is_flow_exclusion, host_ip, vlan_id, alert_key, add_exclusion, comment)
   if not _check_host_ip_vlan_id(host_ip, vlan_id) then
     -- Invalid params submitted
     return false
@@ -188,21 +213,21 @@ local function _toggle_alert_exclusion_by_host(is_flow_exclusion, host_ip, vlan_
     host = format_ip_vlan(host_ip, vlan_id)
   end
 
-  return _toggle_alert_exclusion(host, "host", alert_key, add_exclusion, is_flow_exclusion)
+  return _toggle_alert_exclusion(host, "host", alert_key, add_exclusion, is_flow_exclusion, comment)
 end
 
 -- ##############################################
 
 --@brief Enables or disables alerts for a domain
-local function _toggle_alert_exclusion_by_domain(domain_name, alert_key, add_exclusion)
-  return _toggle_alert_exclusion(domain_name, "domain", alert_key, add_exclusion, true)
+local function _toggle_alert_exclusion_by_domain(domain_name, alert_key, add_exclusion, comment)
+  return _toggle_alert_exclusion(domain_name, "domain", alert_key, add_exclusion, true, comment)
 end
 
 -- ##############################################
 
 --@brief Enables or disables alerts for a domain
-local function _toggle_alert_exclusion_by_certificate(certificate, alert_key, add_exclusion)
-  return _toggle_alert_exclusion(certificate, "certificate", alert_key, add_exclusion, true)
+local function _toggle_alert_exclusion_by_certificate(certificate, alert_key, add_exclusion, comment)
+  return _toggle_alert_exclusion(certificate, "certificate", alert_key, add_exclusion, true, comment)
 end
 
 -- ##############################################
@@ -239,13 +264,23 @@ local function _enable_all_alerts_by_type(subject_type, host_ip, vlan_id)
         else
           new_exclusions[subject_key] = v
         end
-
+        -- delete all host alert exclusions
+        for k in ipairs(v.host_alerts) do
+          local exlusion_comment_map_key = string.format('%s_%s_%s', "host", subject_key, k)
+          ntop.delHashCache(exclusion_comment_map, exlusion_comment_map_key)
+        end
       -- Enabling all by type
       else
         if v.type == subject_type then
           -- nothing to do (do not add this to the new configuration)
         else
           new_exclusions[subject_key] = v
+        end
+
+        -- delete all flow alert exclusions
+        for k in ipairs(v.flow_alerts) do
+          local exlusion_comment_map_key = string.format('%s_%s_%s', "flow", subject_key, k)
+          ntop.delHashCache(exclusion_comment_map, exlusion_comment_map_key)
         end
       end
     end
@@ -322,12 +357,15 @@ local function _get_exclusions(is_flow_exclusion, alert_key, subject_type)
       if not t then
         traceError(TRACE_INFO,TRACE_CONSOLE, "Failure checking exclusions")
       else
+
+
         for i=0,table.len(t) do
           if t[i] == alert_key then
             ret[subject_key] = true
+            
             break
           end
-        end     
+        end   
       end
     end
   end
@@ -337,26 +375,33 @@ end
 
 -- ##############################################
 
+function alert_exclusions.get_comment(subject_key, subject_type, alert_key) 
+  local exlusion_comment_map_key = string.format('%s_%s_%s', subject_type, subject_key, alert_key)
+  return ntop.getHashCache(exclusion_comment_map, exlusion_comment_map_key)
+end
+
+-- ##############################################
+
 --@brief Marks a flow alert as disabled for a given `host_ip`, considered either as client or server
 --@return True, if alert is disabled with success, false otherwise
-function alert_exclusions.disable_flow_alert_by_host(host_ip, vlan_id, alert_key)
-   return _toggle_alert_exclusion_by_host(true --[[ flow --]], host_ip, vlan_id, alert_key, true --[[ disable --]])
+function alert_exclusions.disable_flow_alert_by_host(host_ip, vlan_id, alert_key, comment)
+   return _toggle_alert_exclusion_by_host(true --[[ flow --]], host_ip, vlan_id, alert_key, true --[[ disable --]], comment)
 end
 
 -- ##############################################
 
 --@brief Marks a flow alert as disabled for a given domain name
 --@return True, if alert is disabled with success, false otherwise
-function alert_exclusions.disable_flow_alert_by_domain(domain_name, alert_key)
-   return _toggle_alert_exclusion_by_domain(domain_name, alert_key, true --[[ disable --]])
+function alert_exclusions.disable_flow_alert_by_domain(domain_name, alert_key, comment)
+   return _toggle_alert_exclusion_by_domain(domain_name, alert_key, true --[[ disable --]], comment)
 end
 
 -- ##############################################
 
 --@brief Marks a flow alert as disabled for a given certificate
 --@return True, if alert is disabled with success, false otherwise
-function alert_exclusions.disable_flow_alert_by_certificate(certificate, alert_key)
-   return _toggle_alert_exclusion_by_certificate(certificate, alert_key, true --[[ disable --]])
+function alert_exclusions.disable_flow_alert_by_certificate(certificate, alert_key, comment)
+   return _toggle_alert_exclusion_by_certificate(certificate, alert_key, true --[[ disable --]], comment)
 end
 
 -- ##############################################
@@ -411,8 +456,8 @@ end
 
 --@brief Marks a host alert as disabled for a given `host_ip`
 --@return True, if alert is disabled with success, false otherwise
-function alert_exclusions.disable_host_alert_by_host(host_ip, vlan_id, alert_key)
-   return _toggle_alert_exclusion_by_host(false --[[ host --]], host_ip, vlan_id, alert_key, true --[[ disable --]])
+function alert_exclusions.disable_host_alert_by_host(host_ip, vlan_id, alert_key, comment)
+   return _toggle_alert_exclusion_by_host(false --[[ host --]], host_ip, vlan_id, alert_key, true --[[ disable --]], comment)
 end
 
 -- ##############################################
@@ -434,7 +479,7 @@ end
 
 -- @brief Returns all the excluded hosts for the flowt alert identified with `alert_key`
 function alert_exclusions.flow_alerts_get_exclusions(alert_key, subject_type)
-   return _get_exclusions(true --[[ flow --]], alert_key, subject_type or "host") or {}
+   return _get_exclusions(true --[[ flow --]], alert_key, subject_type or "flow") or {}
 end
 
 -- ##############################################
@@ -477,5 +522,9 @@ function alert_exclusions.cleanup()
 end
 
 -- ##############################################
+
+if(trace_script_duration ~= nil) then
+  io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end
 
 return alert_exclusions

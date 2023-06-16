@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,15 +23,14 @@
 
 /* ***************************************************** */
 
-ndpi_serializer *FlowRiskSuspiciousDGADomainAlert::getAlertJSON(ndpi_serializer* serializer) {
+ndpi_serializer *FlowRiskSuspiciousDGADomainAlert::getAlertJSON(
+    ndpi_serializer *serializer) {
   Flow *f = getFlow();
   char *info = f->getDGADomain();
-  
-  if((serializer == NULL) || (info == NULL))
-    return NULL;
+
+  if ((serializer == NULL) || (info == NULL)) return NULL;
 
   ndpi_serialize_string_string(serializer, "dga_domain", info);
-  
+
   return serializer;
 }
-

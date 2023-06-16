@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,13 +32,12 @@ class SQLiteAlertStore : virtual public AlertStore, public SQLiteStoreManager {
 
   int openStore();
   int execFile(const char *path);
-  
+
  public:
   SQLiteAlertStore(int interface_id, const char *db_filename);
   ~SQLiteAlertStore();
 
-  bool query(lua_State *vm, const char * query);
-
+  bool query(lua_State *vm, const char *query);
 };
 
 #endif /* _SQLITE_ALERT_STORE_H_ */

@@ -1,4 +1,3 @@
-const path = require("path");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
@@ -31,7 +30,6 @@ module.exports = {
     new webpack.ProvidePlugin({
       $: "jquery",
       jQuery: "jquery",
-      d3: 'd3',
     }),   
     new MiniCssExtractPlugin({ filename: '[name].css' }),
     new CleanWebpackPlugin(),
@@ -67,21 +65,12 @@ module.exports = {
           use: "source-map-loader"
       },
       {
-        test: /.m?js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env']
-          }
-        }
-      },
-      {
         test: /\.(gif|png|jpe?g|svg)$/i,
         use: [
           {
             loader: 'file-loader',
             options: {
+              publicPath: '',
               outputPath: './images',
               name: '[name].[ext]'
             }

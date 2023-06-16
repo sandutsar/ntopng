@@ -42,8 +42,13 @@ end
 -- ##############################################
 
 function snmp_device_alert_store:_entity_val_to_ip_and_port(entity_val)
+   local ip, port
+
    local ip_port = string.split(entity_val, "_ifidx")
-   local ip, port = ip_port[1], tonumber(ip_port[2])
+   if ip_port and #ip_port > 1 then
+      ip = ip_port[1]
+      port = tonumber(ip_port[2])
+   end
 
    return ip, port
 end
@@ -71,8 +76,8 @@ function snmp_device_alert_store:insert(alert)
       device_ip, port = self:_entity_val_to_ip_and_port(alert.entity_val)
    end
 
-   local extra_columns = ""
-   local extra_values = ""
+   local extra_columns
+   local extra_values
    if(ntop.isClickHouseEnabled()) then
       extra_columns = "rowid, "
       extra_values = "generateUUIDv4(), "
@@ -82,19 +87,20 @@ function snmp_device_alert_store:insert(alert)
       "(%salert_id, interface_id, tstamp, tstamp_end, severity, score, ip, name, port, port_name, json) "..
       "VALUES (%s%u, %d, %u, %u, %u, %u, '%s', '%s', %u, '%s', '%s'); ",
       self._table_name, 
-      extra_columns,
-      extra_values,
+      extra_columns or "",
+      extra_values or "",
       alert.alert_id,
       self:_convert_ifid(interface.getId()),
       alert.tstamp,
       alert.tstamp_end,
-      ntop.mapScoreToSeverity(alert.score),
+      map_score_to_severity(alert.score),
       alert.score,
       self:_escape(device_ip or alert.entity_val),
-      self:_escape(device_name),
-      port or 0,
-      self:_escape(port_name),
-      self:_escape(alert.json))
+      self:_escape(device_name or ""),
+      tonumber(port) or 0,
+      self:_escape(port_name or ""),
+      self:_escape(alert.json)
+   )
 
    -- traceError(TRACE_NORMAL, TRACE_CONSOLE, insert_stmt)
 
@@ -109,7 +115,9 @@ function snmp_device_alert_store:_add_additional_request_filters()
    local port = _GET["snmp_interface"]
 
    self:add_filter_condition_list('ip', ip)
-   self:add_filter_condition_list('port', port, 'number')
+
+   --  self:add_filter_condition_list('port', port, 'number')
+   self:add_filter_condition_list('snmp_interface', port)
 end
 
 -- ##############################################

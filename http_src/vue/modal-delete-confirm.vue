@@ -16,7 +16,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import { default as modal } from "./modal.vue";
 
 const modal_id = ref(null);
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['delete']);
 
 const showed = () => {};
 
@@ -30,11 +30,11 @@ const show = () => {
 };
 
 const delete_ = () => {
+    emit('delete');
     close();
 };
 
 const close = () => {
-    emit('delete');
     modal_id.value.close();
 };
 

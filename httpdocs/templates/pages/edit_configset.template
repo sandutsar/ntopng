@@ -26,6 +26,7 @@
 	            <th>{{ i18n("name", {}) }}</th>
               <th>{{ i18n("interface", {}) }}</th>
               <th>{{ i18n("category", {}) }}</th>
+              <th>{{ i18n("severity", {}) }}</th>
               <th>{{ i18n("description", {}) }}</th>
               <th>{{ i18n("values", {}) }}</th>
               <th>{{ i18n("action", {})}}</th>
@@ -153,7 +154,6 @@ i18n_ext.scripts_list.templates.elephant_flows_l2r = "{{ i18n('scripts_list.temp
 i18n_ext.scripts_list.templates.elephant_flows_r2l = "{{ i18n('scripts_list.templates.elephant_flows_r2l') }}";
 i18n_ext.scripts_list.templates.template_not_implemented = "{{ i18n('scripts_list.templates.template_not_implemented') }}";
 i18n_ext.scripts_list.templates.blacklisted_country_list = "{{ i18n('scripts_list.templates.blacklisted_country_list') }}";
-i18n_ext.scripts_list.exclusion_list_title = "{{ i18n('scripts_list.exclusion_list_title') }}";
 
 i18n_ext.enable = "{{ i18n('show_alerts.enable_alerts') }}";
 i18n_ext.disable = "{{ i18n('show_alerts.disable_alerts') }}";
@@ -489,35 +489,10 @@ else if (seconds >= 86400) {
 
 /* ******************************************************* */
 
-function getSanitizedScriptExList(script_exclusion_list) {
-var ex_list_purified;
-
-// IP only are supported at the moment, values are listed without <name>=
-// as this is more intuitive for the user, however the backend 
-// handles <name>=<value> (see also appendExclusionList)
-//ex_list_purified = script_exclusion_list.split("\n").join(";");
-
-ex_list_purified = script_exclusion_list.split(" ").join(""); 
-ex_list_purified = ex_list_purified.split("\n").join("");
-if (ex_list_purified.length > 0) 
-  ex_list_purified = "ip="+ex_list_purified;
-ex_list_purified = ex_list_purified.split(",").join(";ip=");
-
-return ex_list_purified.split(" ").join("");
-}
-
-/* ******************************************************* */
-
 const apply_edits_script = (template_data, check_subdir, script_key) => {
-const exclusionList = $(`#script-config-editor textarea[name='exclusion-list']`).val();
-var script_exclusion_list = exclusionList || undefined;
 
 const $apply_btn = $('#btn-apply');
 const $error_label = $("#apply-error");
-
-if (script_exclusion_list !== undefined) {
-   script_exclusion_list = getSanitizedScriptExList(script_exclusion_list);
-}
 
 // remove dirty class from form
 $('#edit-form').removeClass('dirty')
@@ -527,7 +502,6 @@ $.post(`${http_prefix}/lua/edit_check_config.lua`, {
    check_subdir: check_subdir,
    script_key: script_key,
    csrf: pageCsrf,
-   script_exclusion_list: script_exclusion_list,
    JSON: JSON.stringify(template_data)
 })
    .done((d, status, xhr) => {
@@ -571,37 +545,8 @@ $.get(`${http_prefix}/lua/get_check_config.lua`, {
       if (NtopUtils.check_status_code(xhr.status, xhr.statusText, $error_label)) return;
 
       const { metadata } = reset_data;
-      const exclusionList = $(`#script-config-editor textarea[name='exclusion-list']`).val();
-      const script_exclusion_list = exclusionList || undefined;
 
-      /* Creating the default string for the exclusion list when reset is called */
-      if (script_exclusion_list) {
-         let ex_list_str = ""
-         const scriptConfExList = reset_data.filters;
-
-         if (scriptConfExList) {
-            const scriptConfCurrFil = scriptConfExList.current_filters;
-            if (scriptConfCurrFil) {
-               for (const [index, filters] of Object.entries(scriptConfCurrFil)) {
-                  for (const [name, value] of Object.entries(filters)) {
-                     // Concat the string to create a human readable string
-                     if (name === "str_format") {
-                        // Temporary check, needs to be removed in a few time
-                        continue;
-                     }
-                     ex_list_str = ex_list_str + name + "=" + value + ",";
-                  }
-
-                  ex_list_str = ex_list_str.slice(0, -1);
-                  ex_list_str = ex_list_str + "\n";
-               }
-            }
-
-            $(`#script-config-editor textarea[name='exclusion-list']`).val(ex_list_str);
-         }
-      }
-
-       // call callback function to reset fields
+      // call callback function to reset fields
       callback_reset(reset_data);
 
       // add dirty class to form
@@ -626,7 +571,7 @@ const $table_editor = $("#script-config-editor");
 const render_select_operator = (operators, key, hook) => {
 
    const $select = $(`
-   <select
+    <select
       name='${key}-select'
       required
       ${hook.enabled ? '' : 'disabled'}
@@ -646,8 +591,7 @@ const render_select_operator = (operators, key, hook) => {
 }
 
 const render_template = () => {
-
-   const { field_operator, fields_unit, field_min, field_max } = gui;
+  const { field_operator, fields_unit, field_min, field_max } = gui;
    const operators = ['gt', 'lt'];
 
    // save input fields
@@ -716,8 +660,7 @@ const render_template = () => {
       );
 
       // save input field
-      $input_fields[key] = $input_container;
-
+      $input_fields[key] = $input_container;     
    }
 
    // clean script editor table from previous state
@@ -757,15 +700,17 @@ const render_template = () => {
 };
 
 const apply_event = (event) => {
-
    // prepare request to save config
    const data = {};
 
    // iterate over granularities
    $table_editor.find("tr[id]").each(function (index) {
-
+    
       const id = $(this).attr("id");
 
+      $(this).find("input").each(function(index) {
+        debugger
+      })
       const enabled = $(this).find("input[type='checkbox']").is(":checked");
       const $template = $(this).find(".template");
       const $error_label = $template.find(`.invalid-feedback`);
@@ -785,7 +730,6 @@ const apply_event = (event) => {
 
       // remove class error
       $input_box.removeClass('is-invalid');
-
       // save data into dictonary
       data[id] = {
          'enabled': enabled,
@@ -842,6 +786,225 @@ return {
 }
 }
 
+/* ********************************* */
+
+/* Multi Threshold cross template, used to set multiple threshold cross.
+ * e.g.: tcp retransmissions > 4% and out of order packets > 5%
+ */
+const MultiThresholdCross = (gui, metadata, hooks, check_subdir, script_key) => {
+const $table_editor = $("#script-config-editor");
+const render_select_operator = (operators, key, hook) => {
+
+   const $select = $(`
+    <select
+      name='${key}-select'
+      required
+      ${hook.enabled ? '' : 'disabled'}
+      class='btn btn-outline-secondary'></select>
+   `);
+
+   operators.forEach((op) => {
+      $select.append($(`<option value="${op}">&${op}</option>`));
+   });
+
+   // select the right operator
+   if (hook.script_conf.operator != undefined) {
+      $select.val(hook.script_conf.operator)
+   }
+
+   return $select;
+}
+
+const render_template = () => {
+  const operators = ['gt', 'lt'];
+
+  // clean script editor table from previous state
+  $table_editor.empty();
+  // append each hooks to the table
+  $table_editor.append(`<tr>
+                          <th class="col-2" style="padding-left: 22px!important;">${i18n('options')}</th>
+                          <th class="col-3 text-center align-middle">${i18n('enabled')}</th>
+                          <th>${i18n('threshold')}</th>
+                        </tr>`)
+   
+  // iterate over keys to create each hooks
+  for (const key in hooks) {
+    if (key == undefined) continue;
+      
+    // get hook
+    const hook = hooks[key];
+    for (const field in hook.script_conf) {
+      const $field = $(`<div class='input-group template'></div>`);
+      let { default_value, field_operator, fields_unit, field_min, field_max, title } = hook.script_conf[field];  
+      let enabled = hook.script_conf[field]["enabled"]
+
+      if(enabled == undefined)
+        enabled = hook.enabled
+      if(default_value == undefined)
+        default_value = hook.script_conf[field]["threshold"]
+      if(field_operator == undefined)
+        field_operator = hook.script_conf[field]["operator"]
+      if(fields_unit == undefined)
+        fields_unit = metadata.default_value[field].i18n_fields_unit
+      if(field_min == undefined)
+        field_min = metadata.default_value[field].field_min
+      if(field_max == undefined)
+        field_max = metadata.default_value[field].field_max
+      if(title == undefined)
+        title = metadata.default_value[field].title
+
+      let $select = null;
+  
+      if (field_operator == undefined) {
+        $select = render_select_operator(operators, key, hook);
+      } else {
+        $select = $(`<span class='input-group-text'>&${field_operator}</span>`).data('value', field_operator);
+      }
+
+      const $title = `<span class='mt-auto mb-auto ms-2 me-2'>${title ? title : ""}</span>`;
+      
+      $field.append($select);
+      $field.append(`<input
+                        type='number'
+                        class='form-control text-end'
+                        required
+                        style='max-width: 7rem;'
+                        name='${key}-${field}-input'
+                        ${enabled ? '' : 'readonly'}
+                        value='${default_value == undefined ? '' : default_value}'
+                        min='${field_min == undefined ? '' : field_min}'
+                        max='${field_max == undefined ? '' : field_max}'>`);
+      $field.append(`<span class='mt-auto mb-auto ms-2 me-2'>${i18n(fields_unit) ? i18n(fields_unit) : ""}</span>`);
+      $field.append(`<div class='invalid-feedback'></div>`);
+      
+      const $input_container = $(`<tr id='${field}'></tr>`);
+      const $checkbox = $(`
+        <div class="form-switch">
+          <input class="form-check-input ms-0" id="id-${key}-${field}-check" name="${key}-${field}-check" type="checkbox" ${enabled ? "checked" : ""} >
+          <label class="form-check-label" for="id-${key}-${field}-check"></label>
+        </div>
+      `);
+
+      // bind check event on checkboxes
+      $checkbox.find(`input[type='checkbox']`).change(function (e) {
+        const checked = $(this).prop('checked');
+        // if the checked option is false the disable the elements
+        if (!checked) {
+          $field.find(`input[type='number']`).attr("readonly", "");
+          $select.attr("disabled", "");
+          return;
+        }
+
+        $field.find(`input[type='number']`).removeAttr("readonly");
+        $select.removeAttr("disabled");
+      });
+
+      // append label and checkbox inside the row
+      $input_container.append(
+        $(`<td class='align-middle'></td>`).append($title),
+        $(`<td class='text-center align-middle'></td>`).append($checkbox),
+        $(`<td class='text-center align-middle'></td>`).append($field)
+      );
+
+      $table_editor.append($input_container);
+    }
+  }
+};
+
+const apply_event = (event) => {
+   // prepare request to save config
+   const data = {};
+   let script_threshold = {}
+   let script_enabled = false;
+   const hook = (hooks.all === undefined) ? ((hooks["5mins"] === undefined) ? "min" : "5mins") : "all";
+
+   // iterate over granularities
+   $table_editor.find("tr[id]").each(function (index) {
+      const id = $(this).attr("id");
+      const enabled = $(this).find("input[type='checkbox']").is(":checked");
+      const $template = $(this).find(".template");
+      const $error_label = $template.find(`.invalid-feedback`);
+      
+      let operator = $template.find("select").val();
+      // if operator is undefined it means there isn't any select, so take the value from span
+      if (operator == undefined) {
+         operator = $template.find('span.input-group-text').data('value');
+      }
+
+      const $input_box = $template.find("input");
+
+      let threshold = parseInt($input_box.val());
+
+      // hide before errors
+      $error_label.hide();
+
+      // remove class error
+      $input_box.removeClass('is-invalid');
+      // save data into dictonary
+      script_threshold[id] = {
+         'enabled': enabled,
+         'operator': operator,
+         'threshold': parseInt(threshold),
+      }
+
+      if(script_enabled || enabled) {
+         script_enabled = true
+      } else {
+         script_enabled = false;
+      } 
+   });
+
+   data[hook] = {
+      'enabled': script_enabled,
+      'script_conf': script_threshold,
+   }
+
+   apply_edits_script(data, check_subdir, script_key);
+};
+
+const reset_event = (event) => {
+
+   reset_script_defaults(script_key, check_subdir, (data) => {
+
+      const { hooks } = data;
+
+      for (const key in hooks) {
+        if (key == undefined) continue;
+          
+        // get hook
+        const hook = hooks[key];
+        for (const field in hook.script_conf) {
+          const { default_value, field_operator } = hook.script_conf[field];
+
+          $(`input[name='${key}-${field}-check']`).prop('checked', hook.enabled);
+
+          (default_value === undefined) 
+              ? $(`input[name='${key}-${field}-input']`).val('')
+              : $(`input[name='${key}-${field}-input']`).val(default_value);
+
+          if (hook.enabled) {
+              $(`select[name='${key}-${field}-select']`).removeAttr("disabled");
+              $(`input[name='${key}-${field}-input']`).removeAttr("readonly");
+          }
+          else {
+              $(`input[name='${key}-${field}-input']`).attr("readonly", "");
+              $(`select[name='${key}-${field}-select']`).attr("disabled", "");
+          }
+
+          $(`select[name='${key}-${field}-select']`).val(field_operator);
+        }
+      }
+   });
+
+}
+
+return {
+   apply_click_event: apply_event,
+   reset_click_event: reset_event,
+   render: render_template,
+}
+}
+
 /* ******************************************************* */
 
 const ItemsList = (gui, hooks, check_subdir, script_key) => {
@@ -874,7 +1037,14 @@ const render_template = () => {
       'itemslist-checkbox', enabled, callback_checkbox
    );
 
-   const items_list = hooks.all ? hooks.all.script_conf.items : ( (hooks["5mins"] ? hooks["5mins"].script_conf.items : hooks.min.script_conf.items) || []); 
+   let items_list = hooks.all ? hooks.all.script_conf.items : ( (hooks["5mins"] ? hooks["5mins"].script_conf.items : hooks.min.script_conf.items) || []); 
+   
+   /* This is necessary, in case no array is given
+      the js is going to crush otherwise, so add an empty array*/
+   if (items_list == null) {
+    items_list = []
+   }
+
    const $text_area = $(`
       <td>
          <div class='form-row'>
@@ -924,7 +1094,13 @@ const reset_event = (event) => {
 
    reset_script_defaults(script_key, check_subdir, (reset_data) => {
       const enabled = reset_data.hooks.all ? reset_data.hooks.all.enabled : (reset_data.hooks["5mins"] ? reset_data.hooks["5mins"].enabled : reset_data.hooks.min.enabled);
-      const items_list = reset_data.hooks.all ? reset_data.hooks.all.script_conf.items : (reset_data.hooks["5mins"] ? reset_data.hooks["5mins"].script_conf.items : reset_data.hooks.min.script_conf.items);
+      let items_list = reset_data.hooks.all ? reset_data.hooks.all.script_conf.items : (reset_data.hooks["5mins"] ? reset_data.hooks["5mins"].script_conf.items : reset_data.hooks.min.script_conf.items);
+
+      /* This is necessary, in case no array is given
+         the js is going to crush otherwise, so add an empty array */
+      if (items_list == null) {
+        items_list = []
+      }
 
       // set textarea value with default's one
       $('#itemslist-textarea').val(items_list.join(','));
@@ -1515,12 +1691,6 @@ $.get(`${http_prefix}/lua/get_check_config.lua`,
       // render template
       template.render();
 
-// append the exclusion list 
-      if(script_subdir == "flow" || script_subdir == "host")
-    appendExclusionList(data);
-      else
-        $(`#exclusion-list-template`).hide();
-
       // bind on_apply event on apply button
       $("#edit-form").off("submit").on('submit', template.apply_click_event);
       $("#btn-reset").off("click").on('click', template.reset_click_event);
@@ -1561,7 +1731,8 @@ const templates = {
    items_list: ItemsList(gui, hooks, check_subdir, script_key),
    long_lived: LongLived(gui, hooks, check_subdir, script_key),
    elephant_flows: ElephantFlows(gui, hooks, check_subdir, script_key),
-   multi_select: MultiSelect(gui, hooks, check_subdir, script_key)
+   multi_select: MultiSelect(gui, hooks, check_subdir, script_key),
+   multi_threshold_cross: MultiThresholdCross(gui, metadata, hooks, check_subdir, script_key)
 }
 
 const isSubdirFlow = (check_subdir === "flow")
@@ -1654,55 +1825,6 @@ $button.off('click').on('click', function () {
 return $button;
 };
 
-function appendExclusionList(data) {
-let ex_list_str = ""
-const scriptConfExList = data.filters;
-
-if (scriptConfExList) {
-   const scriptConfCurrFil = scriptConfExList.current_filters;
-   if (scriptConfCurrFil) {
-      for (const [index, filters] of Object.entries(scriptConfCurrFil)) {
-         for (const [name, value] of Object.entries(filters)) {
-            // Concat the string to create a human readable string
-            if (name === "str_format") {
-               // Temporary check, needs to be removed in a few time
-               continue;
-            }
-            // IP only are supported at the moment, just list the values without <name>=
-            // as this is more intuitive for the user
-            //ex_list_str = ex_list_str + name + "=" + value + ",";
-            ex_list_str = ex_list_str + value + ",";
-         }
-
-         //ex_list_str = ex_list_str.slice(0, -1);
-         //ex_list_str = ex_list_str + "\n";
-      }
-      if (ex_list_str.length > 0) 
-        ex_list_str = ex_list_str.slice(0, -1);
-   }
-}
-
- if ($(`#exclusion-list-template`).length) {
-      /* Only show exclusion lists configuration textarea for those entities that support it */
-      let $container;
-      const $textarea = $($(`#exclusion-list-template`).html());
-      const label = i18n_ext.scripts_list.exclusion_list_title;
-
-      if (["elephant_flows", "long_lived", "items_list"].includes(data.gui.input_builder)) {
-         $container = $(`<tr></tr>`);
-         $container.append($(`<td></td>`), $(`<td></td>`).append($(`<div class='form-row'></div>`).append(
-         $(`<label class='col-3 col-form-label'>${label}</label>`),
-         $(`<div class='col-12'></div>`).append($textarea))));
-      } else {
-         $container = $(`<tr><td></td></tr>`);
-         $container.append($(`<td class='align-middle'>${label}</td>`), $(`<td></td>`).append($(`<div class='form-row'></div>`).append($textarea)));
-      }
-
-      $(`#script-config-editor`).append($container);
-      $(`#script-config-editor Textarea[name='exclusion-list']`).val(ex_list_str);
- }
-}
-
 function delegateActionButton(gui) {
 
 const $button = $(`#btn-action-config`);
@@ -1770,7 +1892,7 @@ $(`span[data-bs-toggle='popover']`).popover({
 $(function () {
 
 const CATEGORY_COLUMN_INDEX = 3;
-const VALUES_COLUMN_INDEX = 5;
+const VALUES_COLUMN_INDEX = 6;
 
 const add_filter_categories_dropdown = () => {
 
@@ -1875,6 +1997,9 @@ if(typeof check_subdir === 'undefined') return;
 const $script_table = $("#scripts-config").DataTable({
    dom: "Bfrtip",
    pagingType: 'full_numbers',
+   columnDefs: [
+      { type: "severity", targets: 4 },
+    ],
    language: {
       info: i18n_ext.showing_x_to_y_rows,
       search: i18n_ext.script_search,
@@ -1888,7 +2013,7 @@ const $script_table = $("#scripts-config").DataTable({
    },
    lengthChange: false,
    ajax: {
-      url: `${http_prefix}/lua/get_checks.lua?check_subdir=${check_subdir}`,
+      url: `${http_prefix}/lua/get_checks.lua?check_subdir=${check_subdir}&ifid={{ifid}}`,
       type: 'get',
       dataSrc: ''
    },
@@ -1920,7 +2045,7 @@ const $script_table = $("#scripts-config").DataTable({
       delegateTooltips();
 
       // update the tabs counters
-      const INDEX_SEARCH_COLUMN = 5;
+      const INDEX_SEARCH_COLUMN = 6;
 
       const $disabled_button = $(`#disabled-scripts`);
       const $all_button = $("#all-scripts");
@@ -2044,7 +2169,21 @@ const $script_table = $("#scripts-config").DataTable({
          }
       },
       {
+         data: 'severity',
+         sortable: true,
+         searchable: true,
+         className: 'text-center no-wrap',
+         render: function (data, type, row) {
+          let severity = ''
+          if (Object.keys(data).length > 0) {
+            severity = `${data.title || ''} <i class="${data.icon}"></i>`
+          }
+          return severity;
+        }
+      },
+      {
          data: 'description',
+         sortable: false,
          render: function (data, type, row) {
 
             if (type == "display") {

@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,16 +26,25 @@
 
 class FlowRiskTLSMissingSNI : public FlowRiskTLS {
  private:
-  FlowAlertType getAlertType() const { return FlowRiskTLSMissingSNIAlert::getClassType(); }
+  FlowAlertType getAlertType() const {
+    return FlowRiskTLSMissingSNIAlert::getClassType();
+  }
 
  public:
-  FlowRiskTLSMissingSNI() : FlowRiskTLS() {};
-  ~FlowRiskTLSMissingSNI() {};
+  FlowRiskTLSMissingSNI() : FlowRiskTLS(){};
+  ~FlowRiskTLSMissingSNI(){};
 
-  FlowAlert *buildAlert(Flow *f) { return new FlowRiskTLSMissingSNIAlert(this, f); }
+  FlowAlert *buildAlert(Flow *f) {
+    return new FlowRiskTLSMissingSNIAlert(this, f);
+  }
 
-  std::string getName()        const { return(FlowRiskAlerts::getCheckName(FlowRiskTLSMissingSNIAlert::getClassRisk())); }
-  ndpi_risk_enum handledRisk()       { return FlowRiskTLSMissingSNIAlert::getClassRisk(); }
+  std::string getName() const {
+    return (FlowRiskAlerts::getCheckName(
+        FlowRiskTLSMissingSNIAlert::getClassRisk()));
+  }
+  ndpi_risk_enum handledRisk() {
+    return FlowRiskTLSMissingSNIAlert::getClassRisk();
+  }
 };
 
 #endif

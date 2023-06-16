@@ -9,10 +9,13 @@ Source: ntopng-%{version}.tgz
 Packager: Luca Deri <deri@ntop.org>
 # Temporary location where the RPM will be built
 BuildRoot:  %{_tmppath}/%{name}-%{version}-root
-Requires: pfring = @PFRING_VERSION@-@PFRING_GIT_RELEASE@, redis >= 2.4.0, rrdtool >= 1.3.8, numactl, libcurl, ntopng-data, logrotate, zeromq >= 4.0.0, openldap, radcli, openssl, hiredis, mysql-libs, ethtool, redhat-lsb-core, libcap, json-c, expat, libzstd, net-snmp-libs, newt, libatomic, libmaxminddb, tcp_wrappers-libs, @LICENSE_DEP@
+%if 0%{?centos_ver} <= 8
+Requires: pfring = @PFRING_VERSION@-@PFRING_GIT_RELEASE@, redis >= 2.4.0, rrdtool >= 1.3.8, numactl, libcurl, ntopng-data, logrotate, zeromq >= 4.0.0, openldap, radcli, openssl, hiredis, mysql-libs, ethtool, redhat-lsb-core, libcap, json-c, expat, libzstd, net-snmp-libs, newt, libatomic, libmaxminddb, tcp_wrappers-libs, librdkafka, @LICENSE_DEP@
+%else
+Requires: pfring = @PFRING_VERSION@-@PFRING_GIT_RELEASE@, redis >= 2.4.0, rrdtool >= 1.3.8, numactl, libcurl, ntopng-data, logrotate, zeromq >= 4.0.0, openldap, radcli, openssl, hiredis, mysql-libs, ethtool, libcap, json-c, expat, libzstd, net-snmp-libs, newt, libatomic, libmaxminddb, tcp_wrappers-libs, librdkafka, @LICENSE_DEP@
+%endif
 # Disable shared libs dependency check (needed by FPGA libs)
 AutoReqProv: no
-
 # Make sure .build-id is not part of the package
 %define _build_id_links none
 
@@ -56,11 +59,6 @@ cp -Lr $HOME/ntopng/httpdocs $HOME/ntopng/scripts $RPM_BUILD_ROOT/usr/share/ntop
 cp $HOME/ntopng/packages/wizard/ntopng-config $RPM_BUILD_ROOT/usr/bin
 mv $RPM_BUILD_ROOT/usr/share/ntopng/httpdocs/misc/ntopng-utils-manage-config $RPM_BUILD_ROOT/usr/bin
 mv $RPM_BUILD_ROOT/usr/share/ntopng/httpdocs/misc/ntopng-utils-manage-updates $RPM_BUILD_ROOT/usr/bin
-%if 0%{?centos_ver} != 6
-if test -f "${HOME}/nIndex/nindex"; then
-    cp ${HOME}/nIndex/nindex $RPM_BUILD_ROOT/usr/bin;
-fi
-%endif
 cp $HOME/ntopng/packages/usr/bin/ntopctl $RPM_BUILD_ROOT/usr/bin/
 # Make sure .mmdb files are not packaged by ntopng as they belong to ntopng-data
 rm -f $RPM_BUILD_ROOT/usr/share/ntopng/httpdocs/geoip/*.mmdb
@@ -113,7 +111,6 @@ rm -fr $RPM_BUILD_ROOT
 %config(noreplace) /etc/ntopng/ntopng.conf
 /etc/ntopng/ntopng.conf.nprobe.sample
 %if 0%{?centos_ver} != 6
-/usr/bin/nindex
 /usr/lib/systemd/system/ntopng.service
 /usr/lib/systemd/system/ntopng@.service
 %else
@@ -189,7 +186,8 @@ echo 'Setting up redis auto startup'
 /bin/chmod gou+s /usr/bin/ntopng-config
 /bin/chown -R ntopng:ntopng /etc/ntopng
 
-if [ ! -f /.dockerenv ]; then
+CMDLINE=$(tr -d '\0' < /proc/1/cmdline) 
+if [ -z "${CMDLINE##*system*}" ] || [ -z "${CMDLINE##*init*}" ]; then # init/systemd (not a container)
 %if 0%{?centos_ver} != 6
 /bin/systemctl daemon-reload
 %systemd_post ntopng.service
@@ -202,7 +200,9 @@ TLS_DIR="/usr/share/ntopng/httpdocs/ssl"
 TLS_CERT_PATH="$TLS_DIR/ntopng-cert.pem"
 if [ ! -f "$TLS_CERT_PATH" ]; then
     openssl req -new -x509 -sha1 -extensions v3_ca -nodes -days 365 -out $TLS_DIR/cert.pem -subj "/CN=ntopng.local"
-    cat $TLS_DIR/privkey.pem $TLS_DIR/cert.pem > $TLS_CERT_PATH
+    mv privkey.pem $TLS_CERT_PATH
+    cat $TLS_DIR/cert.pem >> $TLS_CERT_PATH
+    rm $TLS_DIR/cert.pem
 fi
 
 case "$1" in
@@ -224,7 +224,9 @@ case "$1" in
 esac
 
 %preun
-if [ ! -f /.dockerenv ]; then
+
+CMDLINE=$(tr -d '\0' < /proc/1/cmdline) 
+if [ -z "${CMDLINE##*system*}" ] || [ -z "${CMDLINE##*init*}" ]; then # init/systemd (not a container)
 %if 0%{?centos_ver} == 6
 case "$1" in
   0)
@@ -245,7 +247,8 @@ esac
 fi
 
 %postun
-if [ ! -f /.dockerenv ]; then
+CMDLINE=$(tr -d '\0' < /proc/1/cmdline) 
+if [ -z "${CMDLINE##*system*}" ] || [ -z "${CMDLINE##*init*}" ]; then # init/systemd (not a container)
 %if 0%{?centos_ver} != 6
   %systemd_postun_with_restart ntopng.service
 %endif

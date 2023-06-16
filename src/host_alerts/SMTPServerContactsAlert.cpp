@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,8 +23,10 @@
 
 /* ***************************************************** */
 
-SMTPServerContactsAlert::SMTPServerContactsAlert(HostCheck *c, Host *f, risk_percentage cli_pctg, u_int64_t _contacts, u_int64_t _contacts_threshold)
-  : ServerContactsAlert(c, f, cli_pctg, _contacts, _contacts_threshold) {
-};
+SMTPServerContactsAlert::SMTPServerContactsAlert(HostCheck *c, Host *f,
+                                                 risk_percentage cli_pctg,
+                                                 u_int64_t _contacts,
+                                                 u_int64_t _contacts_threshold)
+    : ServerContactsAlert(c, f, cli_pctg, _contacts, _contacts_threshold){};
 
 /* ***************************************************** */

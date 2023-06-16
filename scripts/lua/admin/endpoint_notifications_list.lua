@@ -13,13 +13,14 @@ local json = require "dkjson"
 local script_manager = require("script_manager")
 local endpoints = require("endpoints")
 local checks = require("checks")
-local alert_severities = require "alert_severities"
+local alert_entities = require "alert_entities"
 local am_utils = require "am_utils"
+local alert_consts = require "alert_consts"
 local host_pools = require "host_pools":create()
 
 sendHTTPContentTypeHeader('text/html')
 
-local NOTIFICATION_URL = "/lua/admin/endpoint_notifications_list.lua"
+local NOTIFICATION_URL = ntop.getHttpPrefix() .. "/lua/admin/endpoint_notifications_list.lua"
 local check_subdir = _GET["subdir"] or "endpoint"
 
 if not isAdministratorOrPrintErr() then
@@ -72,7 +73,6 @@ end
 -- append the menu above the page
 dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
 
-local url = ntop.getHttpPrefix() .. "/lua/admin/endpoint_notifications_list.lua"
 page_utils.print_navbar(i18n("endpoint_notifications.notifications"), '#', navbar_menu)
 
 -- localize endpoint name types in a table
@@ -126,7 +126,8 @@ local context = {
     endpoint_list = endpoints.get_configs(true),
     can_create_recipient = can_create_recipient,
     check_categories = checks.check_categories,
-    alert_severities = alert_severities,
+    check_entities = alert_entities,
+    alert_severities = alert_consts.get_printable_severities(),
     endpoints = endpoint_list,
     endpoints_info = get_max_configs_available(),
     am_hosts = am_hosts_list,

@@ -4,6 +4,8 @@
  */
 'use strict';
 
+import NtopUtils from "../ntop-utils";
+
 
 const DataTableHandlers = function() {
     let handlersIdDict = {};
@@ -30,8 +32,6 @@ const DataTableHandlers = function() {
     }
 }();
     
-let DataTableButtonClickHandlers = {};
-
 window["_DataTableButtonsOnClick"] = function(handlerId, rowId) {
     let onClick = DataTableHandlers.getHandler(handlerId, rowId);
     if (onClick != null) {
@@ -45,7 +45,7 @@ export class DataTableFiltersMenu {
      *
      * @param {options}
      */
-    constructor({ tableAPI, filterMenuKey, filterTitle, filters, columnIndex, icon = null, extraAttributes = "", id = null, url = null, urlParams = null }) {
+    constructor({ tableAPI, filterMenuKey, filterTitle, filters, columnIndex, icon = null, extraAttributes = "", id = null, url = null, urlParams = null, removeAllEntry = false, callbackFunction = null }) {
         this.rawFilters = filters;
         this.tableAPI = tableAPI;
         this.filterTitle = filterTitle;
@@ -58,7 +58,8 @@ export class DataTableFiltersMenu {
         this.extraAttributes = extraAttributes;
         this.id = id;
         this.url = url;
-        this.urlParams;
+        this.removeAllEntry = removeAllEntry;
+        this.callbackFunction = callbackFunction;
       }
 
     get selectedFilter() {
@@ -98,7 +99,7 @@ export class DataTableFiltersMenu {
         let $entry = $(`<li class='dropdown-item pointer'>${filter.label} </li>`);
         
         if(self.url) {
-          $entry = $(`<li class='dropdown-item pointer'><a href=# class='p-1 standard-color'>${filter.label} </li>`)
+          $entry = $(`<li class='dropdown-item pointer'><a href=# class='p-1 standard-color'>${filter.label} </li>`);
 
           if(filter.currently_active == true) {
             // set active filter title and key
@@ -111,7 +112,9 @@ export class DataTableFiltersMenu {
             // remove the active class from the li elements
             self.$dropdown.container.find('li').removeClass(`active`);
             // add active class to current entry
-            $entry.addClass(`active`);
+            if(filter.key !== 'all') {
+              $entry.addClass(`active`);
+            }
           }
         } else if (filter.regex !== undefined && (filter.countable === undefined || filter.countable)) {
             const data = this.tableAPI.columns(this.columnIndex).data()[0];
@@ -126,20 +129,29 @@ export class DataTableFiltersMenu {
         }
 
         $entry.on('click', function (e) {
+          // set active filter title and key
+          if (self.$dropdown.title.parent().find(`i.fas`).length == 0) {
+            self.$dropdown.title.parent().prepend(`<i class='fas fa-filter'></i>`);
+          }
+
+          const newContent = $entry.html();
+          self.$dropdown.title.html(newContent);
+          // remove the active class from the li elements
+          self.$dropdown.container.find('li').removeClass(`active`);
+          // add active class to current entry
+          if(filter.key !== 'all') {
+            $entry.addClass(`active`);
+          }
+
+          if(self.callbackFunction) {
+            self.callbackFunction(self.tableAPI, filter);
+            if(filter.callback) filter.callback();
+            return;
+          }
+
           if(!self.url) {
             self.preventUpdate = true;
 
-            // set active filter title and key
-            if (self.$dropdown.title.parent().find(`i.fas`).length == 0) {
-                self.$dropdown.title.parent().prepend(`<i class='fas fa-filter'></i>`);
-            }
-
-            const newContent = $entry.html();
-            self.$dropdown.title.html(newContent);
-            // remove the active class from the li elements
-            self.$dropdown.container.find('li').removeClass(`active`);
-            // add active class to current entry
-            $entry.addClass(`active`);
             // if the filter have a callback then call it
             if (filter.callback) filter.callback();
             // perform the table filtering
@@ -149,8 +161,7 @@ export class DataTableFiltersMenu {
           } else {
             self.urlParams = window.location.search
             const newUrlParams = new URLSearchParams(self.urlParams)
-            newUrlParams.set(self.filterMenuKey, (typeof(filter.id) != undefined) ? filter.id : '')
-            const newUrl = self.url + '?' + newUrlParams.toString()
+            newUrlParams.set(self.filterMenuKey, (typeof(filter.id) != "undefined") ? filter.id : '')
 
             window.history.pushState('', '', window.location.pathname + '?' + newUrlParams.toString())
             location.reload()
@@ -179,7 +190,7 @@ export class DataTableFiltersMenu {
       if(typeof this.columnIndex == 'undefined') {
         $(`<span id="${this.id}" ${this.extraAttributes} title="${this.filterTitle}">${this.icon || this.filterTitle}</span>`).insertBefore(this.$datatableWrapper.find('.dataTables_filter').parent());
       } else {
-        const $dropdownContainer = $(`<div id='${this.filterMenuKey}-filters' class='dropdown d-inline'></div>`);
+        const $dropdownContainer = $(`<div id='${this.filterMenuKey}_dropdown' class='dropdown d-inline'></div>`);
         const $dropdownButton = $(`<button class='btn-link btn dropdown-toggle' data-bs-toggle="dropdown" type='button'></button>`);
         const $dropdownTitle = $(`<span class='filter-title'>${this.filterTitle}</span>`);
         $dropdownButton.append($dropdownTitle);
@@ -192,16 +203,17 @@ export class DataTableFiltersMenu {
 
         this.filters = this._createFilters(filters);
 
-        const $menuContainer = $(`<ul class='dropdown-menu dropdown-menu-lg-end scrollable-dropdown' id='${this.filterMenuKey}-filter-menu'></ul>`);
+        const $menuContainer = $(`<ul class='dropdown-menu dropdown-menu-lg-end scrollable-dropdown' id='${this.filterMenuKey}_dropdown_menu'></ul>`);
         for (const [_, filter] of Object.entries(this.filters)) {
             $menuContainer.append(filter.$node);
         }
 
         // the All entry is created by the object
-        const allFilter = this._generateAllFilter();
-
-        $menuContainer.prepend(this._createMenuEntry(allFilter));
-
+        if(!this.removeAllEntry) {
+          const allFilter = this._generateAllFilter();
+          $menuContainer.prepend(this._createMenuEntry(allFilter));  
+        }
+        
         // append the created dropdown inside
         $dropdownContainer.append($dropdownButton);
         $dropdownContainer.append($menuContainer);
@@ -266,7 +278,7 @@ export class DataTableUtils {
     /**
      * Return a standard config for the Sprymedia (c) DataTables
      */
-    static getStdDatatableConfig(dtButtons = [], dom = "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6 text-end'<'dt-search'f>B>rtip>") {
+    static getStdDatatableConfig(dtButtons = [], dom = "<'row'<'col-sm-2 d-inline-block'l><'col-sm-10 text-end d-inline-block'<'dt-search'f>B>rtip>") {
 
         // hide the buttons section if there aren't buttons inside the array
         if (dtButtons.length == 0) {
@@ -276,7 +288,7 @@ export class DataTableUtils {
         return {
             dom: dom,
             pagingType: 'full_numbers',
-            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, `${i18n.all}`]],
+            lengthMenu: [[10, 20, 50, 100], [10, 20, 50, 100]],
             language: {
                 search: i18n.script_search,
                 paginate: {
@@ -302,6 +314,15 @@ export class DataTableUtils {
         }
     }
 
+    static createLinkCallback(action) {
+	let handler = "";
+	let fOnClick = DataTableHandlers.addHandler(action.handler);
+	handler = `onclick="${fOnClick}"`;
+	return `<a href=#
+                   ${handler}>
+                   ${action.text || ''}
+                </a>`;
+    }
 
     /**
      * Example of action:
@@ -533,7 +554,7 @@ export class DataTableUtils {
                     col.visible(false);
                 }
 
-                const $checkbox = $(`<input class="form-check-input" ${(toggled ? 'checked' : '')} type="checkbox" id="${id}">`)
+                const $checkbox = $(`<input class="form-check-input" ${(toggled ? 'checked' : '')} type="checkbox" id="${id}">`);
                 const $wrapper = $(`
                     <div class="form-check form-switch">
                         <label class="form-check-label" for="${id}">
@@ -598,7 +619,7 @@ export class DataTableRenders {
         return `${DataTableRenders.formatValueLabel(severity, type, alert)} ${DataTableRenders.formatValueLabel(alert.alert_id, type, alert)}`;
     }
 
-    static hideIfZero(obj, type, row) {
+    static hideIfZero(obj, type, row, zero_is_null) {
         let color = (obj.color !== undefined ? obj.color : "#aaa");
         let value = (obj.value !== undefined ? obj.value : obj);
         if (type === "display" && parseInt(value) === 0) color = "#aaa";
@@ -607,25 +628,41 @@ export class DataTableRenders {
         return span;
     }
 
-    static secondsToTime(seconds, type, row) {
+    static secondsToTime(seconds, type, row, zero_is_null) {
         if (type === "display") return NtopUtils.secondsToTime(seconds);
         return seconds;
     }
 
-    static filterize(key, value, label, tag_label, title, html) {
-        return `<a class='tag-filter' data-tag-key='${key}' title='${title || value}' data-tag-value='${value}' data-tag-label='${tag_label || label || value}' href='#'>${html || label || value}</a>`;
+    static filterize(key, value, label, tag_label, title, html, is_snmp_ip, ip) {
+        let content = `<a class='tag-filter' data-tag-key='${key}' title='${title || value}' data-tag-value='${value}' data-tag-label='${tag_label || label || value}' href='javascript:void(0)'>${html || label || value}</a>`;
+        if(is_snmp_ip != null) {
+            if(is_snmp_ip) {
+                if (value) {
+                    let url = NtopUtils.buildURL(`${http_prefix}/lua/pro/enterprise/snmp_device_details.lua?host=${value}`);
+                    content += ` <a href='${url}'data-bs-toggle='tooltip' title=''><i class='fas fa-laptop'></i></a>`;
+                }
+            } else {
+                if (ip && value) {
+                    let url = NtopUtils.buildURL(`${http_prefix}/lua/pro/enterprise/snmp_interface_details.lua?host=${ip}&snmp_port_idx=${value}`);
+                    content += ` <a href='${url}'data-bs-toggle='tooltip' title=''><i class='fas fa-laptop'></i></a>`;
+                }
+            }
+        }
+        return content;
     }
 
-    static formatValueLabel(obj, type, row) {
+    static formatValueLabel(obj, type, row, zero_is_null) {
         if (type !== "display") return obj.value;
         let cell = obj.label;
+	if (zero_is_null == true && obj.value == 0) {
+	    cell = "";
+	}
         if (obj.color) cell = `<span class='font-weight-bold' style='color: ${obj.color}'>${cell}</span>`;
         return cell;
     }
 
-    static formatMessage(obj, type, row) {
+    static formatMessage(obj, type, row, zero_is_null) {
         if (type !== "display") return obj.value;
-        const strip_tags = function(html) { let t = document.createElement("div"); t.innerHTML = html; return t.textContent || t.innerText || ""; }
            
         let cell = obj.descr;
         if (obj.shorten_descr)
@@ -634,7 +671,7 @@ export class DataTableRenders {
         return cell;
     }
 
-    static formatSubtype(obj, type, row) {
+    static formatSubtype(obj, type, row, zero_is_null) {
         if (type !== "display") return obj;
 
         let label = DataTableRenders.filterize('subtype', obj, obj);
@@ -642,34 +679,48 @@ export class DataTableRenders {
         return label; 
     }
 
+    static filterize_2(key, value, label, tag_label, title, html) {
+	if (value == null || (value == 0 && (label == null || label == ""))) { return ""; }
+        return `<a class='tag-filter' data-tag-key='${key}' title='${title || value}' data-tag-value='${value}' data-tag-label='${tag_label || label || value}' href='javascript:void(0)'>${html || label || value}</a>`;
+    }
+
+    static getFormatGenericField(field, zero_is_null) {	
+	return function(obj, type, row) {
+            if (type !== "display") return obj.value;
+	    if (zero_is_null == true && obj?.value == 0) { return ""; }
+    	    let html_ref = '';
+	    if (obj.reference !== undefined)
+		html_ref = obj.reference
+            let label = DataTableRenders.filterize_2(field, row[field].value, row[field].label, row[field].label, row[field].label);
+            return label + ' ' + html_ref;
+	}
+    }
+
     static formatSNMPInterface(obj, type, row) {
         if (type !== "display") return obj.value;
-        let cell = DataTableRenders.filterize('snmp_interface', obj.value, obj.label, obj.label, obj.label);
+        let cell = DataTableRenders.filterize('snmp_interface', obj.value, obj.label, obj.label, obj.label,null,false, row.ip);
         if (obj.color) cell = `<span class='font-weight-bold' style='color: ${obj.color}'>${cell}</span>`;
         return cell;
     }
 
-    static formatSNMPIP(obj, type, row) {
+    static formatSNMPIP(obj, type, row, zero_is_null) {
         if (type !== "display") return obj;
-        return DataTableRenders.filterize('ip', obj, obj, obj, obj);
+        return DataTableRenders.filterize('ip', obj, obj, obj, obj, null, true);
     }
 
-    static getFormatGenericField(field) {
-	return function(obj, type, row) {
-            if (type !== "display") return obj.value;
-    	    let html_ref = '';
-	    if (obj.reference !== undefined)
-		html_ref = obj.reference
-            let label = DataTableRenders.filterize(field, row[field].value, row[field].label, row[field].label, row[field].label);
-            return label + ' ' + html_ref;
-	}
+    static formatProbeIP(obj, type, row, zero_is_null) {
+        if (type !== "display") return obj;
+
+	let label = DataTableRenders.filterize('probe_ip', obj.value, obj.label, obj.label, obj.label_long);
+
+        return label; 
     }
-    
-    static formatHost(obj, type, row) {
+   
+    static formatHost(obj, type, row, zero_is_null) {
         if (type !== "display") return obj;
     	let html_ref = '';
 	if (obj.reference !== undefined)
-	   html_ref = obj.reference
+	   html_ref = obj.reference;
 	let label = "";
 
 	let hostKey, hostValue;
@@ -684,7 +735,7 @@ export class DataTableRenders {
             label = DataTableRenders.filterize('ip', obj.value, obj.label, obj.label, obj.label_long);
 	}
 
-        if (row.vlan_id && row.vlan_id != "") {
+        if (row.vlan_id && row.vlan_id != "" && row.vlan_id != "0") {
             label = DataTableRenders.filterize(hostKey, `${hostValue}@${row.vlan_id}`, `${obj.label}@${row.vlan_id}`, `${obj.label}@${row.vlan_id}`, `${obj.label_long}@${row.vlan_id}`);
 	}
 
@@ -710,20 +761,19 @@ export class DataTableRenders {
 
     static filterizeVlan(flow, row, key, value, label, title) {
 	let valueVlan = value;
-	let labelVlan = label;
+  let labelVlan = label;
 	let titleVlan = title;
 	if (flow.vlan && flow.vlan.value != 0) {
 	    valueVlan = `${value}@${flow.vlan.value}`;
 	    labelVlan = `${label}@${flow.vlan.label}`;
 	    titleVlan = `${title}@${flow.vlan.title}`;
 	}
-        return DataTableRenders.filterize(key, valueVlan, labelVlan, labelVlan, titleVlan); 
+      labelVlan = NtopUtils.shortenLabel(labelVlan, 16, ".")
+      return DataTableRenders.filterize(key, valueVlan, labelVlan, labelVlan, titleVlan); 
     }
 
-    static formatFlowTuple(flow, type, row) {
-        let active_ref = (flow.active_url ? `<a href="${flow.active_url}"><i class="fas fa-stream"></i></a>` : "");
-        let vlan = ""
-
+    static formatFlowTuple(flow, type, row, zero_is_null) {
+      let active_ref = (flow.active_url ? `<a href="${flow.active_url}"><i class="fas fa-stream"></i></a>` : "");
         let cliLabel = "";
         if (flow.cli_ip.name) {
           let title = "";
@@ -750,7 +800,7 @@ export class DataTableRenders {
             srvLabel = DataTableRenders.filterizeVlan(flow, row, 'srv_name', flow.srv_ip.name, flow.srv_ip.label, title);
         } else
             srvLabel = DataTableRenders.filterizeVlan(flow, row, 'srv_ip', flow.srv_ip.value, flow.srv_ip.label, flow.srv_ip.label_long);
-        let srvPortLabel = ((flow.cli_port && flow.cli_port > 0) ? ":"+DataTableRenders.filterize('srv_port', flow.srv_port, flow.srv_port) : "");
+        let srvPortLabel = ((flow.srv_port && flow.srv_port > 0) ? ":"+DataTableRenders.filterize('srv_port', flow.srv_port, flow.srv_port) : "");
 
         let srvFlagLabel= ''
 
@@ -780,7 +830,7 @@ export class DataTableRenders {
         return `${active_ref} ${cliLabel}${cliBlacklisted}${cliFlagLabel}${cliPortLabel} ${cliIcons} ${flow.cli_ip.reference} <i class="fas fa-exchange-alt fa-lg" aria-hidden="true"></i> ${srvLabel}${srvBlacklisted}${srvFlagLabel}${srvPortLabel} ${srvIcons} ${flow.srv_ip.reference}`;
     }
 
-    static formatNameDescription(obj, type, row) {
+    static formatNameDescription(obj, type, row, zero_is_null) {
         if (type !== "display") return obj.name;
         let msg = DataTableRenders.filterize('alert_id', obj.value, obj.name, obj.fullname, obj.fullname);
 

@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,27 +23,22 @@
 
 /* *************************************** */
 
-VLAN::VLAN(NetworkInterface *_iface, VLANid _vlan_id) : GenericHashEntry(_iface), GenericTrafficElement(), Score(_iface) {
+VLAN::VLAN(NetworkInterface* _iface, u_int16_t _vlan_id)
+    : GenericHashEntry(_iface), GenericTrafficElement(), Score(_iface) {
   vlan_id = _vlan_id;
 
 #ifdef VLAN_DEBUG
   ntop->getTrace()->traceEvent(TRACE_NORMAL, "Created VLAN %u", vlan_id);
 #endif
-
-  deserializeFromRedis();
 }
 
 /* *************************************** */
 
-void VLAN::set_hash_entry_state_idle() {
-if(ntop->getPrefs()->is_idle_local_host_cache_enabled())
-  serializeToRedis();
-}
+void VLAN::set_hash_entry_state_idle() { ; /* Nothing to do */ }
 
 /* *************************************** */
 
-VLAN::~VLAN() {
-  /* NOTE: ndpiStats is alredy freed by GenericTrafficElement */
+VLAN::~VLAN() { /* NOTE: ndpiStats is alredy freed by GenericTrafficElement */
 }
 
 /* *************************************** */
@@ -53,11 +48,11 @@ void VLAN::lua(lua_State* vm, DetailsLevel details_level, bool asListElement) {
 
   lua_push_uint64_table_entry(vm, "vlan", vlan_id);
 
-  if(details_level >= details_high) {
+  if (details_level >= details_high) {
     ((GenericTrafficElement*)this)->lua(vm, true);
 
-    if(details_level >= details_higher)
-      if(ndpiStats) ndpiStats->lua(iface, vm);
+    if (details_level >= details_higher)
+      if (ndpiStats) ndpiStats->lua(iface, vm);
   }
 
   lua_push_uint64_table_entry(vm, "vlan_id", vlan_id);
@@ -66,12 +61,14 @@ void VLAN::lua(lua_State* vm, DetailsLevel details_level, bool asListElement) {
   lua_push_uint64_table_entry(vm, "seen.last", last_seen);
   lua_push_uint64_table_entry(vm, "duration", get_duration());
 
-  lua_push_uint64_table_entry(vm,   "num_hosts", getNumHosts());
+  lua_push_uint64_table_entry(vm, "num_hosts", getNumHosts());
 
   Score::lua_get_score(vm);
   Score::lua_get_score_breakdown(vm);
 
-  if(asListElement) {
+  usedPorts.lua(vm, iface);
+
+  if (asListElement) {
     lua_pushinteger(vm, vlan_id);
     lua_insert(vm, -2);
     lua_settable(vm, -3);
@@ -80,6 +77,4 @@ void VLAN::lua(lua_State* vm, DetailsLevel details_level, bool asListElement) {
 
 /* *************************************** */
 
-bool VLAN::equal(VLANid _vlan_id) {
-  return(vlan_id == _vlan_id);
-}
+bool VLAN::equal(u_int16_t _vlan_id) { return (vlan_id == _vlan_id); }

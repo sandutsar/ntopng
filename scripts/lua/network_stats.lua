@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -33,12 +33,17 @@ page_utils.print_page_title(getPageTitle())
 -- ##############################
 
 if(ntop.isPro()) then
-   local template_utils = require "template_utils"
+   local networks_stats = interface.getNetworksStats()
+   local numNetworks = table.len(networks_stats)
 
-   template_utils.render("pages/networks_map.html", {
-			    url = ntop.getHttpPrefix()..'/lua/pro/rest/v2/get/host/top/network_hosts_score.lua',
-			    prefix = ntop.getHttpPrefix()
-   })
+   if(numNetworks > 0) then
+      local template_utils = require "template_utils"
+      
+      template_utils.render("pages/networks_map.html", {
+			       url = ntop.getHttpPrefix()..'/lua/pro/rest/v2/get/host/top/network_hosts_score.lua',
+			       prefix = ntop.getHttpPrefix()
+      })
+   end
 end
 
 -- ##############################
@@ -108,14 +113,30 @@ print [[
 			     }
 
 				 },
-			     {
-			     title: "]] print(i18n("score")) print[[",
-				 field: "column_score",
-				 sortable: true,
-                             css: {
-			        textAlign: 'center'
-			     },
-				 },
+         {
+         title: "]] print(i18n("score")) print[[",
+       field: "column_score",
+       sortable: true,
+                           css: {
+            textAlign: 'center'
+         },
+       },
+       {
+       title: "]] print(i18n("host_score_ratio")) print[[",
+     field: "column_host_score_ratio",
+     sortable: false,
+                         css: {
+          textAlign: 'center'
+       },
+     },
+       {
+       title: "]] print(i18n("flow_details.alerted_flows")) print[[",
+     field: "column_alerted_flows",
+     sortable: true,
+                         css: {
+          textAlign: 'center'
+       },
+     },
 ]]
 
 print [[

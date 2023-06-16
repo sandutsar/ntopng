@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 
 #include "ntop_includes.h"
 
+//#define DEBUG_RECIPIENT_QUEUE
+
 /* *************************************** */
 
 RecipientQueue::RecipientQueue(u_int16_t _recipient_id) {
@@ -32,80 +34,122 @@ RecipientQueue::RecipientQueue(u_int16_t _recipient_id) {
   minimum_severity = alert_level_none;
 
   /* All categories enabled by default */
-  for (int i=0; i < MAX_NUM_SCRIPT_CATEGORIES; i++)
+  for (int i = 0; i < MAX_NUM_SCRIPT_CATEGORIES; i++)
     enabled_categories.setBit(i);
+
+  /* All entities enabled by default */
+  for (int i = 0; i < ALERT_ENTITY_MAX_NUM_ENTITIES; i++)
+    enabled_entities.setBit(i);
 }
 
 /* *************************************** */
 
 RecipientQueue::~RecipientQueue() {
-  if(queue)
-    delete queue;
+  if (queue) delete queue;
 }
 
 /* *************************************** */
 
-bool RecipientQueue::dequeue(AlertFifoItem *notification) {
-  if(!queue || !notification)
-    return false;
+AlertFifoItem *RecipientQueue::dequeue() {
+  AlertFifoItem *notification;
 
-  *notification = queue->dequeue();
+  if (!queue) return NULL;
 
-  if(notification->alert) {
+  notification = queue->dequeue();
+
+  if (notification) {
     last_use = time(NULL);
+  }
+
+  return notification;
+}
+
+/* *************************************** */
+
+/* Filter and Enqueue alerts to the recipient
+ * (similar to what recipients.dispatch_notification does in Lua)
+ */
+bool RecipientQueue::enqueue(const AlertFifoItem* const notification,
+                             AlertEntity alert_entity) {
+  bool res = false;
+
+#ifdef DEBUG_RECIPIENT_QUEUE
+  ntop->getTrace()->traceEvent(TRACE_NORMAL, "Checking alert (entity %d) for recipient %d", alert_entity, recipient_id);
+#endif
+
+  if (!notification ||
+      notification->alert_severity <
+          minimum_severity /* Severity too low for this recipient     */
+      ||
+      !(enabled_categories.isSetBit(
+          notification
+              ->alert_category)) /* Category not enabled for this recipient */
+      || !(enabled_entities.isSetBit(
+             alert_entity)) /* Entity not enabled for this recipient */
+  ) {
+#ifdef DEBUG_RECIPIENT_QUEUE
+    ntop->getTrace()->traceEvent(TRACE_NORMAL, "Alert filtered out due to filtering policy for recipient %d", recipient_id);
+#endif
+    return true; /* Nothing to enqueue */
+  }
+
+  if (recipient_id == 0 && /* Default recipient (DB) */
+      alert_entity == alert_entity_flow &&
+      ntop->getPrefs()->do_dump_flows_on_clickhouse()) {
+    /* Do not store flow alerts on ClickHouse as they are retrieved using a view
+     * on historical flows) */
+    /* But still increment the number of uses */
+    uses++;
+#ifdef DEBUG_RECIPIENT_QUEUE
+    ntop->getTrace()->traceEvent(TRACE_NORMAL, "Flow alert (no enqueue - clickhouse uses: %u)", uses);
+#endif
     return true;
   }
 
-  return false;
-}
-
-/* *************************************** */
-
-bool RecipientQueue::enqueue(const AlertFifoItem* const notification, AlertEntity alert_entity) {
-  bool res = false;
-
-  if(!notification
-     || !notification->alert
-     || notification->alert_severity < minimum_severity              /* Severity too low for this recipient     */
-     || !(enabled_categories.isSetBit(notification->alert_category))  /* Category not enabled for this recipient */
-     )
-    return true; /* Nothing to enqueue */
-
-  if(recipient_id == 0) {
-    /* Default recipient (SQLite / ClickHouse DB) - do not filter alerts by host */
-    if(alert_entity == alert_entity_flow &&
-        ntop->getPrefs()->useClickHouse()) {
-      return true; /* Do not store flow alert - a view on historical flows is used */
-    }
-  } else { 
+  if (recipient_id == 0) {
+    /* Default recipient (SQLite / ClickHouse DB) - do not filter alerts by host
+     */
+  } else {
     /* Other recipients (notifications) */
-    if(alert_entity == alert_entity_flow) {
-      if(!enabled_host_pools.isSetBit(notification->pools.flow.cli_host_pool) &&
-          !enabled_host_pools.isSetBit(notification->pools.flow.srv_host_pool))
+    if (alert_entity == alert_entity_flow) {
+      if (!enabled_host_pools.isSetBit(
+              notification->flow.cli_host_pool) &&
+          !enabled_host_pools.isSetBit(notification->flow.srv_host_pool))
         return true;
-    } else if(alert_entity == alert_entity_host) {
-      if(!enabled_host_pools.isSetBit(notification->pools.host.host_pool))
+    } else if (alert_entity == alert_entity_host) {
+      if (!enabled_host_pools.isSetBit(notification->host.host_pool))
         return true;
     }
   }
 
-  if((!queue &&
-       !(queue = new (nothrow) AlertFifoQueue(ALERTS_NOTIFICATIONS_QUEUE_SIZE)))) {
+  if ((!queue && !(queue = new (nothrow)
+                       AlertFifoQueue(ALERTS_NOTIFICATIONS_QUEUE_SIZE)))) {
     /* Queue not available */
     drops++;
     return false; /* Enqueue failed */
   }
 
   /* Enqueue the notification (allocate memory for the alert string) */
-  AlertFifoItem q = *notification;
-  if((q.alert = strdup(notification->alert)))
-    res = queue->enqueue(q);
+  AlertFifoItem *new_item = new AlertFifoItem(notification);
 
-  if(!res) {
+  if (new_item) {
+    res = queue->enqueue(new_item);
+
+    if (!res) {
+      drops++;
+      delete new_item;
+#ifdef DEBUG_RECIPIENT_QUEUE
+      ntop->getTrace()->traceEvent(TRACE_NORMAL, "Alert enqueue failed (drop)");
+#endif
+    } else {
+      uses++;
+#ifdef DEBUG_RECIPIENT_QUEUE
+      ntop->getTrace()->traceEvent(TRACE_NORMAL, "Alert enqueued successfully (uses: %u)", uses);
+#endif
+    }
+  } else {
     drops++;
-    if(q.alert) free(q.alert);
-  } else
-    uses++;
+  }
 
   return res;
 }
@@ -125,10 +169,10 @@ void RecipientQueue::lua(lua_State* vm) {
 bool RecipientQueue::empty() {
   bool res = true;
 
-  if(queue) {
-    if(!queue->empty()) {
+  if (queue) {
+    if (!queue->empty()) {
       res = false;
-    }  
+    }
   }
 
   return res;

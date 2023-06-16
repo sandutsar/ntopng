@@ -239,6 +239,19 @@ The token in ntopng can be generated following these steps:
 
 .. _token: https://www.ntop.org/guides/ntopng/api/rest/api_v2.html
 
+The token can be used to authenticate by setting `Token` as authorization method in the HTTP request, example:
+
+.. code:: text
+
+   Authorization: Token 39ca319a42...
+
+You can also use this from curl as follows:
+
+.. code:: text
+
+   curl -v http://localhost:3000/lua/locale.lua -H 'Authorization: Token 39ca319a42...'
+
+
 Please check the API documentation for further information about token_ usage.
 
 

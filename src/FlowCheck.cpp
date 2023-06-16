@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,47 +23,52 @@
 
 /* **************************************************** */
 
-FlowCheck::FlowCheck(NtopngEdition _edition,
-		     bool _packet_interface_only, bool _nedge_exclude, bool _nedge_only,
-		     bool _has_protocol_detected, bool _has_periodic_update, bool _has_flow_end, bool _has_flow_begin)
-  : Check(_edition, _packet_interface_only, _nedge_exclude, _nedge_only) {
-  has_protocol_detected  = _has_protocol_detected;
-  has_periodic_update    = _has_periodic_update;
-  has_flow_end           = _has_flow_end;
-  has_flow_begin         = _has_flow_begin;
+FlowCheck::FlowCheck(NtopngEdition _edition, bool _packet_interface_only,
+                     bool _nedge_exclude, bool _nedge_only,
+                     bool _has_protocol_detected, bool _has_periodic_update,
+                     bool _has_flow_end, bool _has_flow_begin)
+    : Check(_edition, _packet_interface_only, _nedge_exclude, _nedge_only) {
+  has_protocol_detected = _has_protocol_detected;
+  has_periodic_update = _has_periodic_update;
+  has_flow_end = _has_flow_end;
+  has_flow_begin = _has_flow_begin;
+#ifdef CHECKS_PROFILING
+  stats.execution_time = 0;
+#endif
 };
 
 /* **************************************************** */
 
-FlowCheck::~FlowCheck() {
-};
+FlowCheck::~FlowCheck(){};
 
 /* **************************************************** */
 
-void FlowCheck::addCheck(std::list<FlowCheck*> *l, NetworkInterface *iface, FlowChecks check) {
-  if(!isCheckCompatibleWithInterface(iface)) return;
+void FlowCheck::addCheck(std::list<FlowCheck *> *l, NetworkInterface *iface,
+                         FlowChecks check) {
+  if (!isCheckCompatibleWithInterface(iface)) return;
 
-  switch(check) {
-  case flow_check_protocol_detected:
-    if(has_protocol_detected) l->push_back(this);
-    break;
-    
-  case flow_check_periodic_update:
-    if(has_periodic_update) l->push_back(this);
-    break;
-    
-  case flow_check_flow_end:
-    if(has_flow_end) l->push_back(this);
-    break;
-    
-  case flow_check_flow_begin:
-    if(has_flow_begin) l->push_back(this);
-    break;
+  switch (check) {
+    case flow_check_protocol_detected:
+      if (has_protocol_detected) l->push_back(this);
+      break;
 
-  case flow_check_flow_none:
-    if(!(has_protocol_detected || has_periodic_update || has_flow_end || has_flow_begin))
-      l->push_back(this);
-    break;
+    case flow_check_periodic_update:
+      if (has_periodic_update) l->push_back(this);
+      break;
+
+    case flow_check_flow_end:
+      if (has_flow_end) l->push_back(this);
+      break;
+
+    case flow_check_flow_begin:
+      if (has_flow_begin) l->push_back(this);
+      break;
+
+    case flow_check_flow_none:
+      if (!(has_protocol_detected || has_periodic_update || has_flow_end ||
+            has_flow_begin))
+        l->push_back(this);
+      break;
   }
 }
 
@@ -71,8 +76,9 @@ void FlowCheck::addCheck(std::list<FlowCheck*> *l, NetworkInterface *iface, Flow
 
 bool FlowCheck::loadConfiguration(json_object *config) {
   bool rc = true;
-  
-  // ntop->getTrace()->traceEvent(TRACE_NORMAL, "%s() %s", __FUNCTION__, json_object_to_json_string(config));
+
+  // ntop->getTrace()->traceEvent(TRACE_NORMAL, "%s() %s", __FUNCTION__,
+  // json_object_to_json_string(config));
 
   /*
     Example of simple configuration without parameters:
@@ -87,13 +93,15 @@ bool FlowCheck::loadConfiguration(json_object *config) {
       }
     }
    */
-  
-  return(rc);
+
+  return (rc);
 }
 
 /* **************************************************** */
 
-void FlowCheck::computeCliSrvScore(FlowAlertType alert_type, risk_percentage cli_pctg, u_int8_t *cli_score, u_int8_t *srv_score) {
+void FlowCheck::computeCliSrvScore(FlowAlertType alert_type,
+                                   risk_percentage cli_pctg,
+                                   u_int8_t *cli_score, u_int8_t *srv_score) {
   u_int8_t score = ntop->getFlowAlertScore(alert_type.id);
   *cli_score = (score * cli_pctg) / 100;
   *srv_score = score - (*cli_score);
@@ -101,3 +109,17 @@ void FlowCheck::computeCliSrvScore(FlowAlertType alert_type, risk_percentage cli
 
 /* **************************************************** */
 
+void FlowCheck::lua(lua_State *vm) {
+#ifdef CHECKS_PROFILING
+  /* Stats */
+  lua_newtable(vm);
+
+  lua_push_uint64_table_entry(vm, "execution_time", stats.execution_time);
+
+  lua_pushstring(vm, "stats");
+  lua_insert(vm, -2);
+  lua_settable(vm, -3);
+#endif
+}
+
+/* **************************************************** */

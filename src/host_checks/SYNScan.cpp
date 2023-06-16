@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,14 +27,15 @@
 void SYNScan::periodicUpdate(Host *h, HostAlert *engaged_alert) {
   u_int16_t hits = 0;
 
-  if((hits = h->syn_scan_attacker_hits()) > threshold)
-    triggerFlowHitsAlert(h, engaged_alert, true, hits, threshold, CLIENT_FULL_RISK_PERCENTAGE);
-  else if((hits = h->syn_scan_victim_hits()) > threshold) 
-    triggerFlowHitsAlert(h, engaged_alert, false, hits, threshold, CLIENT_NO_RISK_PERCENTAGE);
+  if ((hits = h->syn_scan_attacker_hits()) > threshold)
+    triggerFlowHitsAlert(h, engaged_alert, true, hits, threshold,
+                         CLIENT_FULL_RISK_PERCENTAGE);
+  else if ((hits = h->syn_scan_victim_hits()) > threshold)
+    triggerFlowHitsAlert(h, engaged_alert, false, hits, threshold,
+                         CLIENT_NO_RISK_PERCENTAGE);
 
   /* Reset counters once done */
   h->reset_syn_scan_hits();
 }
 
 /* ***************************************************** */
-

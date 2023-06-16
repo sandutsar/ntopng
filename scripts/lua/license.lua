@@ -1,5 +1,5 @@
 --
--- (C) 2020 - ntop.org
+-- (C) 2020-22 - ntop.org
 --
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
@@ -47,7 +47,7 @@ if ntop.isnEdge() then
          edition = ("nedge_pro")
       end
     end
- else
+else
    if(info["version.embedded_edition"] == true) then
       edition = ("embedded")
    elseif(info["version.enterprise_edition"] == true) then
@@ -66,7 +66,9 @@ local context = {
       external_link = external_link,
       version = version,
       systemIdHref = systemIdHref,
-      is_admin = isAdministrator()
+      systemId = info["pro.systemid"],
+      is_admin = isAdministrator(),
+      license  = info["pro.license_encoded"]
    }
 }
 

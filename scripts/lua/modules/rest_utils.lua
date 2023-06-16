@@ -3,6 +3,8 @@
 --
 --
 
+local clock_start = os.clock()
+
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 
@@ -93,6 +95,9 @@ local rest_utils = {
 	 -- nEdge
 	 dhcp_active_leases_not_nedge        = { http_code = 409, rc = -55, str = "DHCP_ACTIVE_LEASES_NOT_NEDGE"},
 	 dhcp_active_leases_not_routing_mode = { http_code = 409, rc = -56, str = "DHCP_ACTIVE_LEASES_NOT_ROUTING_MODE"},
+
+         -- Checks
+         not_enabled                         = { http_code = 400, rc =  -2, str = "NOT_ENABLED"},
       },
    }
 }
@@ -146,6 +151,10 @@ function rest_utils.vanilla_payload_response(ret_const, payload, content_type, e
    if(extra_headers == nil) then extra_headers = {} end
    sendHTTPHeader(content_type, nil, extra_headers, ret_const.http_code)
    print(payload)
+end
+
+if(trace_script_duration ~= nil) then
+   io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
 end
 
 return rest_utils

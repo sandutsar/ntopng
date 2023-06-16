@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,13 +26,14 @@
 
 class TCPZeroWindowAlert : public FlowAlert {
  private:
-
  public:
-  static FlowAlertType getClassType() { return { flow_alert_zero_tcp_window, alert_category_network }; }
-  static u_int8_t      getDefaultScore() { return SCORE_LEVEL_NOTICE; };
+  static FlowAlertType getClassType() {
+    return {flow_alert_zero_tcp_window, alert_category_network};
+  }
+  static u_int8_t getDefaultScore() { return SCORE_LEVEL_NOTICE; };
 
- TCPZeroWindowAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f) {};
-  ~TCPZeroWindowAlert() {};
+  TCPZeroWindowAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  ~TCPZeroWindowAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }
 };

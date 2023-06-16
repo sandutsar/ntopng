@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,16 +26,25 @@
 
 class FlowRiskSSHObsoleteClient : public FlowRisk {
  private:
-  FlowAlertType getAlertType() const { return FlowRiskSSHObsoleteClientAlert::getClassType(); }
+  FlowAlertType getAlertType() const {
+    return FlowRiskSSHObsoleteClientAlert::getClassType();
+  }
 
  public:
-  FlowRiskSSHObsoleteClient() : FlowRisk() {};
-  ~FlowRiskSSHObsoleteClient() {};
+  FlowRiskSSHObsoleteClient() : FlowRisk(){};
+  ~FlowRiskSSHObsoleteClient(){};
 
-  FlowAlert *buildAlert(Flow *f)  { return new FlowRiskSSHObsoleteClientAlert(this, f); }
+  FlowAlert *buildAlert(Flow *f) {
+    return new FlowRiskSSHObsoleteClientAlert(this, f);
+  }
 
-  std::string getName()        const { return(FlowRiskAlerts::getCheckName(FlowRiskSSHObsoleteClientAlert::getClassRisk())); }
-  ndpi_risk_enum handledRisk() { return FlowRiskSSHObsoleteClientAlert::getClassRisk();       }
+  std::string getName() const {
+    return (FlowRiskAlerts::getCheckName(
+        FlowRiskSSHObsoleteClientAlert::getClassRisk()));
+  }
+  ndpi_risk_enum handledRisk() {
+    return FlowRiskSSHObsoleteClientAlert::getClassRisk();
+  }
 };
 
 #endif

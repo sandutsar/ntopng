@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,12 +36,12 @@ class Fingerprint {
   std::map<std::string /* fingerprint */, FingerprintStats> fp;
 
   void prune();
-  
+
  public:
   Fingerprint() { ; }
 
   void update(const char *fp, const char *app_name, bool is_malicious);
-  void lua(const char *key, lua_State* vm);
+  void lua(const char *key, lua_State *vm);
 };
 
 #endif /* _FINGERPRINT_H_ */

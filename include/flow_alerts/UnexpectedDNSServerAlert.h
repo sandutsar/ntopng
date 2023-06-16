@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,16 +26,18 @@
 
 class UnexpectedDNSServerAlert : public UnexpectedServerAlert {
  private:
-
  protected:
-  const IpAddress* getServerIP(Flow *f) { return(f->get_dns_srv_ip_addr()); }
+  const IpAddress *getServerIP(Flow *f) { return (f->get_dns_srv_ip_addr()); }
 
  public:
-  static FlowAlertType getClassType() { return { flow_alert_unexpected_dns_server, alert_category_security }; }
-  static u_int8_t      getDefaultScore() { return SCORE_LEVEL_ERROR; };
+  static FlowAlertType getClassType() {
+    return {flow_alert_unexpected_dns_server, alert_category_security};
+  }
+  static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
- UnexpectedDNSServerAlert(FlowCheck *c, Flow *f) : UnexpectedServerAlert(c, f) {};
-  ~UnexpectedDNSServerAlert() {};
+  UnexpectedDNSServerAlert(FlowCheck *c, Flow *f)
+      : UnexpectedServerAlert(c, f){};
+  ~UnexpectedDNSServerAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }
 };

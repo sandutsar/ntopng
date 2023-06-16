@@ -130,7 +130,7 @@ other hand, enabling the "Layer-7 Applications" (in particular for the local hos
 has a high impact since there are many protocols and timeseries must be processed
 for each of them.
 
-It is possible to skip timeseries generation for a particular network interface
+It is possible to skip timeseries generation for a specific network interface
 from the interface settings page. By disabling timeseries generation on a network
 interface, no timeseries data will be written for the interface itself and for
 all the local hosts belonging to it.
@@ -145,6 +145,35 @@ Countries, VLANs and so on, which can be enabled independently.
 .. figure:: ../img/basic_concepts_timeseries_to_enable_2.png
   :align: center
   :alt: InfluxDB Preferences
+
+Network Matrix Timeseries
+-------------------------
+
+.. note::
+
+  Network Matrix is not avaailble in the community edition.
+
+  ntopng can store timeseries for communicatins across local networks, called Network Matrix.
+  
+It represent the traffic done between Local Networks (can be added to ntopng using the `-m` option in the configuration file), both sent and received.
+
+.. figure:: ../img/basic_concepts_timeseries_enable_network_matrix.png
+  :align: center
+  :alt: Network Matrix Preference
+
+It can be found into the Networks timeseries page; to jump to it, access the Networks tab and then click the charts icon. 
+This pspecific timeseries is reported in all time presets except the last 5 minutes.
+
+.. figure:: ../img/basic_concepts_timeseries_jump_to_network_matrix.png
+  :align: center
+  :alt: Network Matrix Preference
+
+|
+
+.. figure:: ../img/basic_concepts_timeseries_network_matrix.png
+  :align: center
+  :alt: Network Matrix
+
 
 
 .. _RRD: https://oss.oetiker.ch/rrdtool

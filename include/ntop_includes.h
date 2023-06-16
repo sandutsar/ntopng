@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,7 @@
 
 #include "config.h"
 
-
-#if defined (__FreeBSD) || defined(__FreeBSD__)
+#if defined(__FreeBSD) || defined(__FreeBSD__)
 #define _XOPEN_SOURCE
 #define _WITH_GETLINE
 #endif
@@ -93,10 +92,10 @@
 #ifndef WIN32
 #include <grp.h>
 #endif
-//#include <libgen.h>
+// #include <libgen.h>
 #if defined(__linux__)
-#include <linux/ethtool.h> // ethtool
-#include <linux/sockios.h> // sockios
+#include <linux/ethtool.h>  // ethtool
+#include <linux/sockios.h>  // sockios
 #include <ifaddrs.h>
 #elif defined(__FreeBSD__) || defined(__APPLE__)
 #include <net/if_dl.h>
@@ -130,7 +129,11 @@ extern "C" {
 #endif
 #include "json.h"
 #include <sqlite3.h>
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 #include <hiredis.h>
+#endif
+
 #ifdef HAVE_LDAP
 #include <ldap.h>
 #endif
@@ -139,7 +142,7 @@ extern "C" {
 #endif
 
 #ifdef WIN32
-/* 
+/*
 See
 https://translate.google.co.uk/translate?sl=auto&tl=en&u=http%3A%2F%2Fbugsfixed.blogspot.com%2F2017%2F05%2Fvcpkg.html
 */
@@ -149,7 +152,7 @@ https://translate.google.co.uk/translate?sl=auto&tl=en&u=http%3A%2F%2Fbugsfixed.
 
 #ifdef WIN32
 #pragma comment(lib, "crypt32.lib")
-#pragma comment(lib, "wldap32.lib") 
+#pragma comment(lib, "wldap32.lib")
 #endif
 
 #include "third-party/uthash.h"
@@ -173,7 +176,8 @@ https://translate.google.co.uk/translate?sl=auto&tl=en&u=http%3A%2F%2Fbugsfixed.
 #include <map>
 #include <unordered_map>
 
-#if !defined(__clang__) && (__GNUC__ <= 4) && (__GNUC_MINOR__ < 8) && !defined(WIN32)
+#if !defined(__clang__) && (__GNUC__ <= 4) && (__GNUC_MINOR__ < 8) && \
+    !defined(WIN32)
 #include <cstdatomic>
 #else
 #include <atomic>
@@ -238,11 +242,16 @@ using namespace std;
 #include "NetworkInterfaceAlertableEntity.h"
 #include "InterfaceMemberAlertableEntity.h"
 #include "BehaviouralCounter.h"
-
+#include "DESCounter.h"
+#include "HWCounter.h"
+#include "RSICounter.h"
 #ifdef NTOPNG_PRO
 #include "BehaviorAnalysis.h"
 #endif
-
+#include "ThroughputStats.h"
+#include "TrafficCounter.h"
+#include "ProtoCounter.h"
+#include "CategoryCounter.h"
 #include "nDPIStats.h"
 #include "InterarrivalStats.h"
 #include "FlowStats.h"
@@ -250,8 +259,9 @@ using namespace std;
 #include "CustomAppMaps.h"
 #include "CustomAppStats.h"
 #endif
-#include "ThroughputStats.h"
 #include "GenericTrafficElement.h"
+#include "BlacklistUsageStats.h"
+#include "BlacklistStats.h"
 #include "AlertCounter.h"
 #include "NetworkStats.h"
 #include "ContainerStats.h"
@@ -285,7 +295,6 @@ using namespace std;
 #include "HostPools.h"
 #include "Fingerprint.h"
 #include "Prefs.h"
-#include "SerializableElement.h"
 #include "DnsStats.h"
 #include "SNMP.h"
 #include "NetworkDiscovery.h"
@@ -308,6 +317,10 @@ using namespace std;
 #include "AlertStore.h"
 #include "SQLiteAlertStore.h"
 #include "DB.h"
+#if defined(HAVE_KAFKA) && defined(NTOPNG_PRO)
+#include "KafkaProducer.h"
+#include "KafkaClient.h"
+#endif
 #ifdef HAVE_MYSQL
 #include "MySQLDB.h"
 #endif
@@ -330,6 +343,7 @@ using namespace std;
 #include "SyslogLuaEngine.h"
 #include "FifoQueue.h"
 #include "StringFifoQueue.h"
+#include "AlertFifoItem.h"
 #include "AlertFifoQueue.h"
 #include "FifoSerializerQueue.h"
 #include "RRDTimeseriesExporter.h"
@@ -341,7 +355,14 @@ using namespace std;
 #include "ServiceMap.h"
 #include "PeriodicityMap.h"
 #endif
+#include "PortDetails.h"
+#include "HostsPorts.h"
+#include "HostDetails.h"
+#include "HostsPortsAnalysis.h"
+#include "UsedPorts.h"
 #include "ObservationPointIdTrafficStats.h"
+#include "FlowsHostInfo.h"
+#include "AggregatedFlowsStats.h"
 #include "NetworkInterface.h"
 #ifndef HAVE_NEDGE
 #include "PcapInterface.h"
@@ -353,7 +374,13 @@ using namespace std;
 #include "VirtualHost.h"
 #include "VirtualHostHash.h"
 #include "HTTPstats.h"
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#include "RedisStub.h"
+#else
 #include "Redis.h"
+#endif
+
 #ifndef HAVE_NEDGE
 #include "ElasticSearch.h"
 #ifndef WIN32
@@ -375,11 +402,14 @@ using namespace std;
 #include "HwBypass.h"
 #include "SilicomHwBypass.h"
 #include "NetfilterInterface.h"
+#else
+#include "nTapInterface.h"
 #endif
 #endif
 #ifndef HAVE_NEDGE
 #include "ParserInterface.h"
 #include "ListeningPorts.h"
+#include "ZMQUtils.h"
 #include "ZMQParserInterface.h"
 #include "ZMQPublisher.h"
 #include "ZMQCollectorInterface.h"
@@ -388,6 +418,10 @@ using namespace std;
 #include "ZCCollectorInterface.h"
 #include "DummyInterface.h"
 #include "ExportInterface.h"
+#endif
+
+#if defined(HAVE_KAFKA) && defined(NTOPNG_PRO)
+#include "KafkaCollectorInterface.h"
 #endif
 
 #include "Geolocation.h"
@@ -405,9 +439,14 @@ using namespace std;
 #include "HostChecksStatus.h"
 #include "ActiveHostWalkerInfo.h"
 #include "Host.h"
+#include "DoHDoTStats.h"
 #include "LocalHostStats.h"
 #include "LocalHost.h"
 #include "RemoteHost.h"
+#ifdef NTOPNG_PRO
+#include "AssetManagement.h"
+#include "ModbusStats.h"
+#endif
 #include "IEC104Stats.h"
 #include "Flow.h"
 #include "FlowHash.h"
@@ -437,6 +476,10 @@ using namespace std;
 #include "FlowChecksExecutor.h"
 #include "HostChecksLoader.h"
 #include "HostChecksExecutor.h"
+#ifdef HAVE_NEDGE
+#include "MulticastForwarder.h"
+#endif
+#include "Radius.h"
 #include "Ntop.h"
 
 #ifdef NTOPNG_PRO

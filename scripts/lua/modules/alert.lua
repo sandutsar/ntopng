@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -22,6 +22,27 @@ end
 
 function Alert:format()
    --tprint("base format")
+end
+
+-- ##############################################
+
+-- @brief Function called to set standard information:
+--        - score
+--        - subtype
+--        - granularity
+--        Those information could be set using standard functions
+--        like set_score() or set_granularity
+function Alert:set_info(params)
+  local script = params.check
+  if(not self.score or self.score == 0) then
+    self.score = ntop.mapSeverityToScore(script.severity.severity_id or 0 --[[ no score ]])
+  end
+  
+  if params.entity_info then
+    self.subtype = params.entity_info.name or ""
+  end
+  
+  self.granularity = params.granularity or ""
 end
 
 -- ##############################################
@@ -119,11 +140,13 @@ end
 function Alert:set_score_notice()  self.score = ntop.mapSeverityToScore(alert_severities.notice.severity_id) end
 function Alert:set_score_warning() self.score = ntop.mapSeverityToScore(alert_severities.warning.severity_id) end
 function Alert:set_score_error()   self.score = ntop.mapSeverityToScore(alert_severities.error.severity_id) end
+function Alert:set_score_critical() self.score = ntop.mapSeverityToScore(alert_severities.critical.severity_id) end
+function Alert:set_score_emergency() self.score = ntop.mapSeverityToScore(alert_severities.emergency.severity_id) end
 
 -- ##############################################
 
 function Alert:set_subtype(subtype)
-   self.subtype = subtype
+  self.subtype = subtype
 end
 
 -- ##############################################

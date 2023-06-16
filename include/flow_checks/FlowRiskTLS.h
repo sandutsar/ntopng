@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,11 +26,10 @@
 
 class FlowRiskTLS : public FlowRisk {
  private:
-
  public:
- FlowRiskTLS() : FlowRisk() {};
- FlowRiskTLS(NtopngEdition _edition) : FlowRisk(_edition) {};
-  ~FlowRiskTLS() {};
+  FlowRiskTLS() : FlowRisk(){};
+  FlowRiskTLS(NtopngEdition _edition) : FlowRisk(_edition){};
+  ~FlowRiskTLS(){};
 };
 
 #endif

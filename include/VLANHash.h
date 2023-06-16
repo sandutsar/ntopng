@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,15 +23,15 @@
 #define _VLAN_HASH_H_
 
 #include "ntop_includes.h"
- 
+
 class VLANHash : public GenericHash {
  private:
   Mutex m;
 
  public:
-  VLANHash(NetworkInterface *iface, u_int _num_hashes, u_int _max_hash_size);
+  VLANHash(NetworkInterface* iface, u_int _num_hashes, u_int _max_hash_size);
 
-  VLAN* get(VLANid vlan_id, bool is_inline_call);
+  VLAN* get(u_int16_t vlan_id, bool is_inline_call);
 
 #ifdef VLAN_DEBUG
   void printHash();

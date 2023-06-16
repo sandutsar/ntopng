@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,6 @@
 
 /* ***************************************************** */
 
-DNSServerContacts::DNSServerContacts() : ServerContacts() {
-}
+DNSServerContacts::DNSServerContacts() : ServerContacts() {}
 
 /* ***************************************************** */
-

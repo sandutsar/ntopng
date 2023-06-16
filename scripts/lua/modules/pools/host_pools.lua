@@ -6,6 +6,7 @@ local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/pools/?.lua;" .. package.path
 package.path = dirs.installdir .. "/scripts/lua/modules/notifications/?.lua;" .. package.path
 
+local clock_start = os.clock()
 
 require "lua_utils"
 local pools = require "pools"
@@ -424,7 +425,7 @@ function host_pools:hostpool2record(ifid, pool_id, pool)
                           pool_name .. "'>" .. pool_name .. '</A>'
     record["column_id"] = pool_link
 
-    record["column_hosts"] = pool["num_hosts"] .. ""
+    record["column_hosts"] = format_high_num_value_for_tables(pool, "num_hosts")
     record["column_since"] = secondsToTime(os.time() - pool["seen.first"] + 1)
     record["column_num_dropped_flows"] = (pool["flows.dropped"] or 0) .. ""
 
@@ -512,5 +513,9 @@ function host_pools:updateRRDs(ifid, dump_ndpi, verbose)
 end
 
 -- ##############################################
+
+if(trace_script_duration ~= nil) then
+  io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end
 
 return host_pools

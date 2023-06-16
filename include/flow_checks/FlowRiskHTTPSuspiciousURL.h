@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,22 +26,30 @@
 
 class FlowRiskHTTPSuspiciousURL : public FlowRisk {
  private:
-  FlowAlertType getAlertType() const { return FlowRiskHTTPSuspiciousURLAlert::getClassType(); }
+  FlowAlertType getAlertType() const {
+    return FlowRiskHTTPSuspiciousURLAlert::getClassType();
+  }
 
  public:
-  FlowRiskHTTPSuspiciousURL() : FlowRisk() {};
-  ~FlowRiskHTTPSuspiciousURL() {};
+  FlowRiskHTTPSuspiciousURL() : FlowRisk(){};
+  ~FlowRiskHTTPSuspiciousURL(){};
 
   FlowAlert *buildAlert(Flow *f) {
-    FlowRiskHTTPSuspiciousURLAlert *alert = new FlowRiskHTTPSuspiciousURLAlert(this, f);
+    FlowRiskHTTPSuspiciousURLAlert *alert =
+        new FlowRiskHTTPSuspiciousURLAlert(this, f);
 
     alert->setCliAttacker(), alert->setSrvVictim();
 
     return alert;
   }
 
-  std::string getName()        const { return(FlowRiskAlerts::getCheckName(FlowRiskHTTPSuspiciousURLAlert::getClassRisk())); }
-  ndpi_risk_enum handledRisk()       { return FlowRiskHTTPSuspiciousURLAlert::getClassRisk(); }
+  std::string getName() const {
+    return (FlowRiskAlerts::getCheckName(
+        FlowRiskHTTPSuspiciousURLAlert::getClassRisk()));
+  }
+  ndpi_risk_enum handledRisk() {
+    return FlowRiskHTTPSuspiciousURLAlert::getClassRisk();
+  }
 };
 
 #endif

@@ -47,7 +47,8 @@ if((ifid ~= nil) and (isAdministrator())) then
   interface.select(getInterfaceName(ifid))
 
   if pool_id ~= nil then
-    local active_hosts = interface.getHostsInfo(false, nil, nil, nil, nil, nil, nil, nil, nil, nil, true--[[no macs]], tonumber(pool_id)).hosts
+     local active_hosts = interface.getHostsInfo(false, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+						 true--[[no macs]], tonumber(pool_id)).hosts
     local network_stats = interface.getNetworksStats()
     local pool_members = host_pools_nedge.getPoolMembers(pool_id) or {}
 
@@ -117,8 +118,8 @@ if((ifid ~= nil) and (isAdministrator())) then
   else
     local by_pool_name = {}
 
-    for _,pool in pairs(host_pools_nedge.getPoolsList()) do
-      if pool.id ~= host_pools_nedge.DEFAULT_POOL_ID then
+    for _, pool in pairs(host_pools_nedge.getPoolsList()) do
+      if tonumber(pool.id) ~= host_pools_nedge.DEFAULT_POOL_ID then
         by_pool_name[pool.name] = pool
       end
     end

@@ -161,9 +161,9 @@ end
 
 -- #################################################################
 
--- @brief Sanity checks for the endpoint key
+-- @brief coherence checks for the endpoint key
 -- @param endpoint_key A string with the notification endpoint key
--- @return true if the sanity checks are ok, false otherwise
+-- @return true if the coherence checks are ok, false otherwise
 local function check_endpoint_key(endpoint_key)
    if not endpoints.get_types()[endpoint_key] then
       return false, {status = "failed", error = {type = "endpoint_not_existing"}}
@@ -174,9 +174,9 @@ end
 
 -- #################################################################
 
--- @brief Sanity checks for the endpoint configuration name
+-- @brief coherence checks for the endpoint configuration name
 -- @param endpoint_conf_name A string with the configuration name
--- @return true if the sanity checks are ok, false otherwise
+-- @return true if the coherence checks are ok, false otherwise
 local function check_endpoint_conf_name(endpoint_conf_name)
    if not endpoint_conf_name or endpoint_conf_name == "" then
       return false, {status = "failed", error = {type = "invalid_endpoint_conf_name"}}
@@ -187,7 +187,7 @@ end
 
 -- #################################################################
 
--- @brief Sanity checks for the endpoint configuration parameters
+-- @brief coherence checks for the endpoint configuration parameters
 -- @param endpoint_key A string with the notification endpoint key
 -- @param endpoint_params A table with endpoint configuration params that will be possibly sanitized
 -- @return false with a description of the error, or true, with a table containing sanitized configuration params.
@@ -236,20 +236,20 @@ function endpoints.add_config(endpoint_key, endpoint_conf_name, endpoint_params)
    -- Is the config already existing?
    local is_existing, existing_conf = is_endpoint_config_existing(endpoint_conf_name)
    if is_existing then
-      return {status = "failed",
-	      endpoint_id = existing_conf.endpoint_id,
-	      endpoint_conf_name = existing_conf.endpoint_conf_name,
+      return {
+         status = "failed",
+	 endpoint_id = existing_conf.endpoint_id,
+	 endpoint_conf_name = existing_conf.endpoint_conf_name,
 
-	      error = {
-		 type = "endpoint_config_already_existing",
-		 endpoint_conf_name = existing_conf.endpoint_conf_name,
-	      }
+	 error = {
+            type = "endpoint_config_already_existing",
+            endpoint_conf_name = existing_conf.endpoint_conf_name,
+         }
       }
    end
 
    -- Are the submitted params those expected by the endpoint?
    ok, status = check_endpoint_config_params(endpoint_key, endpoint_params)
-
    if not ok then
       return status
    end
@@ -464,11 +464,12 @@ function endpoints.add_configs_with_recipients(configs)
             for _, recipient_conf in ipairs(conf.recipients) do
                local endpoint_recipient_name = recipient_conf.recipient_name
                local check_categories = recipient_conf.check_categories
+               local check_entities   = recipient_conf.check_entities
                local minimum_severity = recipient_conf.minimum_severity
                local recipient_params = recipient_conf.recipient_params
 
                ret = recipients.add_recipient(ret.endpoint_id, endpoint_recipient_name,
-					      check_categories, minimum_severity,
+					      check_categories, check_entities, minimum_severity,
 					      {}, -- Host pools - restore should take care of this automatically
 					      {}, -- Interface pools - restore should take care of this automatically
 					      recipient_params)

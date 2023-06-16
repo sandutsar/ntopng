@@ -351,7 +351,7 @@ function notification_recipients.test_recipient(endpoint_conf_name, endpoint_rec
 
    local safe_params = status["safe_params"]
 
-   -- Create dummy recipient
+   -- Create placeholder recipient
 
    local recipient = {
       endpoint_conf = ec,
@@ -425,7 +425,7 @@ local function process_notifications_by_priority(ready_recipients, high_priority
    -- To avoid having one recipient jeopardizing all the resources, the total
    -- budget is consumed in chunks, that is, recipients are iterated multiple times
    -- and, each time any recipient has a maximum budget for every iteration.
-   local budget_per_iter = 10
+   local budget_per_iter = 100
 
    -- Cycle until there are ready_recipients and total_budget left
    while #ready_recipients > 0 and total_budget >= 0 and not ntop.isDeadlineApproaching() do

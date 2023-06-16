@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,22 +26,30 @@
 
 class FlowRiskTLSSuspiciousESNIUsage : public FlowRiskTLS {
  private:
-  FlowAlertType getAlertType() const { return FlowRiskTLSSuspiciousESNIUsageAlert::getClassType(); }
+  FlowAlertType getAlertType() const {
+    return FlowRiskTLSSuspiciousESNIUsageAlert::getClassType();
+  }
 
  public:
-  FlowRiskTLSSuspiciousESNIUsage() : FlowRiskTLS() {};
-  ~FlowRiskTLSSuspiciousESNIUsage() {};
+  FlowRiskTLSSuspiciousESNIUsage() : FlowRiskTLS(){};
+  ~FlowRiskTLSSuspiciousESNIUsage(){};
 
   FlowAlert *buildAlert(Flow *f) {
-    FlowRiskTLSSuspiciousESNIUsageAlert *alert = new FlowRiskTLSSuspiciousESNIUsageAlert(this, f);
+    FlowRiskTLSSuspiciousESNIUsageAlert *alert =
+        new FlowRiskTLSSuspiciousESNIUsageAlert(this, f);
 
     alert->setCliAttacker();
 
     return alert;
   }
 
-  std::string getName()        const { return(FlowRiskAlerts::getCheckName(FlowRiskTLSSuspiciousESNIUsageAlert::getClassRisk())); }
-  ndpi_risk_enum handledRisk()       { return FlowRiskTLSSuspiciousESNIUsageAlert::getClassRisk(); }
+  std::string getName() const {
+    return (FlowRiskAlerts::getCheckName(
+        FlowRiskTLSSuspiciousESNIUsageAlert::getClassRisk()));
+  }
+  ndpi_risk_enum handledRisk() {
+    return FlowRiskTLSSuspiciousESNIUsageAlert::getClassRisk();
+  }
 };
 
 #endif

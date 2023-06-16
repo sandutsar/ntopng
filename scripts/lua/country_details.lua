@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 dirs = ntop.getDirs()
@@ -57,21 +57,8 @@ local title = i18n("country_details.country") .. ": "..country
 Selectively render information pages
 --]]
 if page == "historical" then
-    local schema = _GET["ts_schema"] or "country:traffic"
-    local selected_epoch = _GET["epoch"] or ""
-    local url = ntop.getHttpPrefix()..'/lua/country_details.lua?ifid='..ifId..'&country='..country..'&page=historical'
-
-    local tags = {
-      ifid = ifId,
-      country = country,
-    }
-
-    graph_utils.drawGraphs(ifId, schema, tags, _GET["zoom"], url, selected_epoch, {
-      timeseries = {
-        {schema="country:traffic",             label=i18n("traffic"), split_directions = true --[[ split RX and TX directions ]]},
-	{schema="country:score",               label=i18n("score"), split_directions = true},
-      }
-    })
+   local source_value_object = { country = country, ifid = interface.getId() }
+   graph_utils.drawNewGraphs(source_value_object)
 end
 
 dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")

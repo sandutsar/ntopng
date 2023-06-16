@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,11 +26,13 @@
 
 class LateralMovementAlert : public FlowAlert {
  public:
-  static FlowAlertType getClassType() { return { flow_alert_lateral_movement, alert_category_network }; }
-  static u_int8_t      getDefaultScore() { return SCORE_LEVEL_WARNING; };
+  static FlowAlertType getClassType() {
+    return {flow_alert_lateral_movement, alert_category_network};
+  }
+  static u_int8_t getDefaultScore() { return SCORE_LEVEL_WARNING; };
 
-  LateralMovementAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f) { };
-  ~LateralMovementAlert() { };
+  LateralMovementAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  ~LateralMovementAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }
 };

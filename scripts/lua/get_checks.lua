@@ -21,6 +21,7 @@ sendHTTPContentTypeHeader('application/json')
 
 local subdirs = {}
 local subdir = _GET["check_subdir"]
+local ifid = tonumber(_GET["ifid"] or getSystemInterfaceId())
 
 
 -- If subdir is the meta-subdir 'all', then all the available subdirs are returned.
@@ -48,53 +49,74 @@ for _, subdir in ipairs(subdirs) do
 
    local scripts = checks.load(getSystemInterfaceId(), script_type, subdir, {return_all = true})
 
+  for script_name, script in pairs(scripts.modules) do
+    if script.gui and script.gui.i18n_title and script.gui.i18n_description then
+      local hooks = checks.getScriptConfig(config_set, script, subdir)
 
-   for script_name, script in pairs(scripts.modules) do
-      if script.gui and script.gui.i18n_title and script.gui.i18n_description then
-	 local hooks = checks.getScriptConfig(config_set, script, subdir)
+      local enabled_hooks = {}
+      local all_hooks = {}
 
-	 local enabled_hooks = {}
-	 local all_hooks = {}
+      for hook, conf in pairs(hooks) do
+        local label
 
-	 for hook, conf in pairs(hooks) do
-	    local label
+        if(conf.enabled) then
+          enabled_hooks[#enabled_hooks + 1] = hook
+        end
 
-	    if(conf.enabled) then
-	       enabled_hooks[#enabled_hooks + 1] = hook
-	    end
+        local granularity_info = alert_consts.alerts_granularities[hook]
 
-	    local granularity_info = alert_consts.alerts_granularities[hook]
+        if(granularity_info) then
+          label = i18n(granularity_info.i18n_title)
+        end
 
-	    if(granularity_info) then
-	       label = i18n(granularity_info.i18n_title)
-	    end
-
-	    all_hooks[#all_hooks + 1] = {
-	       key = hook,
-	       label = label,
-	    }
-	 end
-
-	 local input_handler = script.gui.input_builder
-
-	 result[#result + 1] = {
-	    key = script_name,
-	    title = i18n(script.gui.i18n_title) or script.gui.i18n_title,
-	    description = i18n(script.gui.i18n_description) or script.gui.i18n_description,
-	    category_title = i18n(script.category.i18n_title),
-	    category_icon = script.category.icon,
-	    enabled_hooks = enabled_hooks,
-	    all_hooks = all_hooks,
-	    packet_interface_only = script.packet_interface_only == true,
-	    is_enabled = not table.empty(enabled_hooks),
-	    edit_url = checks.getScriptEditorUrl(script),
-	    input_handler = input_handler,
-	    value_description = script.template:describeConfig(hooks),
-	    subdir = subdir,
-	    subdir_title = i18n("config_scripts.granularities."..subdir),
-	 }
+        all_hooks[#all_hooks + 1] = {
+          key = hook,
+          label = label,
+        }
       end
-   end
+
+      if script.packet_interface_only == true then
+        if not interface.isPacketInterface() then
+          goto continue
+        end 
+      end
+
+      if subdir == 'flow' and script.alert_id then
+        -- This is an exception, flow alerts has scores set in c++
+        local severity_id = ntop.mapScoreToSeverity(ntop.getFlowAlertScore(script.alert_id))
+        script.severity = alert_consts.alertSeverityById(severity_id)
+      end
+
+      local severity = {}
+      if script.severity then
+        severity.title = i18n(script.severity.i18n_title)
+        severity.icon =  script.severity.icon
+      end
+
+
+      local input_handler = script.gui.input_builder
+
+      result[#result + 1] = {
+        key = script_name,
+        title = i18n(script.gui.i18n_title) or script.gui.i18n_title,
+        description = i18n(script.gui.i18n_description) or script.gui.i18n_description,
+        severity = severity,
+        category_title = i18n(script.category.i18n_title),
+        category_icon = script.category.icon,
+        enabled_hooks = enabled_hooks,
+        all_hooks = all_hooks,
+        packet_interface_only = script.packet_interface_only == true,
+        is_enabled = not table.empty(enabled_hooks),
+        edit_url = checks.getScriptEditorUrl(script),
+        input_handler = input_handler,
+        value_description = script.template:describeConfig(hooks),
+        subdir = subdir,
+        subdir_title = i18n("config_scripts.granularities."..subdir),
+	    }
+    end
+
+    ::continue::
+  end
 end
 
 -- ################################################

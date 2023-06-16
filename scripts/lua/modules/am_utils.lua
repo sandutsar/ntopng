@@ -394,6 +394,7 @@ local function deserializeAmPrefs(host_key, val, config_only)
     local v = json.decode(val)
 
     if v then
+      rv.host_key = host_key
       rv.show_iface = false
       rv.ifname = v.ifname or ''
       rv.threshold = tonumber(v.threshold) or 500
@@ -425,7 +426,7 @@ end
 function am_utils.getHosts(config_only, granularity)
   local hosts = ntop.getHashAllCache(am_hosts_key) or {}
   local rv = {}
-
+  
   for host_key, val in pairs(hosts) do
     local host = deserializeAmPrefs(host_key, val, config_only)
 
@@ -506,7 +507,7 @@ end
 
 function am_utils.deleteHost(host, measurement)
   local ts_utils = require("ts_utils")
-  local alert_utils = require("alert_utils")
+  -- local alert_utils = require("alert_utils")
 
   -- NOTE: system interface must be manually sected and then unselected
   local old_iface = tostring(interface.getId())
@@ -758,6 +759,7 @@ function am_utils.triggerAlert(numeric_ip, ip_label, current_value, upper_thresh
     -- Unreachable
     local host, measurement = key2amhost(ip_label)
     local info = am_utils.getMeasurementInfo(measurement)
+    type_info:set_score_critical()
 
     if info and info.unreachable_alert_i18n then
       -- The measurement provides an alternative message for the alert
@@ -933,10 +935,14 @@ function am_utils.run_am_check(when, all_hosts, granularity)
     local operator = info.measurement.operator
     local jitter = tonumber(info.jitter)
     local mean = tonumber(info.mean)
+    local calculate_scaling = true
 
+    if info.calculate_scaling then
+      calculate_scaling = info.calculate_scaling
+    end
     if(do_trace) then
        print("[AM result] "..key.."\n")
-       tprint(info)
+       -- tprint(info)
     end
 
     if jitter then jitter = round(jitter, 2) end
@@ -945,14 +951,14 @@ function am_utils.run_am_check(when, all_hosts, granularity)
     if areSystemTimeseriesEnabled() then
        local value = host_value
 
-       if info.measurement.chart_scaling_value then
+       if (calculate_scaling) and (info.measurement.chart_scaling_value) and (info.measurement.chart_scaling_value == 1) then
          value = value * info.measurement.chart_scaling_value
        end
 
        local ts_data = {ifid = getSystemInterfaceId(), host = host.host, metric = host.measurement, value = value}
        if(do_trace) then
 	  print("[Writing AM timeseries ")
-	  tprint(ts_data)
+	  -- tprint(ts_data)
        end
 
        ts_utils.append(am_schema, ts_data, when)

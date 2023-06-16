@@ -74,6 +74,7 @@ flow_consts.flow_fields_description = {
    ["IN_DST_MAC"] = i18n("flow_fields_description.in_dst_mac"),
    ["OUT_DST_MAC"] = i18n("flow_fields_description.out_dst_mac"),
    ["APPLICATION_ID"] = i18n("flow_fields_description.application_id"),
+   ["APPLICATION_NAME"] = i18n("flow_fields_description.application_name"),
    ["PACKET_SECTION_OFFSET"] = i18n("flow_fields_description.packet_section_offset"),
    ["SAMPLED_PACKET_SIZE"] = i18n("flow_fields_description.sampled_packet_size"),
    ["SAMPLED_PACKET_ID"] = i18n("flow_fields_description.sampled_packet_id"),
@@ -511,9 +512,10 @@ flow_consts.flow_fields_description = {
    ['DEVICE_NAME']    = i18n("flow_fields_description.device_name"),
    
    -- Misc
-   ["COMMUNITY_ID"] = i18n("flow_fields_description.community_id"),
-   ["FLOW_VERDICT"] = i18n("flow_fields_description.flow_verdict"),
+   ["COMMUNITY_ID"]  = i18n("flow_fields_description.community_id"),
+   ["FLOW_VERDICT"]  = i18n("flow_fields_description.flow_verdict"),
    ["L7_RISK_SCORE"] = i18n("flow_fields_description.l7_risk_score"),
+   ["L7_INFO"]       = i18n("flow_fields_description.l7_info"),
    
    -- Numeric fields not handled by nProbe
    ["25"]  =  i18n("flow_fields_description.ip_lenght_minimum"),

@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -30,10 +30,7 @@ else
     time_from = tonumber(time_from)
     time_to = tonumber(time_to)
 
-    local timeline_path
-    if recording_utils.getCurrentTrafficRecordingProvider(ifstats.id) ~= "ntopng" then
-       timeline_path = recording_utils.getCurrentTrafficRecordingProviderTimelinePath(ifstats.id)
-    end
+    local timeline_path = recording_utils.getTimelineByInterval(ifstats.id, time_from, time_to)
 
     local params = {
       time_from = time_from,

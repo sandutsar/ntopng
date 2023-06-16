@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,26 +31,28 @@ class UnexpectedServer : public FlowCheck {
 
   virtual FlowAlertType getAlertType() const = 0;
 
-protected:
+ protected:
   bool isAllowedHost(Flow *f);
 
-  virtual bool isAllowedProto(Flow *f)          { return(false); }
-  virtual const IpAddress* getServerIP(Flow *f) { return(f->get_srv_ip_addr()); }
+  virtual bool isAllowedProto(Flow *f) { return (false); }
+  virtual const IpAddress *getServerIP(Flow *f) {
+    return (f->get_srv_ip_addr());
+  }
 
-public:
-  UnexpectedServer() : FlowCheck(ntopng_edition_community,
-				  false /* All interfaces */, false /* Don't exclude for nEdge */, false /* NOT only for nEdge */,
-				  true /* has_protocol_detected */, false /* has_periodic_update */, false /* has_flow_end */) {
+ public:
+  UnexpectedServer()
+      : FlowCheck(ntopng_edition_community, false /* All interfaces */,
+                  false /* Don't exclude for nEdge */,
+                  false /* NOT only for nEdge */,
+                  true /* has_protocol_detected */,
+                  false /* has_periodic_update */, false /* has_flow_end */) {
     whitelist_automa = NULL;
-    if((whitelist_ptree = ndpi_ptree_create()) == NULL)
-      throw "Out of memory";
+    if ((whitelist_ptree = ndpi_ptree_create()) == NULL) throw "Out of memory";
   };
 
   ~UnexpectedServer() {
-    if(whitelist_ptree)
-      ndpi_ptree_destroy(whitelist_ptree);
-    if(whitelist_automa)
-      ndpi_free_automa(whitelist_automa);
+    if (whitelist_ptree) ndpi_ptree_destroy(whitelist_ptree);
+    if (whitelist_automa) ndpi_free_automa(whitelist_automa);
   };
 
   void protocolDetected(Flow *f);

@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,16 +26,25 @@
 
 class FlowRiskClearTextCredentials : public FlowRisk {
  private:
-  FlowAlertType getAlertType() const { return FlowRiskClearTextCredentialsAlert::getClassType(); }
+  FlowAlertType getAlertType() const {
+    return FlowRiskClearTextCredentialsAlert::getClassType();
+  }
 
  public:
-  FlowRiskClearTextCredentials() : FlowRisk() {};
-  ~FlowRiskClearTextCredentials() {};
+  FlowRiskClearTextCredentials() : FlowRisk(){};
+  ~FlowRiskClearTextCredentials(){};
 
-  FlowAlert *buildAlert(Flow *f) { return new FlowRiskClearTextCredentialsAlert(this, f); }
+  FlowAlert *buildAlert(Flow *f) {
+    return new FlowRiskClearTextCredentialsAlert(this, f);
+  }
 
-  std::string getName()        const { return(FlowRiskAlerts::getCheckName(FlowRiskClearTextCredentialsAlert::getClassRisk())); }
-  ndpi_risk_enum handledRisk()       { return FlowRiskClearTextCredentialsAlert::getClassRisk(); }
+  std::string getName() const {
+    return (FlowRiskAlerts::getCheckName(
+        FlowRiskClearTextCredentialsAlert::getClassRisk()));
+  }
+  ndpi_risk_enum handledRisk() {
+    return FlowRiskClearTextCredentialsAlert::getClassRisk();
+  }
 };
 
 #endif

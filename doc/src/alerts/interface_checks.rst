@@ -10,7 +10,7 @@ ____________________
 
 Checks for ghost networks.
 
-There are many reasons why the ghost network may appear- starting from misconfiguration and ending with malicious users who put devices to the network beliving not to be discovered.
+There are many reasons why the ghost network may appear - starting from misconfiguration and ending with malicious users who put devices on the network believing not to be discovered.
 
 The alert is sent when the unknown network is discovered.
 
@@ -31,9 +31,9 @@ The alert is sent when the unknown network is discovered.
 
 Checks for dropped alerts.
 
-The alerts could be dropped when too many are queued /generated.
+The alerts could be dropped when too many are queued/generated.
 
-The alert is sent when the system dropps the alert.
+The alert is sent when the system drops the alert.
 
 *Category: Cybersecurity*
 
@@ -43,11 +43,11 @@ The alert is sent when the system dropps the alert.
 **No activity on interface**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Checks for activities on interface.
+Checks for activities on the interface.
 
-There could be no traffic because of misconfigurations or otherwise because of the mirror network link that has gone down.
+There could be no traffic because of misconfigurations or because of the mirror network link that has gone down.
 
-The alert is sent when no activity on interface is noticed.
+The alert is sent when no activity on the interface is noticed.
 
 *Category: Internals*
 
@@ -103,7 +103,7 @@ The alert is sent when the throughput exceeds threshhold.
 
 Checks for unexpected app behaviour.
 
-Unexpected behaviour in application could be the indicator of bugs in the code that cause an unusual attitude or incorrect functioning of an app.
+Unexpected behaviour in applications could be an indicator of bugs in the code that causes an unusual attitude or incorrect functioning of an app.
 
 Alert is sent when unusual app behaviour is detected.
 
@@ -126,22 +126,6 @@ The alert is sent when unexpected behaviour is seen in ASN.
 *Not Enabled by Default*
 
 
-
-**Unexpected Device Connected**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Checks for unexpected device.
-
-A random device with not allowed MAC address connected to the network.
-
-Alert is sent when a unexpected device connected.
-
-*Category: Network*
-
-*Not Enabled by Default*
-
-
-
 **Unexpected Network Behaviour**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Checks for Unexpected Behaviour.
@@ -155,4 +139,46 @@ Alert is triggered when unexpected behaviour comes from the specific network.
 *Not Enabled by Default*
 
 
+**DHCP Storm**
+~~~~~~~~~~~~~~
 
+Checks for DHCP flooding.
+
+DHCP storm occurs when DHCP router gets too many packets requests in a minute - by blocking totally the router functioning.
+
+The alert is triggered when DHCP storm is detected.
+
+*Category: Cybersecurity*
+
+*Enabled by Default*
+
+
+**DHCP Starvation**
+~~~~~~~~~~~~~~~~~~~
+
+Checks for DHCP starvation.
+
+
+DHCP starvation attacks and DHCP spoofing. In DHCP starvation attacks, an attacker floods the DHCP server with DHCP requests to use up all the available IP addresses.The “starved” DHCP server will not respond to new DHCP requests until a new address becomes available.
+
+
+Ntopng sends an alert in case DHCP starvation occurs.
+
+*Category: Cybersecurity*
+
+*Enabled by Default*
+
+
+**Unexpected Device Connected/Disconnected**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Check for MAC addresses.
+
+An alert is triggered whenever an unexpected MAC address connects or disconnects form an Interface. After enabling the alert, a new page, called `Devices Exclusion` (more info can be found `here <../advanced_features/devices_exclusion.html>`_) is going to be available in the `Settings` menu. 
+
+By jumping there, users are able to configure denied/allowed MAC addresses (unexpected/expected MAC addresses). When a denied or non accounted MAC address connects to the Interface a new Engaged alert is going to be triggered, that is going to be released when the unexpected MAC address is going to disconnect from the Interface or when allowed.  
+
+*Category: Network*
+
+*License: Pro*
+
+*Disabled by Default*

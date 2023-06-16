@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,13 +39,13 @@ class SyslogStats {
 
   void resetStats();
   void incStats(u_int32_t num_total_events, u_int32_t num_malformed,
-    u_int32_t num_dispatched, u_int32_t num_unhandled, u_int32_t num_alerts, 
-    u_int32_t num_host_correlations, u_int32_t num_collected_flows);
+                u_int32_t num_dispatched, u_int32_t num_unhandled,
+                u_int32_t num_alerts, u_int32_t num_host_correlations,
+                u_int32_t num_collected_flows);
   char* serialize();
-  void deserialize(json_object *o);
   json_object* getJSONObject();
   void lua(lua_State* vm);
-  void sum(SyslogStats *s) const;
+  void sum(SyslogStats* s) const;
 };
 
 #endif /* _SYSLOG_STATS_H_ */

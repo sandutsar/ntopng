@@ -34,23 +34,28 @@ jQuery.fn.extend({
 
 const NTOPNG_MIN_VISUAL_VALUE = 0.005;
 
+const backtick = '`';
 const REGEXES = {
-	ipv4: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
-	ipv6: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\:){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$",
-	domainName: "^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][-_\.a-zA-Z0-9]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,13}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,3})",
-  port: "^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
-  latency: "^([0-9]*[.])?[0-9]+$",
-	url: "^(https?\:\/\/[^\/\\s]+(\/.*)?)$",
-	emailUrl: "^smtps?:\/\/[-a-zA-Z0-9:.]{1,256}+$",
-	macAddress: "^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$",
-	username: "^(?=[a-zA-Z0-9._@!-?]{3,30}$)(?!.*[_.]{2})[^_.].*[^_.]$",
-	singleword: "^(?=[a-zA-Z0-9._\-]{3,253}$)(?!.*[_.\-]{2})[^_.\-].*[^_.\-]$",
-	email: "^([a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)$",
-	https: "^https?://.+$",
-	token: "^[0-9a-f]{32}",
-  score: "^[0-9]{1,5}",
-  telegram_channel: "^[0-9\-]{1,15}",
-  password: "^[\w\/$!\/()=?^*@_-]{5,31}$",
+	ipv4: String.raw`^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`,
+	ipv6: String.raw`^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*)$`,
+	domainName: String.raw`^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][-_\.a-zA-Z0-9]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,13}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,3})`,
+	port: String.raw`^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$`,
+	latency: String.raw`^([0-9]*[.])?[0-9]+$`,
+	url: String.raw`^(https?\:\/\/[^\/\s]+(\/.*)?)$`,
+	emailUrl: String.raw`^smtps?:\/\/[-a-zA-Z0-9:.]{1,256}+$`,
+	macAddress: String.raw`^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$`,
+	hostname: String.raw`^[a-zA-Z0-9._:\-]{3,250}|^[a-zA-Z0-9._:\-]{3,250}@[0-9]{0,5}`,
+	username: String.raw`^[a-zA-Z0-9._@!-?]{3,30}$`,
+	singleword: String.raw`^(?=[a-zA-Z0-9._:\-]{3,253}$)(?!.*[_.:\-]{2})[^_.:\-].*[^_.:\-]$`,
+    email: String.raw`^([a-zA-Z0-9.!#$%&'*+-/=?^_${backtick}{|}~]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)$`,
+	https: String.raw`^https?:\/\/.+$`,
+	token: String.raw`^[0-9a-f]{32}`,
+	score: String.raw`^[0-9]{1,5}`,
+	telegram_channel: String.raw`^[0-9\-]{1,15}`,
+	password: String.raw`^[\w\/$!\/()=?^*@_-]{5,31}$`,
+	tls_certificate: String.raw`^[^=,]+=[^=,]+(,\s[^=,]+=[^=,]+)*$`,
+	domain_name_not_strict: String.raw`^[a-zA-Z0-9\-_~]+((\.[a-zA-Z0-9\-_~]+)+)$`,
+	non_quoted_text: String.raw`^[a-zA-Z0-9.-_]+$`,
 };
 
 export default class NtopUtils {
@@ -195,7 +200,7 @@ export default class NtopUtils {
 	}
 
 	static fbits(bits) {
-		const sizes = ['bit/s', 'Kbit/s', 'Mbit/s', 'Gbit/s', 'Tbit/s'];
+		const sizes = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps'];
 
 		if (typeof (bits) === "undefined")
 			return "-";
@@ -349,8 +354,21 @@ export default class NtopUtils {
 		if (typeof (value) === "undefined")
 			return "-";
 
-		return Math.round(value * 100) / 100 + "%";
+		return Math.round(value * 100) / 100 + " %";
 	}
+
+    static percentage(value, total) {
+	if(total > 0) {
+	    var pctg = Math.round((value * 10000) / total)
+	    
+	    if(pctg > 0) {
+		/* Two decimals */
+		return(" [ " + (pctg/100) + " % ] ")
+	    }
+	}
+	
+	return("") 
+    }
 
 	static fdate(when) {
 		var epoch = when * 1000;
@@ -504,12 +522,22 @@ export default class NtopUtils {
 
 	static bitsToSize(bits, factor) {
 		factor = factor || 1000;
-		var sizes = ['bit/s', 'kbit/s', 'Mbit/s', 'Gbit/s', 'Tbit/s'];
+		var sizes = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps'];
 		if (bits == 0) return '0 bps';
 		if ((bits > 0) && (bits < NTOPNG_MIN_VISUAL_VALUE)) return ('< ' + NTOPNG_MIN_VISUAL_VALUE + " bps");
 		var res = NtopUtils.scaleValue(bits, sizes, factor);
 
 		return res[0].toFixed(2) + " " + res[1];
+	};
+
+	static bitsToSize_no_comma(bits, factor) {
+		factor = factor || 1000;
+		var sizes = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps'];
+		if (bits == 0) return '0 bps';
+		if ((bits > 0) && (bits < NTOPNG_MIN_VISUAL_VALUE)) return ('< ' + NTOPNG_MIN_VISUAL_VALUE + " bps");
+		var res = NtopUtils.scaleValue(bits, sizes, factor);
+
+		return res[0]+ " " + res[1];
 	};
 
 	static secondsToTime(seconds) {
@@ -634,7 +662,6 @@ export default class NtopUtils {
 
 	static hostkey2hostInfo(host_key) {
 		var info;
-		var hostinfo = [];
 
 		host_key = host_key.replace(/____/g, ":");
 		host_key = host_key.replace(/___/g, "/");
@@ -685,6 +712,12 @@ export default class NtopUtils {
 					NtopUtils._add_find_host_link(form, "ip", data.ip);
 				} else if (data.type == "mac") {
 					NtopUtils._add_find_host_link(form, "mac", data.mac);
+				} else if (data.type == "community_id") {
+					NtopUtils._add_find_host_link(form, "community_id", data.community_id);
+				} else if (data.type == "ja3_client") {
+					NtopUtils._add_find_host_link(form, "ja3_client", data.ja3_client);
+				} else if (data.type == "ja3_server") {
+					NtopUtils._add_find_host_link(form, "ja3_server", data.ja3_server);
 				} else /* "hostname" */ {
 					NtopUtils._add_find_host_link(form, "name", data.hostname ? data.hostname : data.name);
 				}
@@ -779,10 +812,9 @@ export default class NtopUtils {
 	// To be used in conjunction with httpdocs/templates/config_list_components/import_modal.html
 	static importModalHelper(params) {
 
-		if (!params.loadConfigXHR) { throw ("importModalHelper:: Missing 'loadConfigXHR' param"); return; }
+		if (!params.loadConfigXHR) { throw ("importModalHelper:: Missing 'loadConfigXHR' param"); }
 
 		$(`input#import-input`).on('change', function () {
-			const filename = $(this).val().replace("C:\\fakepath\\", "");
 			$(`#btn-confirm-import`).removeAttr("disabled");
 		});
 
@@ -839,14 +871,14 @@ export default class NtopUtils {
 					        const key = $(`input[name='configuration']:checked`).val();
 
 					        const body = (key == 'all')
-					                ? i18n_ext.manage_configurations.messagges.import_all_success
-							: i18n_ext.manage_configurations.messagges.import_success;
+					                ? i18n("manage_configurations.messages.import_all_success")
+							: i18n("manage_configurations.messages.import_success");
 
 						// show a success alert message
 						ToastUtils.showToast({
 							id: 'import-configuration-alert',
 							level: 'success',
-							title: i18n_ext.success,
+							title: i18n("success"),
 							body: body,
 							delay: 2000
 						});
@@ -872,7 +904,7 @@ export default class NtopUtils {
 					.always(() => {
 						$button.removeAttr("disabled");
 					});
-			}
+			};
 		});
 	}
 
@@ -911,9 +943,6 @@ export default class NtopUtils {
 
 		const controller = new AbortController()
 		const config = { ...options, signal: controller.signal }
-		const timeout = setTimeout(() => {
-			controller.abort()
-		}, time)
 
 		return fetch(uri, config)
 			.then((response) => {
@@ -965,8 +994,9 @@ export default class NtopUtils {
 		const url = new URL(location, window.location);
 
 		for (const [name, value] of Object.entries(params)) {
-			if (!value) continue;
-			url.searchParams.set(name, value);
+      if (value || value === 0)
+			  url.searchParams.set(name, value);
+			continue;
 		}
 
 		if (hasReferer) {
@@ -1085,7 +1115,156 @@ export default class NtopUtils {
 		t.innerHTML = html;
 		return t.textContent || t.innerText || "";
 	}
+
+  static shortenLabel(label, len, last_char) {
+    let shortened_label = label
+    if(label.length > len + 5) {
+      if(last_char) {
+        let last_index = label.lastIndexOf(last_char)
+        const requested_label = label.slice(last_index)
+        if(len > last_index) 
+          len = last_index
+        shortened_label = label.slice(0, len) + "... " + requested_label
+      } else {
+        shortened_label = label.slice(0, len) + "...";
+      }
+    }
+
+    return shortened_label
+  }
 	
+  static sortAlphabetically(a, b) {
+    const nameA = a.label.toUpperCase(); // ignore upper and lowercase
+    const nameB = b.label.toUpperCase(); // ignore upper and lowercase
+    if (nameA < nameB) { return -1; }
+    if (nameA > nameB) { return 1; }
+    return 0;
+  }
+
+  /* This function, given a name and a value, return a string
+   * formatted in the following way:
+   * name [value]
+	* If max_name_len is different from 0, then it's going to cut the name string
+	* to max_name_len
+   */
+	static formatNameValue(name, value, max_name_len) {
+		let label = name;
+		if(name != value) {
+			if(max_name_len && typeof(max_name_len) == 'number')
+				label = this.shortenLabel(label, max_name_len, '.');
+
+			label = `${label} [${value}]` 
+		}
+		return label
+	}
+
+	/* This function, remove from a string the VLAN 0
+	 * name@0 -> name
+	 */
+	static removeVlan(name) {
+		let label = name
+		const vlan_index = label.lastIndexOf('@');
+		if(vlan_index != -1) {
+			const vlan =  label.slice(vlan_index + 1);
+			if(vlan == 0) {
+				label = label.slice(0, vlan_index);
+			}
+		}
+
+		return label
+	}
+
+  static createProgressBar(percentage) {
+    return `<div class="d-flex flex-row align-items-center">
+              <div class="col-9 progress">
+                <div class="progress-bar bg-warning" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100" style="width: ${percentage}%;">
+                </div>
+              </div>
+              <div class="col"> ${percentage} %</div>
+            </div>`
+  }
+
+  static createBreakdown(percentage_1, percentage_2, label_1, label_2) {
+    return `<div class="d-flex flex-row">
+              <div class="col-12 progress">
+                <div class="progress-bar bg-warning" aria-valuenow="${percentage_1}" aria-valuemin="0" aria-valuemax="100" style="width: ${percentage_1}%;">${label_1}</div>
+                <div class="progress-bar bg-success" aria-valuenow="${percentage_2}" aria-valuemin="0" aria-valuemax="100" style="width: ${percentage_2}%;">${label_2}</div>
+              </div>
+            </div>`
+  }
+
+  /* Return the number of rows available in a table */
+  static getNumTableRows() {
+    return [10, 20, 50, 100];
+  }
+
+  static formatApexChartLabelFromXandName({series, seriesIndex, dataPointIndex, w}) {
+    const serie = w.config.series[seriesIndex]["data"][dataPointIndex];
+    const name = serie["name"]
+    const y_value = serie["y"];
+    const host_name = serie["meta"]["label"];
+
+    const x_axis_title = w.config.xaxis.title.text;
+    const y_axis_title = w.config.yaxis[0].title.text;
+
+    return (`
+    <div class='apexcharts-theme-light apexcharts-active' id='test'>
+        <div class='apexcharts-tooltip-title' style='font-family: Helvetica, Arial, sans-serif; font-size: 12px;'>
+            ${host_name}
+        </div>
+        <div class='apexcharts-tooltip-series-group apexcharts-active d-block'>
+            <div class='apexcharts-tooltip-text text-left'>
+                <b>${x_axis_title}</b>: ${name}
+            </div>
+            <div class='apexcharts-tooltip-text text-left'>
+                <b>${y_axis_title}</b>: ${y_value}
+            </div>
+        </div>
+    </div>
+    `)
+  }
+
+  static apexChartJumpToAlerts(event, chartContext, config) {
+    const { seriesIndex, dataPointIndex } = config;
+    const { series } = config.config;
+    if (seriesIndex === -1) return;
+    if (series === undefined) return;
+
+    const serie = series[seriesIndex];
+    const base_url = serie.base_url || series[0]['base_url']
+    const default_url = serie.start_url || series[0]['start_url']
+    if (base_url != null && default_url != null) {
+      const search = serie.data[dataPointIndex].meta.url_query;
+      location.href = `${base_url}?${default_url}${search}`;
+    }
+  }
+  
+  static formatApexChartLabelFromXandY({series, seriesIndex, dataPointIndex, w}) {
+    const serie = w.config.series[seriesIndex]["data"][dataPointIndex];
+    
+    const x_value = serie["x"];
+    const y_value = serie["y"];
+    const host_name = serie["meta"]["label"];
+
+    const x_axis_title = w.config.xaxis.title.text;
+    const y_axis_title = w.config.yaxis[0].title.text;
+
+    return (`
+      <div class='apexcharts-theme-light apexcharts-active' id='test'>
+          <div class='apexcharts-tooltip-title' style='font-family: Helvetica, Arial, sans-serif; font-size: 12px;'>
+              ${host_name}
+          </div>
+          <div class='apexcharts-tooltip-series-group apexcharts-active d-block'>
+              <div class='apexcharts-tooltip-text text-left'>
+                  <b>${x_axis_title}</b>: ${x_value}
+              </div>
+              <div class='apexcharts-tooltip-text text-left'>
+                  <b>${y_axis_title}</b>: ${y_value}
+              </div>
+          </div>
+      </div>
+    `)
+  }
 }
 
 $(function () {

@@ -55,22 +55,9 @@ Each individual menu bar entry will be discussed below.
 .. toctree::
     :maxdepth: 2
 
-    help_menu
-    dashboard_menu
-    dashboard
-    network_discovery
-    historical
-    report
-    flows
-    checks
-    categories
-    hosts
-    host_details
-    pools
-    maps
-    interfaces
+    network_index
+    system_index
     settings
-    administration
-    host_search
-    storage_monitor
-    import_export
+    developer
+    help_menu
+    other_components

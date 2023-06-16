@@ -1,6 +1,8 @@
 --
--- (C) 2014-15 - ntop.org
+-- (C) 2014-22 - ntop.org
 --
+
+local clock_start = os.clock()
 
 -- Trace Level
 TRACE_LEVEL = 2
@@ -25,7 +27,7 @@ MAX_TRACE_LEVEL = 4
 TRACE_CONSOLE = 0
 TRACE_WEB = 1
 
-function traceError(p_trace_level, p_trace_mode,p_message)
+function traceError(p_trace_level, p_trace_mode, p_message)
   local currentline = debug.getinfo(2).currentline
   local what =  debug.getinfo(2).what
   local src =  debug.getinfo(2).short_src
@@ -86,3 +88,7 @@ function resetTraceLevel()
 end
 
 --------------------------------
+
+if(trace_script_duration ~= nil) then
+  io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end

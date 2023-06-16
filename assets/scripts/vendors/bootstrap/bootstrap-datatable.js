@@ -31,7 +31,7 @@
     this.rows = [];
     this.buttons = [];
 
-    const no_results_found = (i18n) ? i18n("no_results_found") : "No Results Found"
+    const no_results_found = (i18n) ? i18n("no_results_found") : "No Results Found";
 
     // this needs to be handled better
     this.localStorageId =
@@ -416,7 +416,7 @@
         this.$footer = $("<tfoot></tfoot>");
 
         // loop through the columns
-        for (column in o.columns) {
+        for (let column in o.columns) {
           var $cell = $("<td></td>");
 
           $cell
@@ -900,7 +900,7 @@
           })
           .modal();
         return false;
-      })
+      });
     this.buttons.unshift($toggle);
 
     if (o.debug) console.log($toggle);
@@ -971,12 +971,6 @@
 	      }),
 	      $(
 		  '<li data-value="100"><a class="dropdown-item" href="#">100</a></li>'
-	      ).click(function() {
-		  _updatePerPage.call(this, that);
-		  return false;
-	      }),
-	      $(
-		  '<li data-value="200"><a class="dropdown-item" href="#">200</a></li>'
 	      ).click(function() {
 		  _updatePerPage.call(this, that);
 		  return false;
@@ -1264,7 +1258,7 @@
     // if the server doesn't pass the column property back
     if (!res.columns) res.columns = [];
 
-    for (column in o.columns) {
+    for (let column in o.columns) {
       o.columns[column] = $.extend(
         {},
         o.columns[column],

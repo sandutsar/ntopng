@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,13 +21,14 @@
 
 #include "flow_alerts_includes.h"
 
-ndpi_serializer* LowGoodputFlowAlert::getAlertJSON(ndpi_serializer* serializer) {
-  Flow *f = getFlow();
+ndpi_serializer* LowGoodputFlowAlert::getAlertJSON(
+    ndpi_serializer* serializer) {
+  Flow* f = getFlow();
 
   if (serializer) {
-    ndpi_serialize_string_float(serializer, "goodput_ratio", f->get_goodput_ratio(), "%f");
+    ndpi_serialize_string_float(serializer, "goodput_ratio",
+                                f->get_goodput_ratio(), "%f");
   }
 
   return serializer;
 }
-

@@ -6,6 +6,8 @@ local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/pools/?.lua;" .. package.path
 package.path = dirs.installdir .. "/scripts/lua/modules/alert_store/?.lua;" .. package.path
 
+local clock_start = os.clock()
+
 -- This file contains the description of all functions
 -- used to trigger host alerts
 local verbose = ntop.getCache("ntopng.prefs.alerts.debug") == "1"
@@ -15,7 +17,6 @@ local recovery_utils = require "recovery_utils"
 local alert_entities = require "alert_entities"
 local alert_consts = require "alert_consts"
 local format_utils = require "format_utils"
-local telemetry_utils = require "telemetry_utils"
 local alerts_api = require "alerts_api"
 local icmp_utils = require "icmp_utils"
 local flow_risk_utils = require "flow_risk_utils"
@@ -30,8 +31,6 @@ end
 -- ##############################################
 
 local alert_utils = {}
-
-alert_utils.SEPARATOR = ';'
 
 -- ##############################################
 
@@ -108,7 +107,7 @@ end
 
 --@brief Deletes all stored alerts matching an host and an IP
 -- @return nil
-function alert_utils.deleteHostAlertsMatching(host_ip, vlan_id, alert_id)
+function alert_utils.deleteHostAlertsMatchingHost(host_ip, vlan_id, alert_id)
   local host_alert_store = require("host_alert_store").new()
 
   if not isEmptyString(host_ip) then
@@ -195,165 +194,6 @@ end
 
 -- #################################
 
--- A redis set with mac addresses as keys
-function alert_utils.getActiveDevicesHashKey(ifid)
-   return "ntopng.cache.active_devices.ifid_" .. ifid
-end
-
-function alert_utils.deleteActiveDevicesKey(ifid)
-   ntop.delCache(alert_utils.getActiveDevicesHashKey(ifid))
-end
-
--- #################################
-
--- A redis set with host pools as keys
-local function getActivePoolsHashKey(ifid)
-   return "ntopng.cache.active_pools.ifid_" .. ifid
-end
-
-function alert_utils.deleteActivePoolsKey(ifid)
-   ntop.delCache(getActivePoolsHashKey(ifid))
-end
-
--- #################################
-
--- Redis hashe with key=pool and value=list of quota_exceed_items, separated by |
-local function getPoolsQuotaExceededItemsKey(ifid)
-   return "ntopng.cache.quota_exceeded_pools.ifid_" .. ifid
-end
-
--- #################################
-
-function alert_utils.check_host_pools_alerts(params, ifid, alert_pool_connection_enabled, alerts_on_quota_exceeded)
-   local active_pools_set = getActivePoolsHashKey(ifid)
-   local prev_active_pools = swapKeysValues(ntop.getMembersCache(active_pools_set)) or {}
-   local pools_stats = interface.getHostPoolsStats()
-   local quota_exceeded_pools_key = getPoolsQuotaExceededItemsKey(ifid)
-   local quota_exceeded_pools_values = ntop.getHashAllCache(quota_exceeded_pools_key) or {}
-   local quota_exceeded_pools = {}
-   local now_active_pools = {}
-
-   -- Deserialize quota_exceeded_pools
-   for pool, v in pairs(quota_exceeded_pools_values) do
-      quota_exceeded_pools[pool] = {}
-
-      for _, group in pairs(split(quota_exceeded_pools_values[pool], "|")) do
-         local parts = split(group, "=")
-
-         if #parts == 2 then
-            local proto = parts[1]
-            local quota = parts[2]
-
-            local parts = split(quota, ",")
-            quota_exceeded_pools[pool][proto] = {toboolean(parts[1]), toboolean(parts[2])}
-         end
-      end
-      -- quota_exceeded_pools[pool] is like {Youtube={true, false}}, where true is bytes_exceeded, false is time_exceeded
-   end
-
-   local pools = interface.getHostPoolsInfo()
-   if(pools ~= nil) and (pools_stats ~= nil) then
-      for pool, info in pairs(pools.num_members_per_pool) do
-	 local pool_stats = pools_stats[tonumber(pool)]
-	 local pool_exceeded_quotas = quota_exceeded_pools[pool] or {}
-
-	 -- Pool quota
-	 if((pool_stats ~= nil) and (shaper_utils ~= nil)) then
-	    local quotas_info = shaper_utils.getQuotasInfo(ifid, pool, pool_stats)
-
-	    for proto, info in pairs(quotas_info) do
-	       local prev_exceeded = pool_exceeded_quotas[proto] or {false,false}
-
-	       if alerts_on_quota_exceeded then
-		  if info.bytes_exceeded and not prev_exceeded[1] then
-		     local alert = alert_consts.alert_types.alert_quota_exceeded.new(
-			"traffic_quota",
-			pool,
-			proto,
-			info.bytes_value,
-			info.bytes_quota
-		     )
-
-		     alert:set_score_warning()
-		     alert:store(alerts_api.hostPoolEntity(pool))
-		  end
-
-		  if info.time_exceeded and not prev_exceeded[2] then           
-		     local alert = alert_consts.alert_types.alert_quota_exceeded.new(
-			"time_quota",
-			pool,
-			proto,
-			info.time_value,
-			info.time_quota
-		     )
-
-		     alert:set_score_warning()
-		     alert:store(alerts_api.hostPoolEntity(pool))
-		  end
-	       end
-
-	       if not info.bytes_exceeded and not info.time_exceeded then
-		  -- delete as no quota is left
-		  pool_exceeded_quotas[proto] = nil
-	       else
-		  -- update/add serialized
-		  pool_exceeded_quotas[proto] = {info.bytes_exceeded, info.time_exceeded}
-	       end
-	    end
-
-	    if table.empty(pool_exceeded_quotas) then
-	       ntop.delHashCache(quota_exceeded_pools_key, pool)
-	    else
-	       -- Serialize the new quota information for the pool
-	       for proto, value in pairs(pool_exceeded_quotas) do
-		  pool_exceeded_quotas[proto] = table.concat({tostring(value[1]), tostring(value[2])}, ",")
-	       end
-
-	       ntop.setHashCache(quota_exceeded_pools_key, pool, table.tconcat(pool_exceeded_quotas, "=", "|"))
-	    end
-	 end
-
-	 -- Pool presence
-	 if (pool ~= host_pools.DEFAULT_POOL_ID) and (info.num_hosts > 0) then
-	    now_active_pools[pool] = 1
-
-	    if not prev_active_pools[pool] then
-	       -- Pool connection
-	       ntop.setMembersCache(active_pools_set, pool)
-
-	       if alert_pool_connection_enabled then
-		  local alert = alert_consts.alert_types.alert_host_pool_connection.new(
-		     pool
-		  )
-
-		  alert:set_score_notice()
-		  alert:store(alerts_api.hostPoolEntity(pool))
-	       end
-	    end
-	 end
-      end
-   end
-
-   -- Pool presence
-   for pool in pairs(prev_active_pools) do
-      if not now_active_pools[pool] then
-         -- Pool disconnection
-         ntop.delMembersCache(active_pools_set, pool)
-
-         if alert_pool_connection_enabled then
-            local alert = alert_consts.alert_types.alert_host_pool_disconnection.new(
-               pool
-            )
-
-            alert:set_score_notice()
-            alert:store(alerts_api.hostPoolEntity(pool))
-         end
-      end
-   end
-end
-
--- #################################
-
 function alert_utils.disableAlertsGeneration()
    if not isAdministratorOrPrintErr() then
       return
@@ -435,7 +275,7 @@ function alert_utils.formatAlertMessage(ifid, alert, alert_json)
   local msg
 
   if(alert_json == nil) then
-   alert_json = alert_utils.getAlertInfo(alert)
+     alert_json = alert_utils.getAlertInfo(alert)
   end
 
   msg = alert_json
@@ -465,18 +305,17 @@ end
 
 -- #################################
 
+-- Return a risk info (raw text, do not return a formatted value)
 function alert_utils.get_flow_risk_info(alert_risk, alert_json)
-  local msg = ""
-
   if (alert_json) and (alert_json.alert_generation) and (alert_json.alert_generation.flow_risk_info) then
     local flow_risk_info = json.decode(alert_json.alert_generation.flow_risk_info)
 
     if (flow_risk_info) and (flow_risk_info[tostring(alert_risk)]) then
-      msg = string.format("%s[%s]", msg, flow_risk_info[tostring(alert_risk)])
+      return flow_risk_info[tostring(alert_risk)]
     end
   end
 
-  return msg
+  return ''
 end
 
 -- #################################
@@ -525,7 +364,12 @@ function alert_utils.formatFlowAlertMessage(ifid, alert, alert_json, add_score)
    -- Add the link to the documentation
    if alert_risk > 0 then
       msg = string.format("%s %s", msg, flow_risk_utils.get_documentation_link(alert_risk))
-      msg = string.format("%s %s", msg, alert_utils.get_flow_risk_info(alert_risk, alert_json))
+      local info_msg = alert_utils.get_flow_risk_info(alert_risk, alert_json)
+      
+      -- Add check info_msg ~= alert.info to avoid duplicated in description msg
+      --[[if (not isEmptyString(info_msg) and info_msg ~= alert.info) then
+         msg = string.format("%s", msg, info_msg)
+      end--]]
    end
 
    return msg or ""
@@ -616,7 +460,7 @@ function alert_utils.getLinkToPastFlows(ifid, alert, alert_json)
 	 -- Join the TAG filters using the predefined operator
 	 local final_filter = {}
 	 for _, tag in pairs(tags) do
-	    final_filter[tag.name] = string.format("%s%s%s", tag.val, alert_utils.SEPARATOR, tag.op)
+	    final_filter[tag.name] = string.format("%s%s%s", tag.val, alert_consts.SEPARATOR, tag.op)
 	 end
 
 	 -- tprint({formatEpoch(epoch_begin), formatEpoch(epoch_end), formatEpoch(tonumber(alert.tstamp)), formatEpoch(tonumber(alert.tstamp_end))})
@@ -687,7 +531,7 @@ function alert_utils.formatAlertNotification(notif, options)
 
    local msg = string.format("%s%s%s [%s]",
 			     when, ifname, severity,
-			     alert_consts.alertTypeLabel(notif.alert_id, options.nohtml))
+			     alert_consts.alertTypeLabel(notif.alert_id, options.nohtml, notif.entity_id))
 
    -- entity can be hidden for example when one is OK with just the message
    if options.show_entity then
@@ -724,7 +568,7 @@ end
 
 -- ##############################################
 
-function alert_utils.formatAlertCulript(notif)
+function alert_utils.formatAlertCulprit(notif)
    local msg
 
    -- Formatting cli-srv
@@ -907,18 +751,6 @@ local function notify_ntopng_status(started)
    end
 
    local entity_value = ntop.getInfo().product
-
-   obj = {
-      entity_id = alerts_api.systemEntity(entity_value), entity_val = entity_value,
-      type = alert_consts.alertType("alert_process_notification"),
-      score = score,
-      message = msg,
-      when = os.time() }
-
-   if anomalous then
-      telemetry_utils.notify(obj)
-   end
-
    local entity_info = alerts_api.systemEntity(entity_value)
    local type_info = alert_consts.alert_types.alert_process_notification.new(
       event,
@@ -970,8 +802,7 @@ function alert_utils.formatBehaviorAlert(params, anomalies, stats, id, subtype, 
          anomaly_table["extra_params"]
       )
  
-      alert:set_score_warning()
-      alert:set_granularity(params.granularity)
+      alert:set_info(params)
       alert:set_subtype(name)
 
       -- Trigger an alert if an anomaly is found
@@ -1061,8 +892,11 @@ function alert_utils.format_other_alerts(alert_bitmap, predominant_alert, alert_
 
             local alert_risk = ntop.getFlowAlertRisk(alert_id)
             if alert_risk > 0 then
-                message = string.format("%s %s", message, flow_risk_utils.get_documentation_link(alert_risk))
-                message = string.format("%s %s", message, alert_utils.get_flow_risk_info(alert_risk, alert_json))
+              message = string.format("%s %s", message, flow_risk_utils.get_documentation_link(alert_risk))
+              local info_msg = alert_utils.get_flow_risk_info(alert_risk, alert_json)
+              if not isEmptyString(info_msg) then
+                message = string.format("%s [%s]", message, info_msg)
+              end
             end
 
             if not other_alerts_by_score[alert_score] then
@@ -1084,5 +918,9 @@ function alert_utils.format_other_alerts(alert_bitmap, predominant_alert, alert_
 end
 
 -- ##############################################
+
+if(trace_script_duration ~= nil) then
+  io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end
 
 return alert_utils

@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,18 +21,18 @@
 
 #include "flow_checks_includes.h"
 
-ndpi_serializer* FlowRiskTLSCertificateSelfSignedAlert::getAlertJSON(ndpi_serializer* serializer) {
-  Flow *f = getFlow();
-  char *s;
-  
-  if(!serializer) return(NULL);
+ndpi_serializer* FlowRiskTLSCertificateSelfSignedAlert::getAlertJSON(
+    ndpi_serializer* serializer) {
+  Flow* f = getFlow();
+  char* s;
 
-  if((s = f->getTLSCertificateIssuerDN()) != NULL)
+  if (!serializer) return (NULL);
+
+  if ((s = f->getTLSCertificateIssuerDN()) != NULL)
     ndpi_serialize_string_string(serializer, "protos.tls.issuerDN", s);
 
-  if((s = f->getTLSCertificateSubjectDN()) != NULL)
+  if ((s = f->getTLSCertificateSubjectDN()) != NULL)
     ndpi_serialize_string_string(serializer, "protos.tls.subjectDN", s);
 
-  return(serializer);
+  return (serializer);
 }
-

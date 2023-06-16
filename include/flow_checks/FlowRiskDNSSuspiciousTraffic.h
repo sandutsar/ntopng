@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,23 +26,32 @@
 
 class FlowRiskDNSSuspiciousTraffic : public FlowRisk {
  private:
-  FlowAlertType getAlertType() const { return FlowRiskDNSSuspiciousTrafficAlert::getClassType(); };
+  FlowAlertType getAlertType() const {
+    return FlowRiskDNSSuspiciousTrafficAlert::getClassType();
+  };
 
  public:
-  FlowRiskDNSSuspiciousTraffic() : FlowRisk() {};
-  ~FlowRiskDNSSuspiciousTraffic() {};
+  FlowRiskDNSSuspiciousTraffic() : FlowRisk(){};
+  ~FlowRiskDNSSuspiciousTraffic(){};
 
   FlowAlert *buildAlert(Flow *f) {
-    FlowRiskDNSSuspiciousTrafficAlert *alert = new FlowRiskDNSSuspiciousTrafficAlert(this, f);
+    FlowRiskDNSSuspiciousTrafficAlert *alert =
+        new FlowRiskDNSSuspiciousTrafficAlert(this, f);
 
-    /* The client is assuming to be probing the victim DNS server with suspicious DNS traffic */
+    /* The client is assuming to be probing the victim DNS server with
+     * suspicious DNS traffic */
     alert->setCliAttacker(), alert->setSrvVictim();
 
     return alert;
   }
 
-  std::string getName()        const { return(FlowRiskAlerts::getCheckName(FlowRiskDNSSuspiciousTrafficAlert::getClassRisk())); }
-  ndpi_risk_enum handledRisk()       { return FlowRiskDNSSuspiciousTrafficAlert::getClassRisk(); };
+  std::string getName() const {
+    return (FlowRiskAlerts::getCheckName(
+        FlowRiskDNSSuspiciousTrafficAlert::getClassRisk()));
+  }
+  ndpi_risk_enum handledRisk() {
+    return FlowRiskDNSSuspiciousTrafficAlert::getClassRisk();
+  };
 };
 
 #endif

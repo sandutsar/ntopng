@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 dirs = ntop.getDirs()
@@ -16,9 +16,10 @@ local tag_utils = require("tag_utils")
 local page_utils = require("page_utils")
 local auth = require "auth"
 
-local network        = _GET["network"]
+local network_id        = _GET["network"]
 local network_name   = _GET["network_cidr"]
 local page           = _GET["page"]
+local subnet2        = _GET["subnet_2"]
 
 local network_behavior_update_freq = 300 -- Seconds
 
@@ -26,9 +27,9 @@ local ifstats = interface.getStats()
 local ifId = ifstats.id
 
 if(not isEmptyString(network_name)) then
-  network = ntop.getNetworkIdByName(network_name)
+  network_id = ntop.getNetworkIdByName(network_name)
 else
-  network_name = ntop.getNetworkNameById(tonumber(network))
+  network_name = ntop.getNetworkNameById(tonumber(network_id))
 end
 
 local custom_name = getLocalNetworkAlias(network_name)
@@ -43,7 +44,7 @@ page_utils.set_active_menu_entry(page_utils.menu_entries.networks)
 
 dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
 
-if(network == nil) then
+if(network_id == nil) then
    print("<div class=\"alert alert alert-danger\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> ".. i18n("network_details.network_parameter_missing_message") .. "</div>")
    dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")
    return
@@ -52,8 +53,8 @@ end
 --[[
 Create Menu Bar with buttons
 --]]
-local nav_url = ntop.getHttpPrefix().."/lua/network_details.lua?network="..tonumber(network)
-local title = i18n("network_details.network") .. ": "..network_name
+local nav_url = ntop.getHttpPrefix().."/lua/network_details.lua?network="..tonumber(network_id)
+local title = i18n("network_details.network") .. ": "..custom_name
 
 page_utils.print_navbar(title, nav_url,
 			{
@@ -76,7 +77,7 @@ page_utils.print_navbar(title, nav_url,
 			      label = "<i class='fas fa-file-alt report-icon'></i>",
 			   },
 			   {
-			      hidden = not network or not isAdministrator(),
+			      hidden = not network_id or not isAdministrator(),
 			      active = page == "config",
 			      page_name = "config",
 			      label = "<i class=\"fas fa-cog fa-lg\"></i>",
@@ -88,40 +89,8 @@ page_utils.print_navbar(title, nav_url,
 Selectively render information pages
 --]]
 if page == "historical" then
-    local schema = _GET["ts_schema"] or "subnet:traffic"
-    local selected_epoch = _GET["epoch"] or ""
-    local url = ntop.getHttpPrefix()..'/lua/network_details.lua?ifid='..ifId..'&network='..network..'&page=historical'
-
-    local tags = {
-      ifid = ifId,
-      subnet = network_name,
-    }
-
-    local all_timeseries = {
-      {schema="subnet:traffic",             label=i18n("traffic"), split_directions = true --[[ split RX and TX directions ]]},
-      {schema="subnet:broadcast_traffic",   label=i18n("broadcast_traffic")},
-      {schema="subnet:engaged_alerts",      label=i18n("show_alerts.engaged_alerts")},
-      {schema="subnet:score",               label=i18n("score"), split_directions = true},
-      {schema="subnet:tcp_retransmissions", label=i18n("graphs.tcp_packets_retr"), nedge_exclude=1},
-      {schema="subnet:tcp_out_of_order",    label=i18n("graphs.tcp_packets_ooo"), nedge_exclude=1},
-      {schema="subnet:tcp_lost",            label=i18n("graphs.tcp_packets_lost"), nedge_exclude=1},
-      {schema="subnet:tcp_keep_alive",      label=i18n("graphs.tcp_packets_keep_alive"), nedge_exclude=1},
-    }
-
-    if ntop.isPro() then
-      local pro_timeseries = {
-        {schema="subnet:score_anomalies",     label=i18n("graphs.iface_score_anomalies")},
-        {schema="subnet:score_behavior",      label=i18n("graphs.iface_score_behavior"), split_directions = true, first_timeseries_only = true, metrics_labels = {i18n("graphs.score"), i18n("graphs.lower_bound"), i18n("graphs.upper_bound")}},
-        {schema="subnet:traffic_anomalies",   label=i18n("graphs.iface_traffic_anomalies")},
-        {schema="subnet:traffic_rx_behavior_v2", label=i18n("graphs.iface_traffic_rx_behavior"), split_directions = true, first_timeseries_only = true, time_elapsed = network_behavior_update_freq, value_formatter = {"NtopUtils.fbits_from_bytes", "NtopUtils.bytesToSize"}, metrics_labels = {i18n("graphs.traffic_rcvd"), i18n("graphs.lower_bound"), i18n("graphs.upper_bound")}},
-        {schema="subnet:traffic_tx_behavior_v2", label=i18n("graphs.iface_traffic_tx_behavior"), split_directions = true, first_timeseries_only = true, time_elapsed = network_behavior_update_freq,value_formatter = {"NtopUtils.fbits_from_bytes", "NtopUtils.bytesToSize"}, metrics_labels = {i18n("graphs.traffic_sent"), i18n("graphs.lower_bound"), i18n("graphs.upper_bound")}},
-      }
-      all_timeseries = table.merge(all_timeseries, pro_timeseries)
-    end
-
-    graph_utils.drawGraphs(ifId, schema, tags, _GET["zoom"], url, selected_epoch, {
-      timeseries = all_timeseries,
-    })
+   local source_value_object = { subnet = network_name, ifid = interface.getId() }
+   graph_utils.drawNewGraphs(source_value_object)
 elseif (page == "config") then
     if(not isAdministrator()) then
       return

@@ -16,6 +16,7 @@ It Combines extensive network visibility with configurable security policies.
    policies
    bandwidth_control
    security
+   vlan
    dns
    captive_portal
    bridging
@@ -38,7 +39,8 @@ It Combines extensive network visibility with configurable security policies.
    PF_RING <https://www.ntop.org/guides/pf_ring/>
    nScrub <https://www.ntop.org/guides/nscrub/>
    nBox <https://www.ntop.org/guides/nbox/>
-
+   nTap <https://www.ntop.org/guides/ntap/>
+   
 .. Indices and tables
 .. ==================
 .. 

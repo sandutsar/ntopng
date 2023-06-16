@@ -22,8 +22,10 @@ local messages = {
   allowed_networks_descr = i18n("manage_users.allowed_networks_descr") .. " 192.168.1.0/24,172.16.0.0/16",
   language = i18n("language"),
   add_new_user = i18n("manage_users.add_new_user"),
-  allow_historical_flow = i18n("manage_users.allow_historical_flow"),
-  allow_historical_flow_descr = i18n("manage_users.allow_historical_flow_descr"),
+  allow_historical_flows = i18n("manage_users.allow_historical_flows"),
+  allow_historical_flows_descr = i18n("manage_users.allow_historical_flows_descr"),
+  allow_alerts = i18n("manage_users.allow_alerts"),
+  allow_alerts_descr = i18n("manage_users.allow_alerts_descr"),
   allow_pcap_download = i18n("manage_users.allow_pcap_download"),
   allow_pcap_download_descr = i18n("manage_users.allow_pcap_download_descr"),
 }
@@ -55,6 +57,7 @@ local location_href = ntop.getHttpPrefix().."/lua/admin/users.lua"
 local is_pcap_download_available = true or recording_utils.isAvailable()
 
 template_utils.render("pages/components/add-user-dialog.template", {
+  i18n = i18n,
   add_user_endpoint = add_user,
   available_locales = available_locales,
   csrf = csrf,

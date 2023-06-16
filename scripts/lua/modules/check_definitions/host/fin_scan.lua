@@ -3,6 +3,7 @@
 --
 
 local checks = require("checks")
+local alert_consts = require("alert_consts")
 local host_alert_keys = require "host_alert_keys"
 
 local fin_scan = {
@@ -11,6 +12,7 @@ local fin_scan = {
 
    default_enabled = false,
    alert_id = host_alert_keys.host_alert_fin_scan,
+   severity = alert_consts.get_printable_severities().error,
 
    -- The default threshold value. The format is specific of the
    -- "threshold_cross" input builder
@@ -21,7 +23,7 @@ local fin_scan = {
 
    -- Allow user script configuration from the GUI
    gui = {
-      i18n_title = "entity_thresholds.fin_scan_title",
+      i18n_title = "alerts_dashboard.tcp_fin_scan",
       i18n_description = "entity_thresholds.fin_scan_description",
 
       -- The input builder to use to draw the gui

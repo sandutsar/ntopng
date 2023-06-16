@@ -36,11 +36,16 @@ if (not ntop.isPro()) then
   return
 end
 
+if ifname == "__system__" then
+   -- Someone jumped from the users to the quotas in the System interface, redirect to a Network interface (e.g. nf:0)
+   local available_interfaces = interface.getIfNames()
+   ifnamee = available_interfaces["0"]
+end
+
 interface.select(ifname)
 local ifstats = interface.getStats()
 local ifId = ifstats.id
 local pool_name = host_pools_instance:get_pool_name(pool_id)
-
 
 if ntop.isnEdge() then
    if _POST["reset_quotas"] ~= nil then
@@ -50,15 +55,14 @@ end
 
 sendHTTPContentTypeHeader('text/html')
 
-
 page_utils.set_active_menu_entry(page_utils.menu_entries.host_pools)
 
 dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
 
 if(pool_id == nil) then
    print("<div class=\"alert alert alert-danger\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> "
-	    ..i18n("pool_details.pool_parameter_missing_message")
-	    .."</div>")
+          ..i18n("pool_details.pool_parameter_missing_message")
+          .."</div>")
    dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")
    return
 end
@@ -72,21 +76,21 @@ page_params["page"] = page
 
 local title = i18n(ternary(have_nedge, "nedge.user", "pool_details.host_pool"))..": "..pool_name
 
-   page_utils.print_navbar(title, base_url,
-			   {
-			      {
-				 active = page == "historical" or not page,
-				 page_name = "historical",
-				 label = "<i class='fas fa-lg fa-chart-area'></i>",
-			      },
-			      {
-				 hidden = not ntop.isEnterpriseM() or not ntop.isnEdge() or not ifstats or pool_id == host_pools_instance.DEFAULT_POOL_ID,
-				 active = page == "quotas",
-				 page_name = "quotas",
-				 label = i18n("quotas"),
-			      },
-			   }
-   )
+page_utils.print_navbar(title, base_url,
+   {
+      {
+         active = page == "historical" or not page,
+         page_name = "historical",
+         label = "<i class='fas fa-lg fa-chart-area'></i>",
+      },
+      {
+         hidden = not ntop.isEnterpriseM() or not ntop.isnEdge() or not ifstats or pool_id == host_pools_instance.DEFAULT_POOL_ID,
+         active = page == "quotas",
+         page_name = "quotas",
+         label = i18n("quotas"),
+      },
+   }
+)
 
 local pools_stats = interface.getHostPoolsStats()
 local pool_stats = pools_stats and pools_stats[tonumber(pool_id)]
@@ -125,25 +129,8 @@ elseif page == "historical" then
     print("<div class=\"alert alert alert-danger\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> "..i18n("pool_details.no_available_data_for_host_pool_message",{pool_name=pool_name}))
     print(" "..i18n("pool_details.host_pool_timeseries_enable_message",{url=ntop.getHttpPrefix().."/lua/admin/prefs.lua?tab=on_disk_ts",icon_flask="<i class=\"fas fa-flask\"></i>"})..'</div>')
   else
-    local schema = _GET["ts_schema"] or "host_pool:traffic"
-    local selected_epoch = _GET["epoch"] or ""
-    local url = getPageUrl(base_url, page_params)
-
-    local tags = {
-      ifid = ifId,
-      pool = pool_id,
-      protocol = _GET["protocol"],
-    }
-
-    graph_utils.drawGraphs(ifId, schema, tags, _GET["zoom"], url, selected_epoch, {
-      top_protocols = "top:host_pool:ndpi",
-      timeseries = {
-        {schema="host_pool:traffic",           label=i18n("traffic"), split_directions = true --[[ split RX and TX directions ]]},
-        {schema="host_pool:blocked_flows",     label=i18n("graphs.blocked_flows")},
-        {schema="host_pool:hosts",             label=i18n("graphs.active_hosts")},
-        {schema="host_pool:devices",           label=i18n("graphs.active_devices")},
-      },
-    })
+     local source_value_object = { pool = tonumber(pool_id), ifid = interface.getId() }
+     graph_utils.drawNewGraphs(source_value_object)
   end
 end
 

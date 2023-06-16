@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,14 +29,17 @@ class RemoteHost : public Host {
   void initialize();
 
  public:
-  RemoteHost(NetworkInterface *_iface, Mac *_mac, VLANid _vlanId, u_int16_t _observation_point_id, IpAddress *_ip);
-  RemoteHost(NetworkInterface *_iface, char *ipAddress, VLANid _vlanId, u_int16_t _observation_point_id);
+  RemoteHost(NetworkInterface *_iface, Mac *_mac, u_int16_t _u_int16_t,
+             u_int16_t _observation_point_id, IpAddress *_ip);
+  RemoteHost(NetworkInterface *_iface, char *ipAddress, u_int16_t _u_int16_t,
+             u_int16_t _observation_point_id);
   virtual ~RemoteHost();
 
   void set_hash_entry_state_idle();
-  virtual int16_t get_local_network_id() const { return(-1);                };
-  virtual bool isLocalHost()  const            { return(false);             };
-  virtual bool isSystemHost() const            { return(false);             };
+  virtual int16_t get_local_network_id() const { return (-1); };
+  virtual bool isLocalHost() const { return (false); };
+  virtual bool isLocalUnicastHost() const { return (false); };
+  virtual bool isSystemHost() const { return (false); };
 };
 
 #endif /* _REMOTE_HOST_H_ */

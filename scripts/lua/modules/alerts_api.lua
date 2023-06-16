@@ -1,6 +1,8 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
+
+local clock_start = os.clock()
 
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
@@ -9,10 +11,13 @@ package.path = dirs.installdir .. "/scripts/lua/modules/notifications/?.lua;" ..
 
 local json = require("dkjson")
 local alert_severities = require "alert_severities"
+local alert_entities = require "alert_entities"
 local alert_consts = require("alert_consts")
 local os_utils = require("os_utils")
 local recipients = require "recipients"
 local pools_alert_utils = require "pools_alert_utils"
+local recording_utils = require "recording_utils"
+
 local do_trace = false
 
 local alerts_api = {}
@@ -31,11 +36,21 @@ local current_configset -- The configset used for the generation of this alert
 
 -- ##############################################
 
+local function debug_print(msg)
+   if not do_trace then
+      return
+   end
+
+   traceError(TRACE_NORMAL, TRACE_CONSOLE, msg)
+end
+
+-- ##############################################
+
 -- Returns a string which identifies an alert
 function alerts_api.getAlertId(alert)
-  return(string.format("%s_%s_%s_%s_%s", alert.alert_type,
-    alert.subtype or "", alert.granularity or "",
-    alert.entity_id, alert.entity_val))
+   return(string.format("%s_%s_%s_%s_%s", alert.alert_type,
+      alert.subtype or "", alert.granularity or "",
+      alert.entity_id, alert.entity_val))
 end
 
 -- ##############################################
@@ -106,10 +121,10 @@ end
 
 -- ##############################################
 
-function alerts_api.addAlertGenerationInfo(alert_json, current_script)
-  if alert_json and current_script then
+function alerts_api.addAlertGenerationInfo(alert_type_params, current_script)
+  if alert_type_params and current_script then
     -- Add information about the script who generated this alert
-    alert_json.alert_generation = {
+    alert_type_params.alert_generation = {
       script_key = current_script.key,
       subdir = current_script.subdir,
     }
@@ -120,17 +135,49 @@ function alerts_api.addAlertGenerationInfo(alert_json, current_script)
   end
 end
 
-local function addAlertGenerationInfo(alert_json)
-  alerts_api.addAlertGenerationInfo(alert_json, current_script)
+local function addAlertGenerationInfo(alert_type_params)
+  alerts_api.addAlertGenerationInfo(alert_type_params, current_script)
 end
 
 -- ##############################################
 
 --! @brief Adds pool information to the alert
 --! @param entity_info data returned by one of the entity_info building functions
-local function addAlertPoolInfo(entity_info, alert_json)
+local function addAlertPoolAndNetworkInfo(entity_info, alert_json)
+   -- Add Pool ID
    if alert_json then
       alert_json.host_pool_id = pools_alert_utils.get_host_pool_id(entity_info)
+   end
+
+   -- Add Local Network ID
+   if entity_info.alert_entity == alert_entities.host and
+      entity_info.entity_val then
+      local network_id = ntop.getAddressNetwork(entity_info.entity_val)
+      alert_json.network = network_id
+   end
+end
+
+-- ##############################################
+
+--! @brief Push filter matching the alert to Smart Recording if enabled
+--! See also Host::enqueueAlertToRecipients for alerts triggered from C++
+--! @param entity_info data returned by one of the entity_info building functions
+local function pushSmartRecordingFilter(entity_info, ifid)
+   if entity_info.alert_entity == alert_entities.host and 
+      recording_utils.isSmartEnabled(ifid) then
+
+      local instance = recording_utils.getN2diskInstanceName(ifid)
+      local ip = entity_info.entity_val
+
+      if not isEmptyString(instance) and
+         not isEmptyString(ip) then
+
+         local filter = string.format("%s", ip)
+
+         local key = string.format("n2disk.%s.filter.host.%s", instance, filter)
+         local expiration = 30*60 -- 30 min
+         ntop.setCache(key, "1", expiration)
+      end
    end
 end
 
@@ -177,8 +224,11 @@ function alerts_api.store(entity_info, type_info, when)
     json = alert_json,
   }
 
-  addAlertPoolInfo(entity_info, alert_to_store)
+  addAlertPoolAndNetworkInfo(entity_info, alert_to_store)
+
   recipients.dispatch_notification(alert_to_store, current_script)
+
+  pushSmartRecordingFilter(entity_info, ifid)
 
   return(true)
 end
@@ -270,8 +320,8 @@ function alerts_api.trigger(entity_info, type_info, when, cur_alerts)
   local alert_key_name = get_alert_triggered_key(type_info.alert_type.alert_key, subtype)
 
   if not type_info.score then
-     traceError(TRACE_ERROR, TRACE_CONSOLE, "Alert score is not set")
-     type_info.score = 0
+    traceError(TRACE_ERROR, TRACE_CONSOLE, "Alert score is not set")
+    type_info.score = 0
   end
 
   local params = {
@@ -293,15 +343,10 @@ function alerts_api.trigger(entity_info, type_info, when, cur_alerts)
   end
 
   if(triggered == nil) then
-    if(do_trace) then 
-      print("Alert not triggered (already triggered?) @ "..granularity_sec.."] "..
-            entity_info.entity_val .."@"..type_info.alert_type.i18n_title..":".. subtype .. "\n")
-    end
+    --debug_print("Alert not triggered (already triggered?) @ "..granularity_sec.."] ".. entity_info.entity_val .."@"..type_info.alert_type.i18n_title..":".. subtype .. "\n")
     return(false)
   else
-    if(do_trace) then 
-      print("Alert triggered @ "..granularity_sec.." ".. entity_info.entity_val .."@"..type_info.alert_type.i18n_title..":".. subtype .. "\n")
-    end
+    --debug_print("Alert triggered @ "..granularity_sec.." ".. entity_info.entity_val .."@"..type_info.alert_type.i18n_title..":".. subtype .. "\n")
   end
 
   triggered.ifid = ifid
@@ -313,9 +358,18 @@ function alerts_api.trigger(entity_info, type_info, when, cur_alerts)
   -- same 100 alerts will be triggered again as soon as ntopng is restarted, causing
   -- 100 trigger notifications to be emitted twice. This check is to prevent such behavior.
   if not is_trigger_notified(triggered) then
-     addAlertPoolInfo(entity_info, triggered)
-     recipients.dispatch_notification(triggered, current_script)
-     mark_trigger_notified(triggered)
+
+    debug_print("Sending notification for alert " .. entity_info.entity_val)
+
+    addAlertPoolAndNetworkInfo(entity_info, triggered)
+
+    recipients.dispatch_notification(triggered, current_script)
+    mark_trigger_notified(triggered)
+
+    pushSmartRecordingFilter(entity_info, ifid)
+
+  else
+    debug_print("Alert already notified for " .. entity_info.entity_val)
   end
 
   return(true)
@@ -371,22 +425,19 @@ function alerts_api.release(entity_info, type_info, when, cur_alerts)
   end
 
   if(released == nil) then
-    if(do_trace) then 
-      print("Alert not released (not triggered?) @ "..granularity_sec.." "..
-	    entity_info.entity_val .."@"..type_info.alert_type.i18n_title..":".. subtype .. "\n")
-    end
+    --debug_print("Alert not released (not triggered?) @ "..granularity_sec.." ".. entity_info.entity_val .."@"..type_info.alert_type.i18n_title..":".. subtype .. "\n")
     return(false)
   else
-    if(do_trace) then 
-      print("Alert released @ "..granularity_sec.." ".. entity_info.entity_val .."@"..type_info.alert_type.i18n_title..":".. subtype .. "\n") 
-    end
+    --debug_print("Alert released @ "..granularity_sec.." ".. entity_info.entity_val .."@"..type_info.alert_type.i18n_title..":".. subtype .. "\n") 
   end
 
   released.ifid = ifid
   released.action = "release"
 
-  addAlertPoolInfo(entity_info, released)
+  addAlertPoolAndNetworkInfo(entity_info, released)
+
   mark_release_notified(released)
+
   recipients.dispatch_notification(released, current_script)
 
   return(true)
@@ -563,8 +614,7 @@ function alerts_api.checkThresholdAlert(params, alert_type, value, attacker, vic
     threshold
   )
   
-  alert:set_score_error()
-  alert:set_granularity(params.granularity)
+  alert:set_info(params)
   alert:set_subtype(script.key)
 
   if attacker ~= nil then
@@ -670,10 +720,6 @@ end
 
 -- ##############################################
 
-function alerts_api.host_delta_val(metric_name, granularity, curr_val, skip_first)
-  return(delta_val(host --[[ the host Lua reg ]], metric_name, granularity, curr_val, skip_first))
-end
-
 function alerts_api.interface_delta_val(metric_name, granularity, curr_val, skip_first)
   return(delta_val(interface --[[ the interface Lua reg ]], metric_name, granularity, curr_val, skip_first))
 end
@@ -722,5 +768,9 @@ function alerts_api.setCheck(check)
 end
 
 -- ##############################################
+
+if(trace_script_duration ~= nil) then
+  io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end
 
 return(alerts_api)

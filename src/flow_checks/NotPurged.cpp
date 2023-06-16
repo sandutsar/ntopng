@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 /* ***************************************************** */
 
 void NotPurged::checkNotPurged(Flow *f) {
-  if(f->isNotPurged()) {
+  if (f->isNotPurged()) {
     FlowAlertType alert_type = NotPurgedAlert::getClassType();
     u_int8_t c_score, s_score;
     risk_percentage cli_score_pctg = CLIENT_FAIR_RISK_PERCENTAGE;
@@ -38,15 +38,11 @@ void NotPurged::checkNotPurged(Flow *f) {
 
 /* ***************************************************** */
 
-void NotPurged::periodicUpdate(Flow *f) {
-  checkNotPurged(f);
-}
+void NotPurged::periodicUpdate(Flow *f) { checkNotPurged(f); }
 
 /* ***************************************************** */
 
-void NotPurged::flowEnd(Flow *f) {
-  checkNotPurged(f);
-}
+void NotPurged::flowEnd(Flow *f) { checkNotPurged(f); }
 
 /* ***************************************************** */
 

@@ -10,10 +10,12 @@ local alert_severities = require "alert_severities"
 local alert_consts = require "alert_consts"
 local alert_entities = require "alert_entities"
 local checks = require "checks"
-
-local host_pools = require "host_pools":create()
-
 local endpoints = require("endpoints")
+local last_error_notification = 0
+local MIN_ERROR_DELAY = 60 -- 1 minute
+local ERROR_KEY = "ntopng.cache.%s.error_time"
+
+local do_trace = false
 
 -- ##############################################
 
@@ -31,17 +33,36 @@ local default_builtin_minimum_severity = alert_severities.notice.severity_id -- 
 
 -- ##############################################
 
+local function debug_print(msg)
+   if not do_trace then
+      return
+   end
+
+   traceError(TRACE_NORMAL, TRACE_CONSOLE, msg)
+end
+
+-- ##############################################
+
 -- @brief Performs Initialization operations performed during startup
 function recipients.initialize()
    local checks = require "checks"
 
    -- Initialize builtin recipients, that is, recipients always existing an not editable from the UI
    -- For each builtin configuration type, a configuration and a recipient is created
+
+   -- Add categories
    local all_categories = {}
    for _, category in pairs(checks.check_categories) do
       all_categories[#all_categories + 1] = category.id
    end
 
+   -- Add entities
+   local all_entities = {}
+   for _, entity_info in pairs(alert_entities) do
+      all_entities[#all_entities + 1] = entity_info.entity_id
+   end
+
+   local host_pools = require "host_pools":create()
    -- Add host pools
    local all_host_pools = {}
    local pools = host_pools:get_all_pools()
@@ -54,8 +75,8 @@ function recipients.initialize()
 
    for endpoint_key, endpoint in pairs(endpoints.get_types()) do
       if endpoint.builtin then
-	 -- Delete (if existing) the old, string-keyed endpoint configuration
-	 endpoints.delete_config("builtin_config_"..endpoint_key)
+         -- Delete (if existing) the old, string-keyed endpoint configuration
+         endpoints.delete_config("builtin_config_"..endpoint_key)
 
          -- Add the configuration
          local res = endpoints.add_config(
@@ -64,21 +85,22 @@ function recipients.initialize()
             {} --[[ no default params --]]
          )
 
-	 -- Endpoint successfully created (or existing)
-	 if res and res.endpoint_id then
-	    -- And the recipient
+         -- Endpoint successfully created (or existing)
+         if res and res.endpoint_id then
+            -- And the recipient
 
-	    local recipient_res = recipients.add_recipient(
-	       res.endpoint_id --[[ the id of the endpoint --]],
-	       "builtin_recipient_"..endpoint_key --[[ the name of the endpoint recipient --]],
-	       all_categories,
-	       default_builtin_minimum_severity,
+            local recipient_res = recipients.add_recipient(
+               res.endpoint_id --[[ the id of the endpoint --]],
+               "builtin_recipient_"..endpoint_key --[[ the name of the endpoint recipient --]],
+               all_categories,
+               all_entities,
+               default_builtin_minimum_severity,
                all_host_pools, -- host pools
                all_am_hosts, -- active monitoring hosts
-	       {} --[[ no recipient params --]]
-	    )
+               {} --[[ no recipient params --]]
+            )
 
-	 end
+         end
       end
    end
 
@@ -103,8 +125,9 @@ function recipients.initialize()
    
    for _, recipient in pairs(recipients.get_all_recipients()) do     
       ntop.recipient_register(recipient.recipient_id, recipient.minimum_severity, 
-         table.concat(recipient.check_categories, ','),
-         table.concat(recipient.host_pools, ',')
+                              table.concat(recipient.check_categories, ','),
+                              table.concat(recipient.host_pools, ','),
+                              table.concat(recipient.check_entities, ',')
       )
    end
 end
@@ -128,7 +151,7 @@ local function _lock()
       local value_set = ntop.setnxCache(lock_key, "1", max_lock_duration)
 
       if value_set then
-	 return true -- lock acquired
+         return true -- lock acquired
       end
 
       ntop.msleep(1000)
@@ -208,8 +231,8 @@ local function _assign_recipient_id()
    -- belonging to deleted recipients
    for i = 0, recipients.MAX_NUM_RECIPIENTS - 1 do
       if not ids_by_key[i] then
-	 next_recipient_id = i
-	 break
+         next_recipient_id = i
+         break
       end
    end
 
@@ -225,7 +248,7 @@ end
 
 -- ##############################################
 
--- @brief Sanity checks for the endpoint configuration parameters
+-- @brief Coherence checks for the endpoint configuration parameters
 -- @param endpoint_key A string with the notification endpoint key
 -- @param recipient_params A table with endpoint recipient params that will be possibly sanitized
 -- @return false with a description of the error, or true, with a table containing sanitized configuration params.
@@ -246,7 +269,7 @@ local function check_endpoint_recipient_params(endpoint_key, recipient_params)
          if recipient_params and recipient_params[param_name] and not safe_params[param_name] then
             safe_params[param_name] = recipient_params[param_name]
          elseif not optional then
-	    return false, {status = "failed", error = {type = "missing_mandatory_param", missing_param = param_name}}
+            return false, {status = "failed", error = {type = "missing_mandatory_param", missing_param = param_name}}
          end
       end
    end
@@ -260,20 +283,22 @@ end
 -- @param endpoint_id An integer identifier of the endpoint
 -- @param endpoint_recipient_name A string with the recipient name
 -- @param check_categories A Lua array with already-validated ids as found in `checks.check_categories` or nil to indicate all categories
+-- @param check_entities A Lua array with already-validated ids as found in `checks.check_entities` or nil to indicate all entities
 -- @param minimum_severity An already-validated integer alert severity id as found in `alert_severities` or nil to indicate no minimum severity
 -- @param safe_params A table with endpoint recipient params already sanitized
 -- @return nil
-local function _set_endpoint_recipient_params(endpoint_id, recipient_id, endpoint_recipient_name, check_categories, minimum_severity, host_pools_ids, am_hosts_ids, safe_params)
+local function _set_endpoint_recipient_params(endpoint_id, recipient_id, endpoint_recipient_name, check_categories, check_entities, minimum_severity, host_pools_ids, am_hosts_ids, safe_params)
    -- Write the endpoint recipient config into another hash
    local k = _get_recipient_details_key(recipient_id)
 
    ntop.setCache(k, json.encode({endpoint_id = endpoint_id,
-				 recipient_name = endpoint_recipient_name,
-				 check_categories = check_categories,
-				 minimum_severity = minimum_severity,
-				 host_pools = host_pools_ids,
-				 am_hosts = am_hosts_ids,
-				 recipient_params = safe_params}))
+                                 recipient_name = endpoint_recipient_name,
+                                 check_categories = check_categories,
+                                 check_entities = check_entities,
+                                 minimum_severity = minimum_severity,
+                                 host_pools = host_pools_ids,
+                                 am_hosts = am_hosts_ids,
+                                 recipient_params = safe_params}))
 
    return recipient_id
 end
@@ -284,10 +309,11 @@ end
 -- @param endpoint_id An integer identifier of the endpoint
 -- @param endpoint_recipient_name A string with the recipient name
 -- @param check_categories A Lua array with already-validated ids as found in `checks.check_categories` or nil to indicate all categories
+-- @param check_entities A Lua array with already-validated ids as found in `checks.check_entities` or nil to indicate all entities
 -- @param minimum_severity An already-validated integer alert severity id as found in `alert_severities` or nil to indicate no minimum severity
 -- @param recipient_params A table with endpoint recipient params that will be possibly sanitized
 -- @return A table with a key status which is either "OK" or "failed", and the recipient id assigned to the newly added recipient. When "failed", the table contains another key "error" with an indication of the issue
-function recipients.add_recipient(endpoint_id, endpoint_recipient_name, check_categories, minimum_severity, host_pools_ids, am_hosts_ids, recipient_params)
+function recipients.add_recipient(endpoint_id, endpoint_recipient_name, check_categories, check_entities, minimum_severity, host_pools_ids, am_hosts_ids, recipient_params)
    local locked = _lock()
    local res = { 
       status = "failed",
@@ -301,47 +327,48 @@ function recipients.add_recipient(endpoint_id, endpoint_recipient_name, check_ca
 
       if ec["status"] == "OK" and endpoint_recipient_name then
 
-	 -- Is the endpoint already existing?
-	 local same_recipient = recipients.get_recipient_by_name(endpoint_recipient_name)
-	 if same_recipient then
-	    res = {
+         -- Is the endpoint already existing?
+         local same_recipient = recipients.get_recipient_by_name(endpoint_recipient_name)
+         if same_recipient then
+            res = {
                status = "failed",
-	       error = {
+               error = {
                   type = "endpoint_recipient_already_existing",
-		  endpoint_recipient_name = endpoint_recipient_name
+                  endpoint_recipient_name = endpoint_recipient_name
                }
-	    }
-	 else
-	    local endpoint_key = ec["endpoint_key"]
-	    local ok, status = check_endpoint_recipient_params(endpoint_key, recipient_params)
+            }
+         else
+            local endpoint_key = ec["endpoint_key"]
+            local ok, status = check_endpoint_recipient_params(endpoint_key, recipient_params)
 
-	    if ok then
-	       local safe_params = status["safe_params"]
+            if ok then
+               local safe_params = status["safe_params"]
 
-	       -- Assign the recipient id
-	       local recipient_id = _assign_recipient_id()
-	       -- Persist the configuration
-	       _set_endpoint_recipient_params(endpoint_id, recipient_id, endpoint_recipient_name, check_categories, minimum_severity, host_pools_ids, am_hosts_ids, safe_params)
+               -- Assign the recipient id
+               local recipient_id = _assign_recipient_id()
+               -- Persist the configuration
+               _set_endpoint_recipient_params(endpoint_id, recipient_id, endpoint_recipient_name, check_categories, check_entities, minimum_severity, host_pools_ids, am_hosts_ids, safe_params)
 
-	       -- Finally, register the recipient in C so we can start enqueuing/dequeuing notifications
-	       ntop.recipient_register(recipient_id, minimum_severity, 
-                  table.concat(check_categories, ','),
-                  table.concat(host_pools_ids, ',')
+               -- Finally, register the recipient in C so we can start enqueuing/dequeuing notifications
+               ntop.recipient_register(recipient_id, minimum_severity, 
+                                       table.concat(check_categories, ','),
+                                       table.concat(host_pools_ids, ','),
+                                       table.concat(check_entities, ',')
                )
 
-	       -- Set a flag to indicate that a recipient has been created
-	       if not ec.endpoint_conf.builtin and isEmptyString(ntop.getPref(recipients.FIRST_RECIPIENT_CREATED_CACHE_KEY)) then
-		  ntop.setPref(recipients.FIRST_RECIPIENT_CREATED_CACHE_KEY, "1")
-	       end
+               -- Set a flag to indicate that a recipient has been created
+               if not ec.endpoint_conf.builtin and isEmptyString(ntop.getPref(recipients.FIRST_RECIPIENT_CREATED_CACHE_KEY)) then
+                  ntop.setPref(recipients.FIRST_RECIPIENT_CREATED_CACHE_KEY, "1")
+               end
 
-	       res = {
+               res = {
                   status = "OK", 
                   recipient_id = recipient_id
                }
             else
                res = status
-	    end
-	 end
+            end
+         end
       else
          res = {
             status = "failed",
@@ -366,7 +393,7 @@ end
 -- @param minimum_severity An already-validated integer alert severity id as found in `alert_severities` or nil to indicate no minimum severity
 -- @param recipient_params A table with endpoint recipient params that will be possibly sanitized
 -- @return A table with a key status which is either "OK" or "failed". When "failed", the table contains another key "error" with an indication of the issue
-function recipients.edit_recipient(recipient_id, endpoint_recipient_name, check_categories, minimum_severity, host_pools_ids, am_hosts_ids, recipient_params)
+function recipients.edit_recipient(recipient_id, endpoint_recipient_name, check_categories, check_entities, minimum_severity, host_pools_ids, am_hosts_ids, recipient_params)
    local locked = _lock()
    local res = { status = "failed" }
 
@@ -374,42 +401,44 @@ function recipients.edit_recipient(recipient_id, endpoint_recipient_name, check_
       local rc = recipients.get_recipient(recipient_id)
 
       if not rc then
-	 res = {status = "failed", error = {type = "endpoint_recipient_not_existing", endpoint_recipient_name = endpoint_recipient_name}}
+         res = {status = "failed", error = {type = "endpoint_recipient_not_existing", endpoint_recipient_name = endpoint_recipient_name}}
       else
-	 local ec = endpoints.get_endpoint_config(rc["endpoint_id"])
+         local ec = endpoints.get_endpoint_config(rc["endpoint_id"])
 
-	 if ec["status"] ~= "OK" then
-	    res = ec
-	 else
-	    -- Are the submitted params those expected by the endpoint?
-	    local ok, status = check_endpoint_recipient_params(ec["endpoint_key"], recipient_params)
+         if ec["status"] ~= "OK" then
+            res = ec
+         else
+            -- Are the submitted params those expected by the endpoint?
+            local ok, status = check_endpoint_recipient_params(ec["endpoint_key"], recipient_params)
 
-	    if not ok then
-	       res = status
-	    else
-	       local safe_params = status["safe_params"]
+            if not ok then
+               res = status
+            else
+               local safe_params = status["safe_params"]
 
-	       -- Persist the configuration
-	       _set_endpoint_recipient_params(
-		  rc["endpoint_id"],
-		  recipient_id,
-		  endpoint_recipient_name,
-		  check_categories,
-		  minimum_severity,
-		  host_pools_ids,
+               -- Persist the configuration
+               _set_endpoint_recipient_params(
+                  rc["endpoint_id"],
+                  recipient_id,
+                  endpoint_recipient_name,
+                  check_categories,
+                  check_entities,
+                  minimum_severity,
+                  host_pools_ids,
                   am_hosts_ids,
-		  safe_params)
+                  safe_params)
 
-	       -- Finally, register the recipient in C to make sure also the C knows about this edit
-	       -- and periodic scripts can be reloaded
-	       ntop.recipient_register(tonumber(recipient_id), minimum_severity, 
-                  table.concat(check_categories, ','),
-                  table.concat(host_pools_ids, ',')
+               -- Finally, register the recipient in C to make sure also the C knows about this edit
+               -- and periodic scripts can be reloaded
+               ntop.recipient_register(tonumber(recipient_id), minimum_severity, 
+                                       table.concat(check_categories, ','),
+                                       table.concat(host_pools_ids, ','),
+                                       table.concat(check_entities, ',')
                )
 
-	       res = {status = "OK"}
-	    end
-	 end
+               res = {status = "OK"}
+            end
+         end
       end
 
       _unlock()
@@ -431,15 +460,15 @@ function recipients.delete_recipient(recipient_id)
       local cur_recipient_details = recipients.get_recipient(recipient_id)
 
       if cur_recipient_details then
-	 -- Remove the key with all the recipient details (e.g., with members)
-	 ntop.delCache(_get_recipient_details_key(recipient_id))
+         -- Remove the key with all the recipient details (e.g., with members)
+         ntop.delCache(_get_recipient_details_key(recipient_id))
 
-	 -- Remove the recipient_id from the set of all currently existing recipient ids
-	 ntop.delMembersCache(_get_recipient_ids_key(), string.format("%d", recipient_id))
+         -- Remove the recipient_id from the set of all currently existing recipient ids
+         ntop.delMembersCache(_get_recipient_ids_key(), string.format("%d", recipient_id))
 
-	 -- Finally, remove the recipient from C
-	 ntop.recipient_delete(recipient_id)
-	 ret = true
+         -- Finally, remove the recipient from C
+         ntop.recipient_delete(recipient_id)
+         ret = true
       end
 
       _unlock()
@@ -460,7 +489,7 @@ function recipients.delete_recipients_by_conf(endpoint_id)
    for _, recipient in pairs(all_recipients) do
       -- Use tostring for backwards compatibility
       if tostring(recipient.endpoint_id) == tostring(endpoint_id) then
-	 recipients.delete_recipient(recipient.recipient_id)
+         recipients.delete_recipient(recipient.recipient_id)
       end
    end
 end
@@ -479,7 +508,7 @@ function recipients.get_recipients_by_conf(endpoint_id, include_stats)
       -- Use tostring for backward compatibility, to handle
       -- both integer and string endpoint_id
       if tostring(recipient.endpoint_id) == tostring(endpoint_id) then
-	 res[#res + 1] = recipient
+         res[#res + 1] = recipient
       end
    end
 
@@ -507,7 +536,7 @@ function recipients.test_recipient(endpoint_id, recipient_params)
 
    local safe_params = status["safe_params"]
 
-   -- Create dummy recipient
+   -- Create test recipient
    local recipient = {
       endpoint_id = ec["endpoint_id"],
       endpoint_conf_name = ec["endpoint_conf_name"],
@@ -551,70 +580,82 @@ function recipients.get_recipient(recipient_id, include_stats)
       recipient_details = json.decode(recipient_details_str)
 
       if recipient_details then
-	 -- Add the integer recipient id
-	 recipient_details["recipient_id"] = tonumber(recipient_id)
+         -- Add the integer recipient id
+         recipient_details["recipient_id"] = tonumber(recipient_id)
 
-	 -- Add also the endpoint configuration name
-	 -- Use the endpoint id to get the endpoint configuration (use endpoint_conf_name for the old endpoints)
-	 local ec = endpoints.get_endpoint_config(recipient_details["endpoint_id"] or recipient_details["endpoint_conf_name"])
-	 recipient_details["endpoint_conf_name"] =  ec["endpoint_conf_name"]
-	 recipient_details["endpoint_id"] =  ec["endpoint_id"]
+         -- Add also the endpoint configuration name
+         -- Use the endpoint id to get the endpoint configuration (use endpoint_conf_name for the old endpoints)
+         local ec = endpoints.get_endpoint_config(recipient_details["endpoint_id"] or recipient_details["endpoint_conf_name"])
+         recipient_details["endpoint_conf_name"] =  ec["endpoint_conf_name"]
+         recipient_details["endpoint_id"] =  ec["endpoint_id"]
 
-	 -- Add user script categories. nil or empty user script categories read from the JSON imply ANY AVAILABLE category
-	 if not recipient_details["check_categories"] or #recipient_details["check_categories"] == 0 then
-	    if not recipient_details["check_categories"] then
-	       recipient_details["check_categories"] = {}
-	    end
+         -- Add check categories. nil or empty check categories read from the JSON imply ANY AVAILABLE category
+         if not recipient_details["check_categories"] or #recipient_details["check_categories"] == 0 then
+            if not recipient_details["check_categories"] then
+               recipient_details["check_categories"] = {}
+            end
 
-	    local checks = require "checks"
-	    for _, category in pairs(checks.check_categories) do
-	       recipient_details["check_categories"][#recipient_details["check_categories"] + 1] = category.id
-	    end
-	 end
+            local checks = require "checks"
+            for _, category in pairs(checks.check_categories) do
+               recipient_details["check_categories"][#recipient_details["check_categories"] + 1] = category.id
+            end
+         end
 
-	 -- Add host pools
-	 if not recipient_details["host_pools"] then
-	    local pools = host_pools:get_all_pools()
+         -- Add check entities. nil or empty check entities read from the JSON imply ANY AVAILABLE entity
+         if not recipient_details["check_entities"] or #recipient_details["check_entities"] == 0 then
+            if not recipient_details["check_entities"] then
+               recipient_details["check_entities"] = {}
+            end
 
-	    if(recipient_details["host_pools"] == nil) then
-	       recipient_details["host_pools"] = {}
-	    end
-	    
-	    for _, pool in pairs(pools) do
-	       recipient_details["host_pools"][#recipient_details["host_pools"] + 1] = pool.pool_id
-	    end
-	 end
+            for _, entity_info in pairs(alert_entities) do
+               recipient_details["check_entities"][#recipient_details["check_entities"] + 1] = entity_info.entity_id
+            end
+         end
 
-	 -- Add active monitoring hosts
-	 if not recipient_details["am_hosts"] then
+         -- Add host pools
+         if not recipient_details["host_pools"] then
+            local host_pools = require "host_pools":create()
+            local pools = host_pools:get_all_pools()
+
+            if(recipient_details["host_pools"] == nil) then
+               recipient_details["host_pools"] = {}
+            end
+            
+            for _, pool in pairs(pools) do
+               recipient_details["host_pools"][#recipient_details["host_pools"] + 1] = pool.pool_id
+            end
+         end
+
+         -- Add active monitoring hosts
+         if not recipient_details["am_hosts"] then
             -- No hosts by default
-	    recipient_details["am_hosts"] = {}
-	 end
+            recipient_details["am_hosts"] = {}
+         end
 
-	 -- Add minimum alert severity. nil or empty minimum severity assumes a minimum severity of notice
-	 if not tonumber(recipient_details["minimum_severity"]) then
-	    recipient_details["minimum_severity"] = default_builtin_minimum_severity
-	 end
+         -- Add minimum alert severity. nil or empty minimum severity assumes a minimum severity of notice
+         if not tonumber(recipient_details["minimum_severity"]) then
+            recipient_details["minimum_severity"] = default_builtin_minimum_severity
+         end
 
-	 if ec then
-	    recipient_details["endpoint_conf"] = ec["endpoint_conf"]
-	    recipient_details["endpoint_key"] = ec["endpoint_key"]
+         if ec then
+            recipient_details["endpoint_conf"] = ec["endpoint_conf"]
+            recipient_details["endpoint_key"] = ec["endpoint_key"]
 
-	    local modules_by_name = endpoints.get_types()
-	    local cur_module = modules_by_name[recipient_details["endpoint_key"]]
-	    if cur_module and cur_module.format_recipient_params then
-	       -- Add a formatted output of recipient params
-	       recipient_details["recipient_params_fmt"] = cur_module.format_recipient_params(recipient_details["recipient_params"])
-	    else
-	       -- A default
-	       recipient_details["recipient_params_fmt"] = ""
-	    end
-	 end
+            local modules_by_name = endpoints.get_types()
+            local cur_module = modules_by_name[recipient_details["endpoint_key"]]
+            if cur_module and cur_module.format_recipient_params then
+               -- Add a formatted output of recipient params
+               recipient_details["recipient_params_fmt"] = cur_module.format_recipient_params(recipient_details["recipient_params"])
+            else
+               -- A default
+               recipient_details["recipient_params_fmt"] = ""
+            end
+         end
 
          if include_stats then
-	    -- Read stats from C
-	    recipient_details["stats"] = ntop.recipient_stats(recipient_details["recipient_id"])
-	 end
+            -- Read stats from C
+            recipient_details["stats"] = ntop.recipient_stats(recipient_details["recipient_id"])
+         end
       end
    end
 
@@ -632,7 +673,7 @@ function recipients.get_all_recipients(exclude_builtin, include_stats)
       local recipient_details = recipients.get_recipient(recipient_id, include_stats)
 
       if recipient_details and (not exclude_builtin or not recipient_details.endpoint_conf.builtin) then
-	 res[#res + 1] = recipient_details
+         res[#res + 1] = recipient_details
       end
    end
 
@@ -648,7 +689,7 @@ function recipients.get_recipient_by_name(name)
       local recipient_details = recipients.get_recipient(recipient_id)
 
       if recipient_details and recipient_details["recipient_name"] and recipient_details["recipient_name"] == name then
-	      return recipient_details
+         return recipient_details
       end
    end
 
@@ -673,7 +714,7 @@ end
 
 local function get_notification_category(notification, current_script)
    -- Category is first read from the current_script. If no current_script is found (e.g., for
-   -- alerts cenerated from the C++ core such as start after anomalous termination), the category
+   -- alerts generated from the C++ core such as start after anomalous termination), the category
    -- is guessed from the alert entity.
    local checks = require "checks"
    local entity_id = notification.entity_id
@@ -685,11 +726,11 @@ local function get_notification_category(notification, current_script)
    else
       --- Determined from the entity
       if entity_id == alert_entities.system.entity_id then
-	 -- System alert entity becomes system
+         -- System alert entity becomes system
          cur_category_id = checks.check_categories.system.id
       else
-	 -- All other entities fall into other category
-	 cur_category_id = checks.check_categories.other.id
+         -- All other entities fall into other category
+         cur_category_id = checks.check_categories.other.id
       end
    end
 
@@ -699,84 +740,111 @@ end
 -- ##############################################
 
 -- @brief Dispatches a `notification` to all the interested recipients
+-- Note: this is similar to RecipientQueue::enqueue does in C++)
 -- @param notification An alert notification
 -- @param current_script The user script which has triggered this notification - can be nil if the script is unknown or not available
 -- @return nil
 function recipients.dispatch_notification(notification, current_script)
-   if(notification) then
-      local notification_category = get_notification_category(notification, current_script)
- 
-      local recipients = recipients.get_all_recipients()
+   if not notification then
+      -- traceError(TRACE_ERROR, TRACE_CONSOLE, "Internal error. Empty notification")
+      -- tprint(debug.traceback())
+   end
 
-      if #recipients > 0 then
-	 -- Use pcall to catch possible exceptions, e.g., (string expected, got light userdata)
-	 local status, json_notification = pcall(function() return json.encode(notification) end)
+   local notification_category = get_notification_category(notification, current_script)
 
-	 -- If an exception occurred, print the notification and exit
-	 if not status then
-	    tprint({notification, json_notification})
-	    return
-	 end
+   local recipients = recipients.get_all_recipients()
 
+   if #recipients > 0 then
+      -- Use pcall to catch possible exceptions, e.g., (string expected, got light userdata)
+      local status, json_notification = pcall(function() return json.encode(notification) end)
 
-	 for _, recipient in ipairs(recipients) do
-            local recipient_ok = false
-
-            -- Check Category
-            if notification_category and recipient.check_categories ~= nil then
-               -- Make sure the user script category belongs to the recipient user script categories
-               for _, check_category in pairs(recipient.check_categories) do
-                  if check_category == notification_category then
-                     recipient_ok = true
-                  end
-               end
-            else
-               recipient_ok = true
-            end
-
-            -- Check Severity
-            if recipient_ok then
-               if notification.severity and recipient.minimum_severity ~= nil and 
-                  notification.severity < recipient.minimum_severity then
-                  -- If the current alert severity is less than the minimum requested severity exclude the recipient
-                  recipient_ok = false
-               end
-            end
-
-            -- Check Pool
-            if recipient_ok then
-               if notification.host_pool_id then
-                  if recipient.recipient_name ~= "builtin_recipient_alert_store_db" and recipient.host_pools then
-                     local host_pools_map = swapKeysValues(recipient.host_pools)
-                     if not host_pools_map[notification.host_pool_id] then
-                        recipient_ok = false
-                     end
-                  end
-               end
-            end
-
-            if recipient_ok then
-               if notification.entity_id == alert_entities.am_host.entity_id and notification.entity_val then
-                  if recipient.recipient_name ~= "builtin_recipient_alert_store_db" and recipient.am_hosts then
-                     local am_hosts_map = swapKeysValues(recipient.am_hosts)
-                     if not am_hosts_map[notification.entity_val] then
-                        recipient_ok = false
-                     end
-                  end
-               end
-            end
-
-            if recipient_ok then
-               -- Enqueue alert
-	       ntop.recipient_enqueue(recipient.recipient_id, json_notification, notification.score, notification_category)
-            end
-	 end
-
-	 ::continue::
+      -- If an exception occurred, print the notification and exit
+      if not status then
+         --tprint({notification, json_notification})
+         return
       end
-   else
-      --      traceError(TRACE_ERROR, TRACE_CONSOLE, "Internal error. Empty notification")
-      --      tprint(debug.traceback())
+
+      for _, recipient in ipairs(recipients) do
+         local recipient_ok = true
+
+         -- Check Category
+         if recipient_ok and notification_category and recipient.check_categories ~= nil then
+            -- Make sure the user script category belongs to the recipient check categories
+            recipient_ok = false
+            for _, check_category in pairs(recipient.check_categories) do
+               if check_category == notification_category then
+                  recipient_ok = true
+               end
+            end
+
+            if not recipient_ok then
+               debug_print("X Discarding " .. notification.entity_val .. " alert for recipient " .. recipient.recipient_name .. " due to category selection")
+            end
+         end
+
+         -- Check Entity
+         if recipient_ok and notification.entity_id and recipient.check_entities ~= nil then
+            -- Make sure the user script entity belongs to the recipient check entities
+            recipient_ok = false
+            for _, check_entity_id in pairs(recipient.check_entities) do
+               if check_entity_id == notification.entity_id then
+                  recipient_ok = true
+               end
+            end
+
+            if not recipient_ok then
+               debug_print("X Discarding " .. notification.entity_val .. " alert for recipient " .. recipient.recipient_name .. " due to entity selection")
+            end
+         end
+
+         -- Check Severity
+         if recipient_ok then
+            if notification.severity and recipient.minimum_severity ~= nil and 
+               notification.severity < recipient.minimum_severity then
+               -- If the current alert severity is less than the minimum requested severity exclude the recipient
+               debug_print("X Discarding " .. notification.entity_val .. " alert for recipient " .. recipient.recipient_name .. " due to severity")
+               recipient_ok = false
+            end
+         end
+
+         -- Check Pool
+         if recipient_ok then
+            if notification.host_pool_id then
+               if recipient.recipient_name ~= "builtin_recipient_alert_store_db" and recipient.host_pools then
+                  local host_pools_map = swapKeysValues(recipient.host_pools)
+                  if not host_pools_map[notification.host_pool_id] then
+                     debug_print("X Discarding " .. notification.entity_val .. " alert for recipient " .. recipient.recipient_name .. " due to host pool selection (".. notification.host_pool_id ..")")
+                     recipient_ok = false
+                  end
+               end
+            end
+         end
+
+         if recipient_ok then
+            if notification.entity_id == alert_entities.am_host.entity_id and notification.entity_val then
+               if recipient.recipient_name ~= "builtin_recipient_alert_store_db" and recipient.am_hosts then
+                  local am_hosts_map = swapKeysValues(recipient.am_hosts)
+                  if not am_hosts_map[notification.entity_val] then
+                     recipient_ok = false
+                     debug_print("X Discarding " .. notification.entity_val .. " alert for recipient " .. recipient.recipient_name .. " due to AM selection")
+                  end
+               end
+            end
+         end
+
+         if recipient_ok then
+            -- Enqueue alert
+
+            -- debug_print(" ===> Delivering alert for entity value " .. notification.entity_val .. " to recipient " .. recipient.recipient_name)
+
+            ntop.recipient_enqueue(recipient.recipient_id, 
+              json_notification --[[ alert --]],
+              notification.score,
+              notification_category)
+         end
+      end
+
+      ::continue::
    end
 end
 
@@ -807,29 +875,35 @@ local function process_notifications(ready_recipients, now, deadline, periodic_f
    local cur_time = os.time()
    while #ready_recipients > 0 and total_budget >= 0 and cur_time <= deadline and (force_export or not ntop.isDeadlineApproaching()) do
       for i = #ready_recipients, 1, -1 do
-	 local ready_recipient = ready_recipients[i]
-	 local recipient = ready_recipient.recipient
-	 local m = ready_recipient.mod
+         local ready_recipient = ready_recipients[i]
+         local recipient = ready_recipient.recipient
+         local m = ready_recipient.mod
 
-	 if do_trace then tprint("Dequeuing alerts for ready recipient: ".. recipient.recipient_name.. " recipient_id: "..recipient.recipient_id) end
+         debug_print("Dequeuing alerts for ready recipient: ".. recipient.recipient_name.. " recipient_id: "..recipient.recipient_id)
 
-	 if m.dequeueRecipientAlerts then
-	    local rv = m.dequeueRecipientAlerts(recipient, budget_per_iter)
+         if last_error_notification == 0 then
+            last_error_notification = tonumber(ntop.getCache(string.format(ERROR_KEY, recipient.recipient_name))) or 0
+         end
 
-	    -- If the recipient has failed (not rv.success) or
-	    -- if it has no more work to do (not rv.more_available)
-	    -- it can be removed from the array of ready recipients.
-	    if not rv.success or not rv.more_available then
-	       table.remove(ready_recipients, i)
+         if m.dequeueRecipientAlerts and (now > MIN_ERROR_DELAY + last_error_notification) then
+            local rv = m.dequeueRecipientAlerts(recipient, budget_per_iter)
 
-	       if do_trace then tprint("Ready recipient done: ".. recipient.recipient_name) end
+            -- If the recipient has failed (not rv.success) or
+            -- if it has no more work to do (not rv.more_available)
+            -- it can be removed from the array of ready recipients.
+            if not rv.success or not rv.more_available then
+               table.remove(ready_recipients, i)
 
-	       if not rv.success then
-		  local msg = rv.error_message or "Unknown Error"
-		  traceError(TRACE_ERROR, TRACE_CONSOLE, "Error while sending notifications via " .. recipient.recipient_name .. " " .. msg)
-	       end
-	    end
-	 end
+               debug_print("Ready recipient done: ".. recipient.recipient_name)
+
+               if not rv.success then
+                  last_error_notification = now
+                  ntop.setCache(string.format(ERROR_KEY, recipient.recipient_name), now)
+                  local msg = rv.error_message or "Unknown Error"
+                  traceError(TRACE_ERROR, TRACE_CONSOLE, "Error while sending notifications via " .. recipient.recipient_name .. " " .. msg)
+               end
+            end
+         end
       end
 
       -- Update the total budget
@@ -839,12 +913,12 @@ local function process_notifications(ready_recipients, now, deadline, periodic_f
 
    if do_trace then
       if #ready_recipients > 0 then
-	 tprint("Deadline approaching: "..tostring(deadline < cur_time))
-	 tprint("Budget left: "..total_budget)
-	 tprint("The following recipients were unable to dequeue all their notifications")
-	 for _, ready_recipient in pairs(ready_recipients) do
-	    tprint(" "..ready_recipient.recipient.recipient_name)
-	 end
+         debug_print("Deadline approaching: "..tostring(deadline < cur_time))
+         debug_print("Budget left: "..total_budget)
+         debug_print("The following recipients were unable to dequeue all their notifications")
+         for _, ready_recipient in pairs(ready_recipients) do
+            debug_print(" "..ready_recipient.recipient.recipient_name)
+         end
       end
    end
 end
@@ -898,12 +972,12 @@ function recipients.process_notifications(now, deadline, periodic_frequency, for
 
       if modules_by_name[module_name] then
          local m = modules_by_name[module_name]
-	 if force_export or check_endpoint_export(recipient.recipient_id, m.EXPORT_FREQUENCY, now) then
-	    -- This recipient is ready for export...
-	    local ready_recipient = {recipient = recipient, recipient_id = recipient.recipient_id, mod = m}
+         if force_export or check_endpoint_export(recipient.recipient_id, m.EXPORT_FREQUENCY, now) then
+            -- This recipient is ready for export...
+            local ready_recipient = {recipient = recipient, recipient_id = recipient.recipient_id, mod = m}
 
-	    ready_recipients[#ready_recipients + 1] = ready_recipient
-	 end
+            ready_recipients[#ready_recipients + 1] = ready_recipient
+         end
       end
    end
 

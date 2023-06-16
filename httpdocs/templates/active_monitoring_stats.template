@@ -12,12 +12,12 @@
                     <thead>
                         <tr>
                         <th>{{i18n("flow_details.url")}}</th>
+                        <th>{{i18n("system_stats.last_ip")}}</th>
 			                  <th>{{i18n("active_monitoring_stats.measurement")}}</th>
                         <th>{{i18n("chart")}}</th>
                         <th>{{i18n("threshold")}}</th>
                         <th>{{i18n("active_monitoring_stats.last_24_hours")}}</th>
                         <th>{{i18n("active_monitoring_stats.last_measurement")}}</th>
-                        <th>{{i18n("system_stats.last_ip")}}</th>
                         <th>{{i18n("active_monitoring_stats.measurement")}}</th>
                         <th>{{i18n("active_monitoring_stats.alerted")}}</th>
                         <th>{{i18n("active_monitoring_stats.pool")}}</th>
@@ -541,6 +541,7 @@ sorted_measurements.sort(function(a, b){
   dtConfig = DataTableUtils.extendConfig(dtConfig, {
       lengthChange: (get_host === ""),
       paging: (get_host === ""),
+      order: [[ 1 /* Last IP */, "desc" ]],
       initComplete: function(settings, data) {
 
           if (get_host != "") {
@@ -569,6 +570,10 @@ sorted_measurements.sort(function(a, b){
 
                   return (row.label);
               }
+          },
+          {
+              data: 'last_ip',
+              className: 'dt-body-right dt-head-center text-nowrap'
           },
           {
               data: 'measurement',
@@ -605,7 +610,7 @@ sorted_measurements.sort(function(a, b){
           },
           {
               data: 'hours',
-              className: 'text-center dt-head-center',
+              className: 'text-center dt-head-center text-nowrap',
               sortable: false,
               render: function(data, type) {
                   if (type == 'display') {
@@ -623,17 +628,14 @@ sorted_measurements.sort(function(a, b){
   render: $.fn.dataTableExt.absoluteFormatSecondsToHHMMSS,
           },
           {
-              data: 'last_ip',
-              className: 'dt-body-right dt-head-center text-nowrap'
-          },
-          {
               data: 'last_measure',
               className: 'text-center',
               sortable: false,
               render: function(data, type, row) {
                   if(type === 'display' || type === 'filter') {
-                      if (row.last_measure)
-                          return `${row.last_measure} ${row.unit}`
+                      if (row.last_measure) {
+                        return (parseFloat(row.last_measure) != NaN ? `${parseFloat(row.last_measure)} ${row.unit}` : `${row.last_measure}`)
+                      }
                       else
                           return "";
                   }

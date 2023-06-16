@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,8 @@
 
 #include "ntop_includes.h"
 
+#if !defined(WIN32) && !defined(__APPLE__)
+
 class SyslogDump : public DB {
  public:
   SyslogDump(NetworkInterface *_iface);
@@ -32,5 +34,6 @@ class SyslogDump : public DB {
   virtual bool dumpFlow(time_t when, Flow *f, char *json);
 };
 
+#endif
 
 #endif /* _LOGSTASH_H_ */

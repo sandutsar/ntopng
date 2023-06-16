@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,15 +28,23 @@ class FlowRisk : public FlowCheck {
  private:
   virtual FlowAlertType getAlertType() const = 0;
 
+  bool ignoreRisk(Flow *f, ndpi_risk_enum r);
+
  public:
-  FlowRisk() : FlowCheck(ntopng_edition_community,
-			 false /* All interfaces */, false /* Don't exclude for nEdge */, false /* NOT only for nEdge */,
-			 true /* has_protocol_detected */, false /* has_periodic_update */, false /* has_flow_end */) {};
- FlowRisk(NtopngEdition _edition) : FlowCheck(_edition,
-						 false /* All interfaces */, false /* Don't exclude for nEdge */, false /* NOT only for nEdge */,
-						 true /* has_protocol_detected */, false /* has_periodic_update */, false /* has_flow_end */) {};
-  ~FlowRisk() {};
-  virtual ndpi_risk_enum handledRisk()       { return NDPI_NO_RISK;    };
+  FlowRisk()
+      : FlowCheck(ntopng_edition_community, false /* All interfaces */,
+                  false /* Don't exclude for nEdge */,
+                  false /* NOT only for nEdge */,
+                  true /* has_protocol_detected */,
+                  false /* has_periodic_update */, false /* has_flow_end */){};
+  FlowRisk(NtopngEdition _edition)
+      : FlowCheck(_edition, false /* All interfaces */,
+                  false /* Don't exclude for nEdge */,
+                  false /* NOT only for nEdge */,
+                  true /* has_protocol_detected */,
+                  false /* has_periodic_update */, false /* has_flow_end */){};
+  ~FlowRisk(){};
+  virtual ndpi_risk_enum handledRisk() { return NDPI_NO_RISK; };
   void protocolDetected(Flow *f);
 };
 

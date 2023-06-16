@@ -4,16 +4,15 @@
 
 local dirs = ntop.getDirs()
 
+local clock_start = os.clock()
+
 local tracker = require "tracker"
 
 local os_utils = {}
 
 local is_windows = ntop.isWindows()
-local is_freebsd = ntop.isFreeBSD()
 
 local dirs = ntop.getDirs()
-local NTOPCTL_CMD = dirs.bindir.."/ntopctl"
-local NTOPNG_CONFIG_TOOL = dirs.bindir.."/ntopng-utils-manage-config"
 
 -- ########################################################
 
@@ -65,6 +64,7 @@ function os_utils.execWithOutput(c, ret_code_success)
    local debug = false
    local f_name = nil 
    local f 
+   local is_freebsd = ntop.isFreeBSD()
 
    ret_code_success = ret_code_success or 0
 
@@ -72,9 +72,14 @@ function os_utils.execWithOutput(c, ret_code_success)
       return nil
    end
 
+   if(not(is_windows)) then
+      -- Avoid errors to be displayed on the console
+      c = c .. " 2>/dev/null"
+   end
+   
    if(debug) then tprint(c) end
 
-   if is_freebsd then
+   if(is_freebsd) then
       f_name = os.tmpname()
       os.execute(c.." > "..f_name)
       f = io.open(f_name, 'r')
@@ -88,21 +93,21 @@ function os_utils.execWithOutput(c, ret_code_success)
   
    local ret_string = f:read('*a')
 
-   if ret_string ~= nil then
-      if(debug) then tprint(s) end
+   if(ret_string ~= nil) then
+      if(debug) then tprint(ret_string) end
    end
    
    local rv = { f:close() }
 
    local retcode = ret_code_success
 
-   if f_name then
+   if(f_name) then
       os.remove(f_name)
    else
       retcode = rv[3]
    end
 
-   if retcode ~= ret_code_success then
+   if(retcode ~= ret_code_success) then
       return nil, retcode
    end
 
@@ -112,6 +117,8 @@ end
 -- ########################################################
 
 local function ntopctl_cmd(service_name, use_sudo, ...)
+   local NTOPCTL_CMD = dirs.bindir.."/ntopctl"
+   
    if not ntop.exists(NTOPCTL_CMD) then
       return nil
    end
@@ -139,6 +146,7 @@ end
 --! @return true if service is available, false otherwise.
 function os_utils.hasService(service_name, ...)
    local prefs = ntop.getPrefs()
+   local NTOPNG_CONFIG_TOOL = dirs.bindir.."/ntopng-utils-manage-config"
 
    if not isEmptyString(prefs.user) 
       and prefs.user ~= "ntopng"
@@ -286,6 +294,10 @@ tracker.track(os_utils, 'enableService')
 tracker.track(os_utils, 'disableService')
 
 -- ########################################################
+
+if(trace_script_duration ~= nil) then
+   io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end
 
 return os_utils
 

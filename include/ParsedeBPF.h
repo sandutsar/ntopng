@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,18 +37,20 @@ class ParsedeBPF {
   bool process_info_set, container_info_set, tcp_info_set;
 
   ParsedeBPF();
-  ParsedeBPF(const ParsedeBPF &pe);
+  ParsedeBPF(const ParsedeBPF &pe, bool swap_directions);
   virtual ~ParsedeBPF();
 
-  inline void swap() { server_info = !server_info; };	
+  inline void swap() { server_info = !server_info; };
 
-  bool update(const ParsedeBPF * const pe);
+  bool update(const ParsedeBPF *const pe);
   bool isServerInfo() const;
   void print();
 
   void getJSONObject(json_object *my_object) const;
-  void getProcessInfoJSONObject(const ProcessInfo *proc, json_object *proc_object) const;
-  void getContainerInfoJSONObject(const ContainerInfo *cont, json_object *proc_object) const;
+  void getProcessInfoJSONObject(const ProcessInfo *proc,
+                                json_object *proc_object) const;
+  void getContainerInfoJSONObject(const ContainerInfo *cont,
+                                  json_object *proc_object) const;
   void getTCPInfoJSONObject(const TcpInfo *tcp, json_object *proc_object) const;
 
   void lua(lua_State *vm) const;

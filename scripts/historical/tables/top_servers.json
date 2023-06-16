@@ -4,6 +4,7 @@
 	"data_source" : "flows",
 	"show_in_page" : "overview",
 	"visualization_type" : "table",
+	"hourly": true,
 	"select" : {
 		"items" : [
 			{
@@ -16,10 +17,7 @@
 				"name" : "IPV6_DST_ADDR"
 			},
 			{
-				"name" : "DST_LABEL"
-			},
-			{
-				"name" : "bytes",
+				"name" : "total_bytes",
 				"func" : "SUM",
 				"param" : "TOTAL_BYTES",
 				"value_type" : "bytes"
@@ -49,16 +47,13 @@
 			},
 			{
 				"name" : "IPV6_DST_ADDR"
-			},
-			{
-				"name" : "DST_LABEL"
 			}
 		]
 	},
 	"sortby" : {
 		"items" : [
 			{
-				"name" : "bytes",
+				"name" : "total_bytes",
 				"order" : "DESC"
 			}
 		]

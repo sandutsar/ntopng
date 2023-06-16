@@ -1237,8 +1237,8 @@ function discover.discover2table(interface_name, recache)
       snmp_community = "public"
    end
 
-   interface.select(interface_name)
-
+   interface.select(tostring(interface_name))
+   
    local cached = discovery2config(interface_name)
 
    if recache ~= true then
@@ -1275,7 +1275,7 @@ function discover.discover2table(interface_name, recache)
 
 	 -- This is an ARP entry
 	 if(discover.debug) then io.write("Attempting to resolve "..ip.."\n") end
-	 local sym = ntop.getResolvedName(ip) -- dummy resolution just to fill-up the cache
+	 local sym = ntop.getResolvedName(ip) -- placeholder resolution just to fill-up the cache
 
 	 interface.mdnsQueueNameToResolve(ip)
 

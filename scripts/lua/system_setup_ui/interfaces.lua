@@ -1,5 +1,5 @@
 --
--- (C) 2013-22 - ntop.org
+-- (C) 2013-23 - ntop.org
 --
 
 local dirs = ntop.getDirs()
@@ -32,8 +32,10 @@ if (_POST["lan_interfaces"] ~= nil) and (_POST["wan_interfaces"] ~= nil) then
 
   if (mode == "routing") then
     -- Ensure we are on static mode on the lan inteface
-    local lan_iface = sys_config:getLanInterface()
-    sys_config:setInterfaceMode(lan_iface, "static")
+    local lan_ifaces = sys_config:getLanInterfaces()
+    for _, lan_iface in ipairs(lan_ifaces) do
+      sys_config:setInterfaceMode(lan_iface, "static")
+    end
   end
 
   sys_config:save()
@@ -67,7 +69,8 @@ local min_wan_ifaces = "1"
 local max_lan_ifaces = "1"
 local max_wan_ifaces = ""
 if mode == "routing" then
-  -- nothing to change
+  -- testing
+  max_lan_ifaces = ""
 elseif mode == "bridging" then
   -- temporary limits - we need to support multiple LAN interfaces in C code
   max_wan_ifaces = "1"

@@ -28,10 +28,10 @@
     {% end %}
 
     {% -- The Interfaces optgroup %}
-  <option disabled>{{ i18n('interfaces') }}</option>
+    <option disabled>{{ i18n('interfaces') }}</option>
 
     {% for round = 1, 2 do -- First round: only physical interfaces, second round: only virtual interfaces %}
-      {% for k, v in pairsByValues(ifnames, asc) do %}
+      {% for k, v in pairsByValues(ifHdescr, asc) do %}
         {% if round == 1 and ifCustom[k] then %}
           {% -- Nothing to do, this round is for physical, non-disaggregated interfaces ... %}
         {% elseif round == 2 and not ifCustom[k] then %}
@@ -43,27 +43,27 @@
               {% selected = 'selected=""' %}
    	    {% end %}
   
-            {% if pcapdump[v] then %}
+            {% if pcapdump[k] then %}
               {% icons[#icons + 1] = "<i class='fas fa-file'></i>" %}
-            {% elseif packetinterfaces[v] then %}
+            {% elseif packetinterfaces[k] then %}
               {% icons[#icons + 1] = "<i class='fas fa-ethernet'></i>" %}
-            {% elseif zmqinterfaces[v] then %}
+            {% elseif zmqinterfaces[k] then %}
               {% icons[#icons + 1] = "<i class='fas fa-bezier-curve'></i>" %} {% --broadcast-tower %}
             {% end %}
 
-            {% if views[v] then %}
+            {% if views[k] then %}
               {% icons[#icons + 1] = "<i class='fas fa-eye'></i>" %}
             {% end %}
 
-            {% if dynamic[v] then %}
+            {% if dynamic[k] then %}
               {% icons[#icons + 1] = "<i class='fas fa-code-branch'></i>" %}
             {% end %}
 
-            {% if drops[v] then %}
+            {% if drops[k] then %}
               {% icons[#icons + 1] = "<i class='fas fa-tint'></i>" %}
             {% end %}
 
-            {% if recording[v] then %}
+            {% if recording[k] then %}
               {% icons[#icons + 1] = "<i class='fas fa-hdd'></i>" %}
             {% end %}
 
@@ -94,7 +94,7 @@
   <li class="nav-item d-sm-flex">
     <div class="d-flex">
       <select name="observationpoint-dropdown" id="observationpoint-dropdown" class="selectpicker form-select-lg pb-0" data-width="fit" data-live-search="true" data-live-search-placeholder="{{ i18n('search') }}" data-actions-box="true">
-      {% for _, v in pairsByKeys(observationPoints, asc) do %}
+      {% for _, v in pairsByField(observationPoints, 'obs_point', asc) do %}
         {% local selected = '' %}
         {% if((observationPointId ~= nil) and (tostring(v["obs_point"]) == tostring(observationPointId))) then selected = 'selected' end %}
         <option value="{{ v["obs_point"] }}" {{ selected }}>{{ getObsPointAlias(v["obs_point"], true) }}</option>

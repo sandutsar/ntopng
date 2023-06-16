@@ -161,11 +161,7 @@ ntopng can be configured programmatically without any GUI interaction.
 This is particularly useful for those who wants to integrate ntopng
 Edge in their own automatized solutions. Let's consider the following case as an example.
 
-An Internet connectivity provider, say ACME ISP, is sells three Internet profiles:
-
-- :code:`basic`
-- :code:`gold`
-- :code:`platinum`
+An Internet connectivity provider, say ACME ISP, is sells three Internet profiles: :code:`basic`, :code:`gold` and :code:`platinum`.
 
 The service provider wants to policy the profiles as follow:
 
@@ -192,10 +188,8 @@ At this point, ACME ISP wants to programmatically configure ntopng Edge to
    of the purchased profile.
 
 Policies can be created programmatically by serving ntopng Edge a
-configuration JSON via web. Upon startup, ntopng Edge will connect to
-the  ACME ISP web server to fetch the configuration JSON.
-ACME ISP will serve the following JSON to create the policies
-described above
+configuration JSON, which is downloaded upon startup from the ACME ISP 
+as configured in *http_bridge_conf_utils.HTTP_BRIDGE_CONFIGURATION_URL*.
 
 .. code:: json
 
@@ -220,8 +214,8 @@ described above
 		       "default_policy": "pass",
 		       "policies" : {
 		       }
-		 },
-	  },
+		 }
+	  }
    }
 
 After the startup, ntopng Edge is ready to associate the Mac addresses
@@ -233,15 +227,15 @@ associations using an HTTP POST.
 
 A JSON that tells ntopng Edge the three associations exemplified above is the following:
 
-
 .. code:: json
 
-	  "associations" : {
+   {
+	   "associations" : {
 		"AA:BB:CC:DD:EE:11"  : {"group" : "basic",    "connectivity" : "pass"},
 		"AA:BB:CC:DD:EE:22"  : {"group" : "gold",     "connectivity" : "pass"},
-		"AA:BB:CC:DD:EE:33"  : {"group" : "platinum", "connectivity" : "pass"},
+		"AA:BB:CC:DD:EE:33"  : {"group" : "platinum", "connectivity" : "pass"}
 	  }
-
+   }
 
 From now on, ntopng Edge will be able to correctly associate the
 traffic exchanged by any of the three Mac addresses above with the
@@ -261,9 +255,11 @@ member from a policy, ACME ISP, will only have to change to :code:`reject` the
 
 .. code:: json
 
+   {
 	  "associations" : {
 		"AA:BB:CC:DD:EE:33"  : {"group" : "platinum", "connectivity" : "reject"},
 	  }
+   }
 
 
 An in-depth explanation on how to programmatically configure ntopng

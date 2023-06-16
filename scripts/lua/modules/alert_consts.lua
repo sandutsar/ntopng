@@ -3,6 +3,8 @@
 --
 -- This file contains the alert constants
 
+local clock_start = os.clock()
+
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/alert_keys/?.lua;" .. package.path
 package.path = dirs.installdir .. "/scripts/lua/modules/pools/?.lua;" .. package.path
@@ -19,6 +21,8 @@ if(ntop.isPro()) then
   -- NOTE: import snmp_utils below to avoid import cycles
 end
 
+alert_consts.SEPARATOR = ';'
+
 -- NOTE: sqlite can handle about 10-50 alerts/sec
 alert_consts.MAX_NUM_QUEUED_ALERTS_PER_MODULE = 1024 -- should match ALERTS_MANAGER_MAX_ENTITY_ALERTS
 
@@ -34,22 +38,30 @@ alert_consts.ALL_ALERT_KEY = 0 -- Special ID to select 'all' alerts
 -- NOTE: keep it in sync with ntop_typedefs.h AlertLevelGroup
 --
 alert_consts.severity_groups = {
-   group_none = {
-      severity_group_id = 0,
-      i18n_title = "severity_groups.group_none",
-   },
-   notice_or_lower = {
-      severity_group_id = 1,
-      i18n_title = "severity_groups.group_notice_or_lower",
-   },
-   warning = {
-      severity_group_id = 2,
-      i18n_title = "severity_groups.group_warning",
-   },
-   error_or_higher = {
-      severity_group_id = 3,
-      i18n_title = "severity_groups.group_error_or_higher",
-   },
+  group_none = {
+    severity_group_id = 0,
+    i18n_title = "severity_groups.group_none",
+  },
+  notice_or_lower = {
+    severity_group_id = 1,
+    i18n_title = "severity_groups.group_notice_or_lower",
+  },
+  warning = {
+    severity_group_id = 2,
+    i18n_title = "severity_groups.group_warning",
+  },
+  error = {
+    severity_group_id = 3,
+    i18n_title = "severity_groups.group_error",
+  },
+  critical = {
+    severity_group_id = 4,
+    i18n_title = "severity_groups.group_critical",
+  },
+  emergency = {
+    severity_group_id = 5,
+    i18n_title = "severity_groups.group_emergency",
+},
 }
 
 -- ##############################################
@@ -149,7 +161,7 @@ end
 -- ##############################################
 
 function alert_consts.formatHostAlert(ifid, host, vlan)
-   return hostinfo2label({host = host, vlan = vlan})
+   return hostinfo2label({host = host, vlan = vlan}, vlan)
 end
 
 -- ##############################################
@@ -225,11 +237,20 @@ end
 
 function getHostPoolUrl(pool_id)
    if not pool_id then
-      tprint("getHostPoolUrl(nil)")
       tprint(debug.traceback())
       return ""
    end
    return ntop.getHttpPrefix() .. "/lua/hosts_stats.lua?pool=" .. pool_id
+end
+
+-- ##############################################
+
+function getNedgeHostPoolUrl(pool_name)
+   if not pool_name then
+      tprint(debug.traceback())
+      return ""
+   end
+   return ntop.getHttpPrefix() .. "/lua/pro/nedge/admin/nf_edit_user.lua?username=" .. pool_name
 end
 
 -- ##############################################
@@ -407,7 +428,7 @@ function loadDefinition(def_script, mod_fname, script_path)
       return(false)
    end
 
-   -- Sanity check: make sure the alert key is not redefined
+   -- Coherence check: make sure the alert key is not redefined
    local alert_entity_id = alert_entity.entity_id
   
    if alerts_by_id[alert_entity_id] and alerts_by_id[alert_entity_id][alert_key] then
@@ -572,10 +593,24 @@ function alert_consts.alertSeverityRaw(severity_id)
    return alert_severities_id_to_key[severity_id] 
 end
 
- -- ################################################################################
+-- ################################################################################
+
+function alert_consts.get_printable_severities()
+  local severities = {}
+
+  for name, conf in pairs(alert_severities, "severity_id", asc) do
+    if (conf.severity_id > 2) then
+      severities[name] = conf
+    end
+  end
+
+  return severities
+end
+
+-- ################################################################################
 
 function alert_consts.alertSeverityLabel(score, nohtml, emoji)
-   local severity_id = alert_consts.alertSeverityRaw(ntop.mapScoreToSeverity(score))
+   local severity_id = alert_consts.alertSeverityRaw(map_score_to_severity(score))
 
    if(severity_id) then
       local severity_info = alert_severities[severity_id]
@@ -661,11 +696,19 @@ end
 
 function alert_consts.sec2granularity(seconds)
    seconds = tonumber(seconds)
-   return alerts_granularities_seconds_to_key[seconds]
+   local key = alerts_granularities_seconds_to_key[seconds]
+   if not key  then
+      key = alerts_granularities_seconds_to_key[60]
+   end
+   return key
 end
  
 -- Load definitions now
 loadAlertsDefs()
 initMappings()
+
+if(trace_script_duration ~= nil) then
+  io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+end
 
 return alert_consts

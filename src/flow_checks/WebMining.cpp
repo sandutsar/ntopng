@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ void WebMining::protocolDetected(Flow *f) {
     FlowAlertType alert_type = WebMiningAlert::getClassType();
     u_int8_t c_score, s_score;
     risk_percentage cli_score_pctg = CLIENT_HIGH_RISK_PERCENTAGE;
-  
+
     computeCliSrvScore(alert_type, cli_score_pctg, &c_score, &s_score);
 
     f->triggerAlertAsync(alert_type, c_score, s_score);

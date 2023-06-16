@@ -4,6 +4,8 @@
 
 -- This file contains a small set of utility functions
 
+local clock_start = os.clock()
+
 -- ##############################################
 
 function string.starts(String,Start)
@@ -52,6 +54,7 @@ end
 -- You can call it as tprint(mytable)
 -- The other two parameters should not be set
 function tprint(s, l, i)
+   -- io.write(debug.traceback().."\n")
    l = (l) or 1000; i = i or "";-- default item limit, indent string
    if (l<1) then io.write("ERROR: Item limit reached.\n"); return l-1 end;
    local ts = type(s);
@@ -107,9 +110,19 @@ end
 
 -- NOTE: on index based tables using #table is much more performant
 function table.len(tbl)
- local count = 0
+  local count = 0
 
-  if(tbl == nil) then return(0) end
+  if tbl == nil then
+    --io.write("ERROR: table expected, got nil\n")
+    --io.write(debug.traceback().."\n")
+    return 0
+  end
+
+  if type(tbl) ~= "table" then
+    io.write("ERROR: table expected, got " .. type(tbl) .. "\n")
+    io.write(debug.traceback().."\n")
+    return 0
+  end
 
   for k,v in pairs(tbl) do
     count = count + 1
@@ -144,8 +157,98 @@ end
 
 -- ##############################################
 
+function isIPv4(address)
+   -- Reuse the for loop to check the address validity
+   local checkAddress = (function(chunks)
+      for _, v in pairs(chunks) do
+         if (tonumber(v) < 0) or (tonumber(v) > 255) then
+            return false
+         end
+      end
+      return true
+   end)
+
+   local chunks = {address:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")}
+   local chunksWithPort = {address:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)%:(%d+)$")}
+
+   if #chunks == 4 then
+      return checkAddress(chunks)
+   elseif #chunksWithPort == 5 then
+      table.remove(chunksWithPort, 5)
+      return checkAddress(chunksWithPort)
+   end
+
+   return false
+end
+
+-- ##############################################
+
 function isIPv6(ip)
   return((not isEmptyString(ip)) and ntop.isIPv6(ip))
+end
+
+-- ##############################################
+
+-- Check if address is a CIDR
+-- strict (optional) do not accept subnets without the '/<mask>'
+function isIPv4Network(address, strict)
+   -- Check for @ VLAN
+   local parts = split(address, "@")
+   if #parts == 2 then
+      address = parts[1]
+   end
+
+   -- Parse CIDR
+   parts = split(address, "/")
+   if #parts == 2 then
+      local prefix = tonumber(parts[2])
+
+      if (prefix == nil) or (math.floor(prefix) ~= prefix) or (prefix < 0) or (prefix > 32) then
+         return false
+      end
+
+   elseif #parts == 1 and strict then
+      return false
+
+   -- Check empty
+   elseif #parts ~= 1 then
+      return false
+   end
+
+   -- Check IP
+   return isIPv4(parts[1])
+end
+
+-- ##############################################
+
+-- Check if address is a CIDR
+-- strict (optional) do not accept subnets without the '/<mask>'
+function isIPv6Network(address, strict)
+   -- Check for @ VLAN
+   local parts = split(address, "@")
+   if #parts == 2 then
+      address = parts[1]
+   end
+
+   -- Parse CIDR
+   parts = split(address, "/")
+   if #parts == 2 then
+      local prefix = tonumber(parts[2])
+
+      if (prefix == nil) or (math.floor(prefix) ~= prefix) or (prefix < 0) or (prefix > 128) then
+         return false
+      end
+
+   elseif #parts == 1 and strict then
+      return false
+
+   -- Check empty
+   elseif #parts ~= 1 then
+      return false
+   end
+
+   -- Check IPv6
+   return isIPv6(parts[1])
 end
 
 -- ##############################################
@@ -309,6 +412,11 @@ end
 function string.split(s, p)
   local temp = {}
   local index = 0
+
+  if s == nil then
+    io.write(debug.traceback().."\n")
+  end
+
   local last_index = string.len(s)
 
   while true do
@@ -335,14 +443,45 @@ end
 -- ##############################################
 
 function isMacAddress(address)
+   local v
+   local addr
+   
+   if(address == nil) then return false end
 
-  if (address == nil) then return false end
+   v = string.split(address, "@")
 
-   if(string.match(address, "^%x%x:%x%x:%x%x:%x%x:%x%x:%x%x$") ~= nil)  or
-     (string.match(address, "^%x%x:%x%x:%x%x:%x%x:%x%x:%x%x%@%d+$") ~= nil) then
+   if(v ~= nil) then
+      addr = v[1]
+   else
+      addr = address
+   end
+   
+  if(string.ends(addr, "_v4") or string.ends(addr, "_v6")
+     or (string.match(addr, "^%x%x:%x%x:%x%x:%x%x:%x%x:%x%x$") ~= nil)
+     or (string.match(addr, "^%x%x:%x%x:%x%x:%x%x:%x%x:%x%x%@%d+$") ~= nil)) then
       return true
    end
    return false
+end
+
+function isCommunityId(address) 
+   local c
+   if(address == nil) then return false end
+
+   c = string.split(address,":")
+   if(c ~= nil and #c == 2) then
+      return true
+   end
+
+   return false
+end
+
+function isJA3(address) 
+   if(address == nil) then return false end
+   if(string.find(address,"%.") or string.find(address,":")) then
+      return false
+   end
+   return true
 end
 
 -- ##############################################
@@ -397,4 +536,8 @@ function hasHighResolutionTs()
    -- every 60 seconds instead of 300 seconds.
    return((active_driver == "influxdb") and
     (ntop.getPref("ntopng.prefs.ts_resolution") ~= "300"))
+end
+
+if(trace_script_duration ~= nil) then
+   io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
 end

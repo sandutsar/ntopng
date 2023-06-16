@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-22 - ntop.org
+ * (C) 2013-23 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,23 +25,24 @@
 #include "ntop_includes.h"
 class FlowRiskAlerts {
  private:
-  static bool isRiskUnhanlded(ndpi_risk_enum risk);
+  static bool isRiskUndefined(ndpi_risk_enum risk);
 
  public:
   static inline u_int8_t getFlowRiskScore(ndpi_risk_enum risk) {
-    if(risk < NDPI_MAX_RISK) {
-      ndpi_risk r = 0; u_int16_t c, s;
-      
+    if (risk < NDPI_MAX_RISK) {
+      ndpi_risk r = 0;
+      u_int16_t c, s;
+
       ndpi_risk2score(NDPI_SET_BIT(r, risk), &c, &s);
 
-      return(c + s);
-    } 
-    return(0);
+      return (c + s);
+    }
+    return (0);
   }
-  
-  static FlowAlertType getFlowRiskAlertType(ndpi_risk_enum risk);  
-  static const char * getCheckName(ndpi_risk_enum risk);
-  static void checkUnhandledRisks();
+
+  static FlowAlertType getFlowRiskAlertType(ndpi_risk_enum risk);
+  static const char* getCheckName(ndpi_risk_enum risk);
+  static void checkUndefinedRisks();
   static bool lua(lua_State* vm);
 };
 

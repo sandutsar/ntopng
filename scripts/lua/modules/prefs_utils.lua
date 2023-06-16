@@ -9,7 +9,6 @@ local verbose = false
 local prefs = ntop.getPrefs()
 local info = ntop.getInfo()
 local menu_subpages = require "prefs_menu"
-show_advanced_prefs_key = "ntopng.prefs.show_advanced_prefs"
 local have_nedge = ntop.isnEdge()
 local skip_redis = false
 
@@ -49,12 +48,11 @@ DNS_PRESETS = {
   {id="cloudflare", label="Cloudflare DNS", url="https://www.cloudflare.com/learning/dns/what-is-1.1.1.1", primary_dns="1.1.1.1", secondary_dns="1.0.0.1"},
   {id="cleanbrowsing_security", label="CleanBrowsing - Security", url="https://cleanbrowsing.org",  primary_dns="185.228.168.9", secondary_dns="185.228.169.9"},
   {id="cleanbrwosing_adult", label="CleanBrowsing - Adult Filter", url="https://cleanbrowsing.org",  primary_dns="185.228.168.168", secondary_dns="185.228.169.168", child_safe=true},
-  {id="yandex_safe", label="Yandex - Safe", url="https://dns.yandex.com", primary_dns="77.88.8.88", secondary_dns="77.88.8.2"},
-  {id="yandex_family", label="Yandex - Family", url="https://dns.yandex.com", primary_dns="77.88.8.7", secondary_dns="77.88.8.3", child_safe=true},
 }
 
 function isSubpageAvailable(subpage, show_advanced_prefs)
   if show_advanced_prefs == nil then
+    local show_advanced_prefs_key = "ntopng.prefs.show_advanced_prefs"
     show_advanced_prefs = toboolean(ntop.getPref(show_advanced_prefs_key))
   end
   if (subpage.hidden) or
@@ -146,7 +144,7 @@ function prefsResolutionButtons(fmt, value, fixed_id, format_spec, max_val)
 
   local res = makeResolutionButtons(format_spec or FMT_TO_DATA_TIME, ctrl_id, fmt, value, {classes={"float-right"}}, max_val)
 
-  res.value = truncate(res.value)
+  res.value = truncate(res.value or 1)
 
   print(res.html)
   print("<script>")
@@ -180,7 +178,7 @@ function prefsInputFieldPrefs(label, comment, prekey, key, default_value, _input
 
     v_cache = ntop.getPref(k)
     value = v_cache
-    if ((v_cache==nil) or (v_s ~= v_cache)) then
+    if ((v_cache == nil) or (v_s ~= v_cache)) then
       if(v ~= nil and (v > 0) and (v <= 86400)) then
         ntop.setPref(k, tostring(v))
         value = v
@@ -278,7 +276,8 @@ function prefsInputFieldPrefs(label, comment, prekey, key, default_value, _input
 
   local input_type = "text"
   if _input_type ~= nil then input_type = _input_type end
-  print('<tr id="'..key..'" style="display: '..showEnabled..';"><td width=50%><strong>'..label..'</strong><p><small>'..comment..'</small></td>')
+  print('<tr id="'..key..'" style="display: '..showEnabled..';"><td width=50%><strong>'..(label or "")..'</strong>')
+  if(comment ~= nil) then print('<p><small>'..comment..'</small></td>') end
 
   local style = {}
   style["text-align"] = "right"
@@ -690,7 +689,7 @@ function multipleTableButtonPrefs(label, comment, array_labels, array_values, de
     end
 
     for nameCount = 1, #array_labels do
-      print('$(`label[for="id_'..submit_field..'_'..array_values[nameCount]..'"`).click(function() {\n')
+      print('$(`label[for="id_'..submit_field..'_'..array_values[nameCount]..'"]`).click(function() {\n')
       print(' var field = $(\'#id-toggle-'..submit_field..'\');\n')
       print(' var oldval = field.val(); ')
       print(' field.val("'..array_values[nameCount]..'").trigger("change");\n')
@@ -703,7 +702,7 @@ function multipleTableButtonPrefs(label, comment, array_labels, array_values, de
           color = selected_color
         end
 
-        print[[ let class_]] print(array_values[indexLabel]) print[[ = $(`label[for="id_]] print(submit_field..'_') print(array_values[indexLabel]) print [["`);
+        print[[ let class_]] print(array_values[indexLabel]) print[[ = $(`label[for="id_]] print(submit_field..'_') print(array_values[indexLabel]) print [["]`);
         class_]] print(array_values[indexLabel]) print[[.removeAttr("class");]]
         if(array_values[indexLabel] == array_values[nameCount]) then
           print[[class_]] print(array_values[indexLabel]) print[[.attr("class", "btn btn-sm btn-]]print(color) print[[ active");]]

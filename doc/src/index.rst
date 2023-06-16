@@ -14,14 +14,15 @@ ntopng can be used in combination with other ntop tools. Documentation to use nt
    adding_a_license/index
    cli_options/index
    web_gui/index
+   snmp/index
    interfaces/index
    alerts/index
-   developing_alerts/index
-   active_monitoring/index
-   self_monitoring/index
    using_with_other_tools/index
    historical_flows
+   containers   
    clickhouse/index
+   scada/index
+   kafka/index
    advanced_features/index
    operating_ntopng_on_large_networks
    third_party_integrations/index
@@ -45,6 +46,7 @@ ntopng can be used in combination with other ntop tools. Documentation to use nt
    nEdge <https://www.ntop.org/guides/nedge/>
    nScrub <https://www.ntop.org/guides/nscrub/>
    nBox <https://www.ntop.org/guides/nbox/>
+   nTap <https://www.ntop.org/guides/ntap/>
 
 .. Indices and tables
 .. ==================

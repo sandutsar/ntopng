@@ -11,13 +11,10 @@ const DEFINED_EVENTS = {
     "db_analyze" : function (event, chartContext, config) {
         const { dataPointIndex } = config;
         const { filter } = config.w.config;
-        let value, value_label, label;
+        let value;
 
         if(config.w.config.filtering_labels)
             value = config.w.config.filtering_labels[dataPointIndex];
-
-        if(config.w.config.labels)
-            value_label = config.w.config.labels[dataPointIndex];
 
         if(filter.length == 0 || value === undefined)
             return;
@@ -42,8 +39,9 @@ const DEFINED_EVENTS = {
 
         const serie = series[seriesIndex];
         if (serie.base_url !== undefined) {
+            const default_url = (serie.start_url || '') 
             const search = serie.data[dataPointIndex].meta.url_query;
-            location.href = `${serie.base_url}?${search}`;
+            location.href = `${serie.base_url}?${default_url}${search}`;
         }
     },
 }
@@ -89,6 +87,30 @@ const DEFINED_TOOLTIP = {
                 <div class='apexcharts-tooltip-series-group apexcharts-active d-block'>
                     <div class='apexcharts-tooltip-text text-left'>
                         <b>${x_axis_title}</b>: ${x_value}
+                    </div>
+                    <div class='apexcharts-tooltip-text text-left'>
+                        <b>${y_axis_title}</b>: ${y_value}
+                    </div>
+                </div>
+            </div>`)
+    },
+    "format_label_from_xname" : function({series, seriesIndex, dataPointIndex, w}) {
+        const serie = w.config.series[seriesIndex]["data"][dataPointIndex];
+        const name = serie["name"]
+        const y_value = serie["y"];
+        const host_name = serie["meta"]["label"];
+
+        const x_axis_title = w.config.xaxis.title.text;
+        const y_axis_title = w.config.yaxis[0].title.text;
+
+        return (`
+            <div class='apexcharts-theme-light apexcharts-active' id='test'>
+                <div class='apexcharts-tooltip-title' style='font-family: Helvetica, Arial, sans-serif; font-size: 12px;'>
+                    ${host_name}
+                </div>
+                <div class='apexcharts-tooltip-series-group apexcharts-active d-block'>
+                    <div class='apexcharts-tooltip-text text-left'>
+                        <b>${x_axis_title}</b>: ${name}
                     </div>
                     <div class='apexcharts-tooltip-text text-left'>
                         <b>${y_axis_title}</b>: ${y_value}
