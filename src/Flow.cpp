@@ -306,6 +306,7 @@ void Flow::deferredInitialization() {
       /* Add client gateway */
       if (srv_mac && !srv_mac->isNull() && !srv_host->isLocalHost()) {
         LocalHost *lh = (LocalHost *)cli_host;
+	
         lh->setRouterMac(srv_mac);
       }
     }
