@@ -5106,6 +5106,7 @@ local lang = {
         ["exported_flows"] = "Exported Flows",
         ["family"] = "Family",
         ["flow_exporters_num"] = "Exporters",
+        ["flow_exporters_interfaces_num"] = "Interfaces",
         ["flows_export_statistics"] = "Flows Export Statistics",
         ["handled_logs"] = "Detected Events",
         ["has_traffic_directions"] = "with RX/TX Directions",
