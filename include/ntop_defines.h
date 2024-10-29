@@ -378,7 +378,7 @@
   8 /* Maximum number of alerts for the flow score breadkown. Additional \
        alerts will fall under 'other' */
 
-#define CONST_MAX_NUM_NETWORKS 32768
+#define CONST_MAX_NUM_NETWORKS 131072
 #define MAX_NUM_LOCAL_NETWORKS 1024
 #define CONST_MAX_NUM_CHECKPOINTS 4
 
