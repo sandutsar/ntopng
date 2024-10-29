@@ -87,8 +87,7 @@ class Flow : public GenericHashEntry {
     struct ndpi_analyze_struct *c2s, *s2c;
   } initial_bytes_entropy;
 
-  u_int32_t hash_entry_id; /* Uniquely identify this Flow inside the flows_hash
-                              hash table */
+  u_int32_t hash_entry_id; /* Uniquely identify this flow inside the flows_hash hash table */
 
   u_int16_t detection_completed : 1, extra_dissection_completed : 1,
       twh_over : 1, dissect_next_http_packet : 1, passVerdict : 1,
@@ -161,10 +160,9 @@ class Flow : public GenericHashEntry {
     } http;
 
     struct {
-      char *last_query;
-      char *last_query_shadow;
-      time_t
-          last_query_update_time; /* The time when the last query was updated */
+      char *last_query, *last_query_shadow;
+      char *last_rsp, *last_rsp_shadow;
+      time_t    last_query_update_time; /* The time when the last query was updated */
       u_int16_t last_query_type;
       u_int16_t last_return_code;
     } dns;
@@ -441,7 +439,7 @@ class Flow : public GenericHashEntry {
     return predominant_alert_info.is_srv_victim;
   };
   inline char *getProtocolInfo() { return json_protocol_info; };
-  char* getDomainName();
+  const char* getDomainName();
   
   void setProtocolJSONInfo();
   void getProtocolJSONInfo(ndpi_serializer *serializer);
@@ -1028,7 +1026,7 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   inline char *getDNSQuery() const {
     return (isDNS() ? protos.dns.last_query : (char *)"");
   }
-  bool setDNSQuery(char *v, bool copy_memory);
+  bool setDNSQuery(char *value, char *rsp_addresses, bool copy_memory);
   inline void setDNSQueryType(u_int16_t t) {
     if (isDNS()) {
       protos.dns.last_query_type = t;

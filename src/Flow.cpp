@@ -491,26 +491,28 @@ Flow::~Flow() {
   if (flow_payload) free(flow_payload);
 
   if (isHTTP() || isHTTP_PROXY()) {
-    if (protos.http.last_url) free(protos.http.last_url);
+    if (protos.http.last_url)        free(protos.http.last_url);
     if (protos.http.last_user_agent) free(protos.http.last_user_agent);
-    if (protos.http.last_server) free(protos.http.last_server);
+    if (protos.http.last_server)     free(protos.http.last_server);
   } else if (isDNS()) {
-    if (protos.dns.last_query) free(protos.dns.last_query);
-    if (protos.dns.last_query_shadow) free(protos.dns.last_query_shadow);
+    if (protos.dns.last_query)         free(protos.dns.last_query);
+    if (protos.dns.last_query_shadow)  free(protos.dns.last_query_shadow);
+    if (protos.dns.last_rsp)           free(protos.dns.last_rsp);
+    if (protos.dns.last_rsp_shadow)    free(protos.dns.last_rsp_shadow);
   } else if (isMDNS()) {
-    if (protos.mdns.answer) free(protos.mdns.answer);
-    if (protos.mdns.name) free(protos.mdns.name);
+    if (protos.mdns.answer)   free(protos.mdns.answer);
+    if (protos.mdns.name)     free(protos.mdns.name);
     if (protos.mdns.name_txt) free(protos.mdns.name_txt);
-    if (protos.mdns.ssid) free(protos.mdns.ssid);
+    if (protos.mdns.ssid)     free(protos.mdns.ssid);
   } else if (isSSDP()) {
     if (protos.ssdp.location) free(protos.ssdp.location);
   } else if (isNetBIOS()) {
-    if (protos.netbios.name) free(protos.netbios.name);
+    if (protos.netbios.name)  free(protos.netbios.name);
   } else if (isSIP()) {
-    if (protos.sip.call_id) free(protos.sip.call_id);
+    if (protos.sip.call_id)   free(protos.sip.call_id);
   } else if (isSSH()) {
-    if (protos.ssh.client_signature) free(protos.ssh.client_signature);
-    if (protos.ssh.server_signature) free(protos.ssh.server_signature);
+    if (protos.ssh.client_signature)  free(protos.ssh.client_signature);
+    if (protos.ssh.server_signature)  free(protos.ssh.server_signature);
     if (protos.ssh.hassh.client_hash) free(protos.ssh.hassh.client_hash);
     if (protos.ssh.hassh.server_hash) free(protos.ssh.hassh.server_hash);
   } else if (isTLS()) {
@@ -636,9 +638,9 @@ void Flow::processDetectedProtocolData() {
 
   l7proto = ndpi_get_lower_proto(ndpiDetectedProtocol);
 
-  if ((l7proto != NDPI_PROTOCOL_DNS) &&
-      (l7proto != NDPI_PROTOCOL_DHCP) /* host_server_name in DHCP is for the
-                                         client name, not the server */
+  if ((l7proto != NDPI_PROTOCOL_DNS)
+      && (l7proto != NDPI_PROTOCOL_DHCP) /* host_server_name in DHCP is for the
+					    client name, not the server */
       && (ndpiFlow->host_server_name[0] != '\0') && (!host_server_name)) {
     Utils::sanitizeHostName((char *)ndpiFlow->host_server_name);
 
@@ -1116,12 +1118,26 @@ void Flow::processDNSPacket(const u_char *ip_packet, u_int16_t ip_len,
     ndpiDetectedProtocol = proto_id; /* Override! */
 
     if (ndpiFlow->host_server_name[0] != '\0') {
+      std::string addresses;
+      
       if (cli_host && (ndpiFlow->protos.dns.reply_code == 0 /* no Error */)) {
 	cli_host->incContactedService((char *)ndpiFlow->host_server_name);
 	cli_host->incrVisitedWebSite((char *)ndpiFlow->host_server_name);
       }
 
-      setDNSQuery(ndpiFlow->host_server_name, true);
+      for(u_int i=0; i<ndpiFlow->protos.dns.num_rsp_addr; i++) {
+	char buf[64];
+	
+	if(ndpiFlow->protos.dns.is_rsp_addr_ipv6[i] == 0)
+	  inet_ntop(AF_INET, &ndpiFlow->protos.dns.rsp_addr[i].ipv4, buf, sizeof(buf));
+	else
+	  inet_ntop(AF_INET6, &ndpiFlow->protos.dns.rsp_addr[i].ipv6, buf, sizeof(buf));
+
+	if(i > 0) addresses += ",";
+	addresses += buf;
+      }     
+      
+      setDNSQuery(ndpiFlow->host_server_name, (char*)addresses.c_str(), true);
 
       if (ndpiFlow->protos.dns.query_type != 0)
 	protos.dns.last_query_type = ndpiFlow->protos.dns.query_type;
@@ -5969,8 +5985,8 @@ void Flow::dissectBittorrent(char *payload, u_int16_t payload_len) {
   handle concurrency issues. This is safe in general as it is unlikely to see
   more than one query per second for the same DNS flow.
 */
-bool Flow::setDNSQuery(char *v, bool copy_memory) {
-  if ((v != NULL) && isDNS()) {
+bool Flow::setDNSQuery(char *query_value, char *rsp_addresses, bool copy_memory) {
+  if ((query_value != NULL) && isDNS()) {
     time_t last_pkt_rcvd = getInterface()->getTimeLastPktRcvd();
 
     if (!protos.dns.last_query_shadow /* The first time the swap is done */
@@ -5979,10 +5995,24 @@ bool Flow::setDNSQuery(char *v, bool copy_memory) {
 	last_pkt_rcvd /* Latest swap occurred at least one second ago */) {
       if (protos.dns.last_query_shadow) free(protos.dns.last_query_shadow);
       protos.dns.last_query_shadow = protos.dns.last_query;
-      protos.dns.last_query = copy_memory ? strdup(v) : v;
+      protos.dns.last_query = copy_memory ? strdup(query_value) : query_value;
+
+      if (protos.dns.last_rsp_shadow) free(protos.dns.last_rsp_shadow);
+      protos.dns.last_rsp_shadow = protos.dns.last_rsp;
+
+      if(rsp_addresses && (rsp_addresses[0] != '\0'))
+	protos.dns.last_rsp = copy_memory ? strdup(rsp_addresses) : rsp_addresses;
+      else
+	protos.dns.last_rsp = NULL;
+      
       protos.dns.last_query_update_time = last_pkt_rcvd;
 
-      return true; /* Swap successful */
+#ifdef DEBUG 
+      if(protos.dns.last_rsp)
+	ntop->getTrace()->traceEvent(TRACE_NORMAL, "**** %s", protos.dns.last_rsp);
+#endif
+      
+      return true; /* Swap successfull */
     }
   }
 
@@ -5998,7 +6028,7 @@ bool Flow::setDNSQuery(char *v, bool copy_memory) {
 void Flow::updateDNS(ParsedFlow *zflow) {
   if (isDNS()) {
     if (zflow->getDNSQuery()) {
-      if (setDNSQuery(zflow->getDNSQuery(true), false /* No need to allocate memory */)) {
+      if (setDNSQuery(zflow->getDNSQuery(true), NULL, false /* No need to allocate memory */)) {
         /* Set successful, query will be freed in the destructor */
         setDNSQueryType(zflow->getDNSQueryType());
         setDNSRetCode(zflow->getDNSRetCode());
@@ -7723,6 +7753,9 @@ void Flow::getDNSInfo(ndpi_serializer *serializer) const {
       ndpi_serialize_string_string(serializer, "last_query",
                                    protos.dns.last_query);
 
+      if (protos.dns.last_rsp)
+	ndpi_serialize_string_string(serializer, "last_rsp",
+				     protos.dns.last_rsp);
       if (hasInvalidDNSQueryChars())
         ndpi_serialize_string_boolean(serializer, "invalid_chars_in_query",
                                       true);
@@ -8981,11 +9014,11 @@ void Flow::updateServerName(Host *h) {
 
 /* *************************************** */
 
-char* Flow::getDomainName() {
+const char* Flow::getDomainName() {
   switch (getLowerProtocol()) {
   case NDPI_PROTOCOL_DNS:
     if(protos.dns.last_query)
-      return((char*)ndpi_get_host_domain(iface->get_ndpi_struct(), protos.dns.last_query));
+      return(ndpi_get_host_domain(iface->get_ndpi_struct(), protos.dns.last_query));
     break;
 
   case NDPI_PROTOCOL_HTTP:
@@ -8999,13 +9032,13 @@ char* Flow::getDomainName() {
       char *s = getFlowServerInfo();
 
       if(s)
-	return((char*)ndpi_get_host_domain(iface->get_ndpi_struct(), s));
+	return(ndpi_get_host_domain(iface->get_ndpi_struct(), s));
     }
     break;
 
   case NDPI_PROTOCOL_MDNS:
     if(protos.mdns.name)
-      return((char*)ndpi_get_host_domain(iface->get_ndpi_struct(), protos.mdns.name));
+      return(ndpi_get_host_domain(iface->get_ndpi_struct(), protos.mdns.name));
     break;
   }
 
