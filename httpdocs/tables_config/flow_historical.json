@@ -218,6 +218,16 @@
 			]
 		},
 		{
+			"title_i18n": "db_search.tags.domain_name",
+			"data_field": "domain_name",
+			"min-width": "100px",
+			"sortable": true,
+			"render_generic": "domain_name",
+			"class": [
+				"no-wrap"
+			]
+		},
+		{
 			"title_i18n": "db_search.src2dst_tcp_flags",
 			"data_field": "src2dst_tcp_flags",
 			"min-width": "140px",
@@ -439,16 +449,6 @@
 			"data_field": "minor_connection_state",
 			"sortable": true,
 			"min-width": "100px",
-			"class": [
-				"no-wrap"
-			]
-		},
-		{
-			"title_i18n": "db_search.tags.domain_name",
-			"data_field": "domain_name",
-			"min-width": "100px",
-			"sortable": true,
-			"render_generic": "domain_name",
 			"class": [
 				"no-wrap"
 			]
