@@ -235,7 +235,7 @@ void LocalHost::addInactiveData() {
 
   ndpi_serialize_string_uint32(&host_json, "vlan", (u_int16_t)get_vlan_id());
   ndpi_serialize_string_uint32(&host_json, "network",
-                               (u_int16_t)get_local_network_id());
+                               (u_int32_t)get_local_network_id());
   ndpi_serialize_string_string(&host_json, "name",
                                get_name(buf, sizeof(buf), false));
 

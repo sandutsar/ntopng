@@ -216,9 +216,9 @@ bool AddressTree::addAddressAndData(const char *_what, void *user_data) {
 
 /* ******************************************* */
 
-bool AddressTree::addAddress(const char *_what, const int16_t user_data) {
+bool AddressTree::addAddress(const char *_what, const int64_t user_data) {
   u_int32_t _mac[6];
-  int16_t id = (user_data == -1) ? numAddresses : user_data;
+  int64_t id = (user_data == -1) ? numAddresses : user_data;
   bool ret = true;
   
   if (sscanf(_what, "%02X:%02X:%02X:%02X:%02X:%02X", &_mac[0], &_mac[1],
@@ -255,7 +255,7 @@ bool AddressTree::addAddress(const char *_what, const int16_t user_data) {
 /* Format: 131.114.21.0/24,10.0.0.0/255.0.0.0
  * Return true if all provided addresses are added successfully, false if none
  * or partial */
-bool AddressTree::addAddresses(const char *rule, const int16_t user_data) {
+bool AddressTree::addAddresses(const char *rule, const int64_t user_data) {
   char *tmp, *net;
   char *_rule = strdup(rule);
   bool rc;
@@ -362,7 +362,7 @@ void *AddressTree::matchAndGetData(IpAddress *ipa) {
 /*
   NOTE: this does NOT accept a char* address! Use AddressTree::find() instead.
 */
-int16_t AddressTree::findAddress(int family, void *addr,
+int64_t AddressTree::findAddress(int family, void *addr,
                                  u_int8_t *network_mask_bits) {
   ndpi_patricia_tree_t *p;
   int bits;
@@ -390,8 +390,8 @@ int16_t AddressTree::findAddress(int family, void *addr,
 
 /* ******************************************* */
 
-int16_t AddressTree::findMac(const u_int8_t addr[]) {
-  std::map<u_int64_t, int16_t>::iterator it;
+int64_t AddressTree::findMac(const u_int8_t addr[]) {
+  std::map<u_int64_t, int64_t>::iterator it;
   u_int64_t mac_num = Utils::mac2int((u_int8_t *)addr);
 
   it = macs.find(mac_num);
@@ -403,7 +403,7 @@ int16_t AddressTree::findMac(const u_int8_t addr[]) {
 /* **************************************************** */
 
 /* Generic find with IPv4/IPv6/Mac */
-int16_t AddressTree::find(const char *addr, u_int8_t *network_mask_bits) {
+int64_t AddressTree::find(const char *addr, u_int8_t *network_mask_bits) {
   u_int8_t mac[6];
   u_int32_t _mac[6];
 
@@ -451,7 +451,7 @@ static void address_tree_dump_funct(ndpi_patricia_node_t *node, void *data,
 /* **************************************************** */
 
 void AddressTree::getAddresses(lua_State *vm) {
-  std::map<u_int64_t, int16_t>::const_iterator it;
+  std::map<u_int64_t, int64_t>::const_iterator it;
 
   updateLock.rdlock(__FILE__, __LINE__);
   
@@ -467,7 +467,7 @@ void AddressTree::getAddresses(lua_State *vm) {
     snprintf(key, sizeof(key), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1],
              mac[2], mac[3], mac[4], mac[5]);
 
-    snprintf(val, sizeof(val), "%u", it->second);
+    snprintf(val, sizeof(val), "%ld", it->second);
 
     lua_push_str_table_entry(vm, key, val);
   }
@@ -520,7 +520,7 @@ void AddressTree::walk(ndpi_void_fn3_t func, void *const user_data) {
 /* **************************************************** */
 
 void AddressTree::dump() {
-  std::map<u_int64_t, int16_t>::iterator it;
+  std::map<u_int64_t, int64_t>::iterator it;
 
   updateLock.rdlock(__FILE__, __LINE__);
   

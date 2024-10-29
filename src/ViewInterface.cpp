@@ -628,10 +628,10 @@ void ViewInterface::viewed_flows_walker(Flow *f, const struct timeval *tv) {
 
 #ifdef NTOPNG_PRO
       if (cli_host && srv_host) {
-        u_int16_t cli_net_id = cli_host->get_local_network_id(),
+        u_int32_t cli_net_id = cli_host->get_local_network_id(),
                   srv_net_id = srv_host->get_local_network_id();
 
-        if (cli_net_id != (u_int16_t)-1 && srv_net_id != (u_int16_t)-1 &&
+        if (cli_net_id != (u_int32_t)-1 && srv_net_id != (u_int32_t)-1 &&
             cli_net_id != srv_net_id && partials.get_cli2srv_bytes() > 0 &&
             partials.get_srv2cli_bytes() > 0) {
           NetworkStats *cli_network_stats = getNetworkStats(cli_net_id),

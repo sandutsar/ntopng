@@ -1855,8 +1855,8 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
     bool cli_and_srv_in_same_subnet = false;
     bool cli_and_srv_in_same_country = false;
     VLAN *vl;
-    int16_t cli_network_id = cli_host->get_local_network_id();
-    int16_t srv_network_id = srv_host->get_local_network_id();
+    int32_t cli_network_id = cli_host->get_local_network_id();
+    int32_t srv_network_id = srv_host->get_local_network_id();
     int16_t stats_protocol =
       getStatsProtocol(); /* The protocol (among ndpi master_ and app_) that
 			     is chosen to increase stats */
@@ -4454,7 +4454,7 @@ void Flow::alert2JSON(FlowAlert *alert, ndpi_serializer *s) {
     ndpi_serialize_string_int32(s, "cli_host_pool_id",
                                 cli_host->get_host_pool());
     ndpi_serialize_string_int32(s, "cli_network",
-                                (u_int16_t)cli_host->get_local_network_id());
+                                (u_int32_t)cli_host->get_local_network_id());
   }
 
   ndpi_serialize_string_string(s, "srv_ip",
@@ -4475,7 +4475,7 @@ void Flow::alert2JSON(FlowAlert *alert, ndpi_serializer *s) {
     ndpi_serialize_string_int32(s, "srv_host_pool_id",
                                 srv_host->get_host_pool());
     ndpi_serialize_string_int32(s, "srv_network",
-                                (u_int16_t)srv_host->get_local_network_id());
+                                (u_int32_t)srv_host->get_local_network_id());
   }
 
   ndpi_serialize_string_string(
@@ -4705,10 +4705,10 @@ void Flow::housekeep(time_t t) {
 
 #ifdef NTOPNG_PRO
     if (cli_host && srv_host) {
-      u_int16_t cli_net_id = cli_host->get_local_network_id(),
+      u_int32_t cli_net_id = cli_host->get_local_network_id(),
 	srv_net_id = srv_host->get_local_network_id();
 
-      if (cli_net_id != (u_int16_t)-1 && srv_net_id != (u_int16_t)-1 &&
+      if (cli_net_id != (u_int32_t)-1 && srv_net_id != (u_int32_t)-1 &&
 	  cli_net_id != srv_net_id) {
 	NetworkStats *cli_network_stats = iface->getNetworkStats(cli_net_id),
 	  *srv_network_stats = iface->getNetworkStats(srv_net_id);
@@ -5642,7 +5642,7 @@ void Flow::incTcpBadStats(bool src2dst_direction, Host *cli, Host *srv,
 
   if (!ooo_pkts && !retr_pkts && !lost_pkts && !keep_alive_pkts) return;
 
-  int16_t cli_network_id = -1, srv_network_id = -1;
+  int32_t cli_network_id = -1, srv_network_id = -1;
   u_int32_t cli_asn = (u_int32_t)-1, srv_asn = (u_int32_t)-1;
   AutonomousSystem *cli_as = NULL, *srv_as = NULL;
   NetworkStats *cli_network_stats = NULL, *srv_network_stats = NULL;
@@ -7884,7 +7884,7 @@ void Flow::setNormalToAlertedCounters() {
   Host *cli_h = get_cli_host(), *srv_h = get_srv_host();
 
   if (cli_h) {
-    u_int16_t local_net_id = cli_h->get_local_network_id();
+    u_int32_t local_net_id = cli_h->get_local_network_id();
     NetworkStats *net_stats = cli_h->getNetworkStats(local_net_id);
     AutonomousSystem *cli_as = cli_h ? cli_h->get_as() : NULL;
 
@@ -7895,7 +7895,7 @@ void Flow::setNormalToAlertedCounters() {
   }
 
   if (srv_h) {
-    u_int16_t local_net_id = srv_h->get_local_network_id();
+    u_int32_t local_net_id = srv_h->get_local_network_id();
     NetworkStats *net_stats = srv_h->getNetworkStats(local_net_id);
     AutonomousSystem *srv_as = srv_h ? srv_h->get_as() : NULL;
 

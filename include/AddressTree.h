@@ -31,7 +31,7 @@ class AddressTree {
   u_int32_t numAddresses, numAddressesIPv4, numAddressesIPv6;
   ndpi_patricia_tree_t *getPatricia(char *what);
   ndpi_patricia_tree_t *ptree_v4, *ptree_v6;
-  std::map<u_int64_t, int16_t> macs;
+  std::map<u_int64_t, int64_t> macs;
   ndpi_void_fn_t free_func;
   RwLock updateLock;
   
@@ -57,19 +57,19 @@ class AddressTree {
     return (isV4 ? ptree_v4 : ptree_v6);
   }
 
-  bool addAddress(const char *_net, const int16_t user_data = -1);
+  bool addAddress(const char *_what, const int64_t user_data = -1);
   bool addAddressAndData(const char *_what, void *user_data);
   ndpi_patricia_node_t *addAddress(const IpAddress *const ipa);
   ndpi_patricia_node_t *addAddress(const IpAddress *const ipa, int network_bits,
                                    bool compact_after_add);
-  bool addAddresses(const char *net, const int16_t user_data = -1);
+  bool addAddresses(const char *net, const int64_t user_data = -1);
 
   void getAddresses(lua_State *vm);
 
-  int16_t findAddress(int family, void *addr,
+  int64_t findAddress(int family, void *addr,
                       u_int8_t *network_mask_bits = NULL);
-  int16_t findMac(const u_int8_t addr[]);
-  int16_t find(const char *addr, u_int8_t *network_mask_bits = NULL);
+  int64_t findMac(const u_int8_t addr[]);
+  int64_t find(const char *addr, u_int8_t *network_mask_bits = NULL);
 
   /* Return true on match, false otherwise */
   bool match(char *addr);

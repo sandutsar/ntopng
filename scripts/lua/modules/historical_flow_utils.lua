@@ -8,6 +8,7 @@ local alert_consts = require "alert_consts"
 local format_utils = require "format_utils"
 local flow_risk_utils = require "flow_risk_utils"
 local country_codes = require "country_codes"
+local network_consts = require "network_consts"
 
 local historical_flow_utils = {}
 
@@ -765,8 +766,8 @@ end
 local function dt_format_network(network)
    local networks_stats = interface.getNetworksStats()
 
-   -- If network is (u_int8_t)-1 then return an empty value
-   if network == "65535" then
+   if isEmptyString(network)
+      or tonumber(network) == network_consts.UNKNOWN_NETWORK then
      return { value = 0, label = "", title = "" }
    end
 
@@ -1119,8 +1120,8 @@ local flow_columns = {
    ['SERVER_NW_LATENCY_US'] = { tag = "srv_nw_latency", dt_func = dt_format_latency_ms, i18n = i18n("db_search.srv_nw_latency"), order = 14, db_type = "Number", db_raw_type = "Uint32" },
    ['CLIENT_LOCATION'] =      { tag = "cli_location", dt_func = dt_format_location, db_type = "Number", db_raw_type = "Uint8" },
    ['SERVER_LOCATION'] =      { tag = "srv_location", dt_func = dt_format_location, db_type = "Number", db_raw_type = "Uint8" },
-   ['SRC_NETWORK_ID'] =       { tag = "cli_network", dt_func = dt_format_network, db_type = "Number", db_raw_type = "Uint16" },
-   ['DST_NETWORK_ID'] =       { tag = "srv_network", dt_func = dt_format_network, db_type = "Number", db_raw_type = "Uint16" },
+   ['SRC_NETWORK_ID'] =       { tag = "cli_network", dt_func = dt_format_network, db_type = "Number", db_raw_type = "Uint32" },
+   ['DST_NETWORK_ID'] =       { tag = "srv_network", dt_func = dt_format_network, db_type = "Number", db_raw_type = "Uint32" },
    ['INPUT_SNMP'] =           { tag = "input_snmp", dt_func = dt_format_snmp_interface, db_type = "Number", db_raw_type = "Uint32" },
    ['OUTPUT_SNMP'] =          { tag = "output_snmp", dt_func = dt_format_snmp_interface, db_type = "Number", db_raw_type = "Uint32" },
    ['SRC_HOST_POOL_ID'] =     { tag = "cli_host_pool_id", dt_func = dt_format_pool_id, db_type = "Number", db_raw_type = "Uint16" },
@@ -1196,8 +1197,8 @@ local aggregated_flow_columns = {
    ['DST_ASN'] =              { tag = "srv_asn", simple_dt_func = simple_format_dst_asn, db_type = "Number", db_raw_type = "Uint32" },
    ['INPUT_SNMP'] =           { tag = "input_snmp", dt_func = dt_format_snmp_interface, db_type = "Number", db_raw_type = "Uint32" },
    ['OUTPUT_SNMP'] =          { tag = "output_snmp", dt_func = dt_format_snmp_interface, db_type = "Number", db_raw_type = "Uint32" },
-   ['SRC_NETWORK_ID'] =       { tag = "cli_network", dt_func = dt_format_network, db_type = "Number", db_raw_type = "Uint16" },
-   ['DST_NETWORK_ID'] =       { tag = "srv_network", dt_func = dt_format_network, db_type = "Number", db_raw_type = "Uint16" },
+   ['SRC_NETWORK_ID'] =       { tag = "cli_network", dt_func = dt_format_network, db_type = "Number", db_raw_type = "Uint32" },
+   ['DST_NETWORK_ID'] =       { tag = "srv_network", dt_func = dt_format_network, db_type = "Number", db_raw_type = "Uint32" },
    ['WLAN_SSID'] =            { tag = "wlan_ssid", db_type = "String", db_raw_type = "String" },
    ['WTP_MAC_ADDRESS'] =      { tag = "apn_mac", dt_func = dt_format_mac, db_type = "Number", db_raw_type = "Uint64" },
 }

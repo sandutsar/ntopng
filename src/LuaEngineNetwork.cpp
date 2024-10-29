@@ -39,17 +39,17 @@ static int ntop_network_get_network_stats(lua_State *vm) {
 /* ****************************************** */
 
 static int ntop_select_local_network(lua_State *vm) {
-  u_int16_t local_network_id = (u_int16_t)-1;
+  u_int32_t local_network_id = (u_int32_t)-1;
   NetworkInterface *iface = getCurrentInterface(vm);
 
   ntop->getTrace()->traceEvent(TRACE_DEBUG, "%s() called", __FUNCTION__);
 
   if (lua_type(vm, 1) == LUA_TNIL)
-    local_network_id = (u_int16_t)-1;
+    local_network_id = (u_int32_t)-1;
   else {
     if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
       return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
-    local_network_id = (u_int16_t)lua_tointeger(vm, 1);
+    local_network_id = (u_int32_t)lua_tointeger(vm, 1);
   }
 
   if (iface)
@@ -85,9 +85,9 @@ static int ntop_network_check_context(lua_State *vm) {
   if ((c->network == NULL) ||
       (strcmp(c->network->getEntityValue().c_str(), entity_val)) != 0) {
     NetworkInterface *iface = getCurrentInterface(vm);
-    u_int16_t network_id = ntop->getLocalNetworkId(entity_val);
+    u_int32_t network_id = ntop->getLocalNetworkId(entity_val);
 
-    if (!iface || (network_id == (u_int16_t)-1) ||
+    if (!iface || (network_id == (u_int32_t)-1) ||
         ((c->network = iface->getNetworkStats(network_id)) == NULL)) {
       ntop->getTrace()->traceEvent(
           TRACE_WARNING, "Could not set context for network %s", entity_val);

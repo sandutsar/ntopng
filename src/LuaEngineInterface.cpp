@@ -1510,13 +1510,13 @@ static int ntop_get_interface_hosts(lua_State *vm) {
   HostWalkMode host_walk_mode = ALL_FLOWS;
   u_int32_t maxHits = CONST_MAX_NUM_HITS;
   bool localHostsOnly = true, treeMapMode = false;
-  int16_t networkIdFilter = -1 /* All networks */;
+  int32_t networkIdFilter = -1 /* All networks */;
 
   if (lua_type(vm, 1) == LUA_TNUMBER)
     host_walk_mode = (HostWalkMode)lua_tonumber(vm, 1);
   if (lua_type(vm, 2) == LUA_TNUMBER) maxHits = (u_int32_t)lua_tonumber(vm, 2);
   if (lua_type(vm, 3) == LUA_TNUMBER)
-    networkIdFilter = (int16_t)lua_tonumber(vm, 3);
+    networkIdFilter = (int32_t)lua_tonumber(vm, 3);
   if (lua_type(vm, 4) == LUA_TBOOLEAN)
     localHostsOnly = lua_toboolean(vm, 4) ? true : false;
   if (lua_type(vm, 5) == LUA_TBOOLEAN)
@@ -1543,7 +1543,7 @@ static int ntop_get_batched_interface_hosts(lua_State *vm,
   bool a2zSortOrder = true;
   u_int16_t vlan_filter = (u_int16_t)-1;
   u_int32_t asn_filter = (u_int32_t)-1;
-  int16_t network_filter = -2;
+  int32_t network_filter = -2;
   u_int16_t pool_filter = (u_int16_t)-1;
   u_int8_t ipver_filter = 0;
   int proto_filter = -1;
@@ -1595,7 +1595,7 @@ static int ntop_get_interface_hosts_criteria(lua_State *vm,
   OSType os_filter = os_any;
   u_int16_t vlan_filter = (u_int16_t)-1;
   u_int32_t asn_filter = (u_int32_t)-1;
-  int16_t network_filter = -2;
+  int32_t network_filter = -2;
   u_int16_t pool_filter = (u_int16_t)-1;
   u_int8_t ipver_filter = 0;
   TrafficType traffic_type_filter = traffic_type_all;
@@ -1625,7 +1625,7 @@ static int ntop_get_interface_hosts_criteria(lua_State *vm,
   if (lua_type(vm, 9) == LUA_TNUMBER)
     asn_filter = (u_int32_t)lua_tonumber(vm, 9);
   if (lua_type(vm, 10) == LUA_TNUMBER)
-    network_filter = (int16_t)lua_tonumber(vm, 10);
+    network_filter = (int32_t)lua_tonumber(vm, 10);
   if (lua_type(vm, 11) == LUA_TSTRING)
     mac_filter = (char *)lua_tostring(vm, 11);
   if (lua_type(vm, 12) == LUA_TNUMBER)
@@ -2721,14 +2721,14 @@ static int ntop_get_local_server_ports(lua_State *vm) {
 
 static int ntop_get_interface_network_stats(lua_State *vm) {
   NetworkInterface *curr_iface = getCurrentInterface(vm);
-  u_int8_t network_id;
+  u_int32_t network_id;
 
   ntop->getTrace()->traceEvent(TRACE_DEBUG, "%s() called", __FUNCTION__);
 
   if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
     return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
 
-  network_id = (u_int8_t)lua_tointeger(vm, 1);
+  network_id = (u_int32_t)lua_tointeger(vm, 1);
 
   if (curr_iface) {
     lua_newtable(vm);
@@ -4666,7 +4666,7 @@ static void ntop_get_maps_filters(lua_State *vm, MapsFilters *filters) {
   filters->maxHits = (u_int32_t)-1;
   filters->startingHit = (u_int32_t)0;
   filters->unicast = false;
-  filters->network_id = (int16_t)-1;
+  filters->network_id = (int32_t)-1;
   filters->cli_location = (u_int8_t)-1;
   filters->srv_location = (u_int8_t)-1;
   filters->sort_column = (mapSortingColumn)map_column_last_seen;
@@ -4700,7 +4700,7 @@ static void ntop_get_maps_filters(lua_State *vm, MapsFilters *filters) {
 						 (char *)lua_tostring(vm, 6));
 
   if (lua_type(vm, 7) == LUA_TNUMBER)
-    filters->network_id = (int16_t)lua_tonumber(vm, 7);
+    filters->network_id = (int32_t)lua_tonumber(vm, 7);
   if (lua_type(vm, 8) == LUA_TNUMBER)
     filters->status = (ServiceAcceptance)lua_tonumber(vm, 8);
   if (lua_type(vm, 9) == LUA_TNUMBER) direction = (u_int8_t)lua_tonumber(vm, 9);

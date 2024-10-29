@@ -342,7 +342,7 @@ protected:
                 AddressTree *allowed_hosts, bool host_details,
                 LocationPolicy location, char *countryFilter, char *mac_filter,
                 u_int16_t vlan_id, OSType osFilter, u_int32_t asnFilter,
-                int16_t networkFilter, u_int16_t pool_filter,
+                int32_t networkFilter, u_int16_t pool_filter,
                 bool filtered_hosts, bool blacklisted_hosts, bool anomalousOnly,
                 bool dhcpOnly, const AddressTree *const cidr_filter,
                 u_int8_t ipver_filter, int proto_filter,
@@ -771,7 +771,7 @@ public:
 			 u_int8_t bridge_iface_idx, AddressTree *allowed_hosts, bool host_details,
 			 LocationPolicy location, char *countryFilter, char *mac_filter,
 			 u_int16_t vlan_id, OSType osFilter, u_int32_t asnFilter,
-			 int16_t networkFilter, u_int16_t pool_filter, bool filtered_hosts,
+			 int32_t networkFilter, u_int16_t pool_filter, bool filtered_hosts,
 			 bool blacklisted_hosts, u_int8_t ipver_filter, int proto_filter,
 			 TrafficType traffic_type_filter, u_int32_t device_ip, bool tsLua,
 			 bool anomalousOnly, bool dhcpOnly, const AddressTree *const cidr_filter,
@@ -799,7 +799,7 @@ public:
                            const char *manufacturer, u_int8_t location_filter);
   int getMacsIpAddresses(lua_State *vm, int idx);
   void getFlowsStats(lua_State *vm);
-  void getNetworkStats(lua_State *vm, u_int16_t network_id,
+  void getNetworkStats(lua_State *vm, u_int32_t network_id,
                        AddressTree *allowed_hosts, bool diff = false) const;
   void getNetworksStats(lua_State *vm, AddressTree *allowed_hosts,
                         bool diff = false) const;
@@ -967,7 +967,7 @@ public:
   int exec_csv_query(const char *sql, bool dump_in_json_format,
                      struct mg_connection *conn);
 
-  NetworkStats *getNetworkStats(u_int16_t networkId) const;
+  NetworkStats *getNetworkStats(u_int32_t networkId) const;
   void allocateStructures(bool disable_dump = false);
   void getsDPIStats(lua_State *vm);
   inline bool isDbCreated() { return (db ? db->isDbCreated() : true); };
@@ -1208,7 +1208,7 @@ public:
   u_int32_t getNumEngagedAlerts(AlertLevelGroup alert_level_group) const;
   void luaNumEngagedAlerts(lua_State *vm) const;
   int walkActiveHosts(lua_State *vm, HostWalkMode mode, u_int32_t maxHits,
-                      int16_t networkIdFilter, bool localHostsOnly,
+                      int32_t networkIdFilter, bool localHostsOnly,
                       bool treeMapMode);
   virtual void
   flowAlertsDequeueLoop(); /* Body of the loop that dequeues flows for the

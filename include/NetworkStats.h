@@ -28,7 +28,7 @@ class NetworkStats : public InterfaceMemberAlertableEntity,
                      public GenericTrafficElement,
                      public Score {
  private:
-  u_int16_t network_id;
+  u_int32_t network_id;
   u_int32_t numHosts;
   u_int32_t alerted_flows_as_client, alerted_flows_as_server;
   TrafficStats ingress, ingress_broadcast; /* outside -> network */
@@ -61,7 +61,7 @@ class NetworkStats : public InterfaceMemberAlertableEntity,
 #endif
 
  public:
-  NetworkStats(NetworkInterface *iface, u_int16_t _network_id);
+  NetworkStats(NetworkInterface *iface, u_int32_t _network_id);
   virtual ~NetworkStats();
 
   inline bool trafficSeen() {
@@ -108,7 +108,7 @@ class NetworkStats : public InterfaceMemberAlertableEntity,
   };
 
 #ifdef NTOPNG_PRO
-  void incTrafficBetweenNets(u_int16_t net_id, u_int32_t bytes_sent,
+  void incTrafficBetweenNets(u_int32_t net_id, u_int32_t bytes_sent,
                              u_int32_t bytes_rcvd);
   void resetTrafficBetweenNets();
 #endif

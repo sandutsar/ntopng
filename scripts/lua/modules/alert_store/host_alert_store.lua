@@ -18,6 +18,7 @@ local alert_roles = require "alert_roles"
 local json = require "dkjson"
 local tag_utils = require "tag_utils"
 local mitre_utils = require "mitre_utils"
+local network_consts = require "network_consts"
 
 -- ##############################################
 
@@ -507,7 +508,8 @@ function host_alert_store:format_record(value, no_html)
     end
 
     local network_value = value['network']
-    if network_value == "65535" then
+    if isEmptyString(network_value) or
+       tonumber(network_value) == network_consts.UNKNOWN_NETWORK then
         network_value = ""
     end
     local network = RNAME.NETWORK.name

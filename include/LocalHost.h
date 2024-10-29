@@ -26,7 +26,7 @@
 
 class LocalHost : public Host {
  protected:
-  int16_t local_network_id;
+  int32_t local_network_id;
   time_t initialization_time;
   LocalHostStats *initial_ts_point;
   /* contacted_server_ports it's a buffer used by the "Server Port Detected" check */
@@ -66,7 +66,7 @@ class LocalHost : public Host {
   virtual ~LocalHost();
 
   virtual void set_hash_entry_state_idle();
-  virtual int16_t get_local_network_id() const { return (local_network_id); };
+  virtual int32_t get_local_network_id() const { return (local_network_id); };
   virtual bool isLocalHost() const { return (true); };
   virtual bool isLocalUnicastHost() const {
     return (!(isBroadcastHost() || isMulticastHost()));
@@ -79,7 +79,7 @@ class LocalHost : public Host {
   }
 
   void toggleRxOnlyHost(bool rx_only);
-  virtual NetworkStats *getNetworkStats(int16_t networkId) {
+  virtual NetworkStats *getNetworkStats(int32_t networkId) {
     return (iface->getNetworkStats(networkId));
   };
   virtual u_int32_t getActiveHTTPHosts() {

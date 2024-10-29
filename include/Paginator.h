@@ -37,7 +37,7 @@ class Paginator {
   int l7proto_filter_master_proto, l7proto_filter_app_proto;
   int l7category_filter;
   u_int16_t port_filter;
-  int16_t local_network_filter;
+  int32_t local_network_filter;
   u_int16_t vlan_id_filter;
   u_int8_t ip_version /* Either 4 or 6 */;
   u_int8_t l4_protocol;
@@ -192,7 +192,7 @@ class Paginator {
     return false;
   }
 
-  inline bool localNetworkFilter(int16_t *f) const {
+  inline bool localNetworkFilter(int32_t *f) const {
     if (local_network_filter <= CONST_MAX_NUM_NETWORKS) {
       (*f) = local_network_filter;
       return true;

@@ -411,9 +411,11 @@ end
 -- ##############################################
 
 function getFullLocalNetworkName(network)
+    local network_consts = require "network_consts"
+
     local alias = getLocalNetworkAlias(network)
 
-    if tonumber(network) == 65535 then
+    if tonumber(network) == network_consts.UNKNOWN_NETWORK then
         return ""
     end
 

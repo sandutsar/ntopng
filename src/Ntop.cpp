@@ -748,7 +748,7 @@ void Ntop::start() {
 
 /* ******************************************* */
 
-bool Ntop::isLocalAddress(int family, void *addr, int16_t *network_id,
+bool Ntop::isLocalAddress(int family, void *addr, int32_t *network_id,
                           u_int8_t *network_mask_bits) {
   u_int8_t nmask_bits;
 
@@ -775,7 +775,7 @@ bool Ntop::isLocalAddress(int family, void *addr, int16_t *network_id,
 
 /* ******************************************* */
 
-void Ntop::getLocalNetworkIp(int16_t local_network_id, IpAddress **network_ip,
+void Ntop::getLocalNetworkIp(int32_t local_network_id, IpAddress **network_ip,
                              u_int8_t *network_prefix) {
   char *network_address, *slash;
   *network_ip = new (std::nothrow) IpAddress();
@@ -3652,29 +3652,29 @@ void Ntop::setScriptsDir() {
 
 /* ******************************************* */
 
-inline int16_t Ntop::localNetworkLookup(int family, void *addr,
+inline int32_t Ntop::localNetworkLookup(int family, void *addr,
                                         u_int8_t *network_mask_bits) {
   return (local_network_tree.findAddress(family, addr, network_mask_bits));
 }
 
 /* ******************************************* */
 
-inline int16_t Ntop::cloudNetworkLookup(int family, void *addr,
+inline int32_t Ntop::cloudNetworkLookup(int family, void *addr,
                                         u_int8_t *network_mask_bits) {
   return (cloud_local_network_tree.findAddress(family, addr, network_mask_bits));
 }
 
 /* **************************************** */
 
-u_int16_t Ntop::getLocalNetworkId(const char *address_str) {
-  u_int16_t i;
+u_int32_t Ntop::getLocalNetworkId(const char *address_str) {
+  u_int32_t i;
 
   for (i = 0; i < local_network_tree.getNumAddresses(); i++) {
     if(local_network_names[i] && (!strcmp(address_str, local_network_names[i])))
       return (i);
   }
 
-  return ((u_int16_t)-1);
+  return ((u_int32_t)-1);
 }
 
 /* ******************************************* */
@@ -3682,8 +3682,8 @@ u_int16_t Ntop::getLocalNetworkId(const char *address_str) {
 bool Ntop::addLocalNetwork(char *_net) {
   char *net, *position_ptr;
   char alias[64] = "";
-  int id = local_network_tree.getNumAddresses();
-  int i, pos = 0;
+  u_int32_t id = local_network_tree.getNumAddresses();
+  u_int32_t i, pos = 0;
 
   if (id >= getMaxNumLocalNetworks()) {
     ntop->getTrace()->traceEvent(TRACE_ERROR, "Too many networks defined (%d): ignored %s", id, _net);
@@ -3745,7 +3745,7 @@ bool Ntop::addLocalNetwork(char *_net) {
 
 /* ******************************************* */
 
-bool Ntop::getLocalNetworkAlias(lua_State *vm, u_int16_t network_id) {
+bool Ntop::getLocalNetworkAlias(lua_State *vm, u_int32_t network_id) {
   char *alias = NULL;
 
   if (network_id < getMaxNumLocalNetworks())
@@ -4331,7 +4331,7 @@ u_int32_t Ntop::getMaxNumFlowExportersInterfaces() {
   
 /* ******************************************* */
 
-u_int16_t Ntop::getMaxNumLocalNetworks() { 
+u_int32_t Ntop::getMaxNumLocalNetworks() { 
 #ifdef NTOPNG_PRO
   return get_max_num_local_networks();
 #else

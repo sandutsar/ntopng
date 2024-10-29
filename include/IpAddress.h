@@ -140,7 +140,7 @@ class IpAddress {
   char* print(char* str, u_int str_len, u_int8_t bitmask = 0xFF) const;
   char* printMask(char* str, u_int str_len, bool isLocalIP);
   bool isLocalHost() const;
-  bool isLocalHost(int16_t* network_id) const;
+  bool isLocalHost(int32_t* network_id) const;
   bool isLocalInterfaceAddress();
   bool get_sockaddr(struct sockaddr** const sa, ssize_t* const sa_len) const;
 

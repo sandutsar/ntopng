@@ -110,7 +110,7 @@ bool IpAddress::isEmpty() const {
 
 void IpAddress::checkIP() {
   u_int32_t a;
-  int16_t local_network_id;
+  int32_t local_network_id;
   u_int32_t nmask;
   u_int8_t nmask_bits;
 
@@ -287,7 +287,7 @@ bool IpAddress::isLocalHost() const {
 
 /* ******************************************* */
 
-bool IpAddress::isLocalHost(int16_t *network_id) const {
+bool IpAddress::isLocalHost(int32_t *network_id) const {
   bool local = false;
 
   if (addr.multicastIP || addr.broadcastIP) return (true);

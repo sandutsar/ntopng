@@ -3,6 +3,6 @@
 --
 
 local network_consts = {}
-network_consts.UNKNOWN_NETWORK = 65535 -- uint16 (-1)
+network_consts.UNKNOWN_NETWORK = 4294967295 -- uint32 -1
 
 return network_consts

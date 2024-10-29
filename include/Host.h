@@ -369,7 +369,7 @@ class Host : public GenericHashEntry,
                                     rcvd_bytes);
   }
 
-  virtual int16_t get_local_network_id() const = 0;
+  virtual int32_t get_local_network_id() const = 0;
   virtual HTTPstats *getHTTPstats() { return (NULL); };
   virtual DnsStats *getDNSstats() { return (NULL); };
   virtual ICMPstats *getICMPstats() { return (NULL); };
@@ -693,7 +693,7 @@ class Host : public GenericHashEntry,
   virtual void addContactedDomainName(char *domain_name){};
   virtual u_int32_t getDomainNamesCardinality() { return 0; };
   virtual void resetDomainNamesCardinality(){};
-  virtual NetworkStats *getNetworkStats(int16_t networkId) { return (NULL); };
+  virtual NetworkStats *getNetworkStats(int32_t networkId) { return (NULL); };
   inline Country *getCountryStats() { return country; };
 
   bool match(const AddressTree *const tree) const { return ip.match(tree); };

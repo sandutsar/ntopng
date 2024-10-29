@@ -23,7 +23,7 @@
 
 /* *************************************** */
 
-NetworkStats::NetworkStats(NetworkInterface *iface, u_int16_t _network_id)
+NetworkStats::NetworkStats(NetworkInterface *iface, u_int32_t _network_id)
     : InterfaceMemberAlertableEntity(iface, alert_entity_network),
       GenericTrafficElement(),
       Score(iface) {
@@ -117,7 +117,7 @@ void NetworkStats::lua(lua_State *vm, bool diff) {
 #ifdef NTOPNG_PRO
   lua_newtable(vm);
 
-  for (u_int16_t i = 0; i < ntop->getNumLocalNetworks(); i++) {
+  for (u_int32_t i = 0; i < ntop->getNumLocalNetworks(); i++) {
     /* Safety check in case a local network is NULL */
     if(!ntop->getLocalNetworkName(i))
       continue;
@@ -239,10 +239,10 @@ void NetworkStats::updateStats(const struct timeval *tv) {
 
 /* ***************************************** */
 
-void NetworkStats::incTrafficBetweenNets(u_int16_t net_id, u_int32_t bytes_sent,
+void NetworkStats::incTrafficBetweenNets(u_int32_t net_id, u_int32_t bytes_sent,
                                          u_int32_t bytes_rcvd) {
 #ifdef NTOPNG_PRO
-  if (net_id < ntop->getNumLocalNetworks() && net_id != (u_int16_t)-1) {
+  if (net_id < ntop->getNumLocalNetworks() && net_id != (u_int32_t)-1) {
     network_matrix[net_id].bytes_sent += bytes_sent;
     network_matrix[net_id].bytes_rcvd += bytes_rcvd;
   }
@@ -253,7 +253,7 @@ void NetworkStats::incTrafficBetweenNets(u_int16_t net_id, u_int32_t bytes_sent,
 
 void NetworkStats::resetTrafficBetweenNets() {
 #ifdef NTOPNG_PRO
-  for (u_int16_t i = 0; i < ntop->getNumLocalNetworks(); i++) {
+  for (u_int32_t i = 0; i < ntop->getNumLocalNetworks(); i++) {
     network_matrix[i].bytes_sent = 0;
     network_matrix[i].bytes_rcvd = 0;
   }

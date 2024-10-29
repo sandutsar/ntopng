@@ -154,9 +154,9 @@ class Ntop {
 #endif
 
   /* For local network */
-  inline int16_t localNetworkLookup(int family, void *addr,
+  inline int32_t localNetworkLookup(int family, void *addr,
                                     u_int8_t *network_mask_bits = NULL);
-  inline int16_t cloudNetworkLookup(int family, void *addr,
+  inline int32_t cloudNetworkLookup(int family, void *addr,
                                     u_int8_t *network_mask_bits = NULL);
   bool addLocalNetwork(char *_net);
 
@@ -295,7 +295,7 @@ class Ntop {
    * @param network_mask_bits It returns the number of bits of the network mask
    * @return True if the address is in the local networks, false otherwise.
    */
-  bool isLocalAddress(int family, void *addr, int16_t *network_id,
+  bool isLocalAddress(int family, void *addr, int32_t *network_id,
                       u_int8_t *network_mask_bits = NULL);
 
   /**
@@ -488,7 +488,7 @@ class Ntop {
   void setScriptsDir();
   void lua_periodic_activities_stats(NetworkInterface *iface, lua_State *vm);
   void getUsers(lua_State *vm);
-  bool getLocalNetworkAlias(lua_State *vm, u_int16_t network_id);
+  bool getLocalNetworkAlias(lua_State *vm, u_int32_t network_id);
   bool isUserAdministrator(lua_State *vm);
   void getAllowedInterface(lua_State *vm);
   void getAllowedNetworks(lua_State *vm);
@@ -554,7 +554,7 @@ class Ntop {
     return (local_interface_addresses.findAddress(family, addr) == -1 ? false
                                                                       : true);
   };
-  void getLocalNetworkIp(int16_t local_network_id, IpAddress **network_ip,
+  void getLocalNetworkIp(int32_t local_network_id, IpAddress **network_ip,
                          u_int8_t *network_prefix);
   void addLocalNetworkList(const char *network);
   void createExportInterface();
@@ -702,19 +702,19 @@ class Ntop {
     return getUserPasswordHashLocal(user, val, sizeof(val));
   }
 
-  u_int16_t getMaxNumLocalNetworks();
+  u_int32_t getMaxNumLocalNetworks();
 
   /* Local network address list methods */
-  inline u_int16_t getNumLocalNetworks() {
+  inline u_int32_t getNumLocalNetworks() {
     return local_network_tree.getNumAddresses();
   };
-  inline const char *getLocalNetworkName(int16_t local_network_id) {
-    return (((u_int16_t)local_network_id < local_network_tree.getNumAddresses())
-                ? local_network_names[(u_int16_t)local_network_id]
+  inline const char *getLocalNetworkName(int32_t local_network_id) {
+    return (((u_int32_t)local_network_id < local_network_tree.getNumAddresses())
+                ? local_network_names[(u_int32_t)local_network_id]
                 : NULL);
   };
 
-  u_int16_t getLocalNetworkId(const char *network_name);
+  u_int32_t getLocalNetworkId(const char *network_name);
 
   void addLocalCloudAddress(char *str) { cloud_local_network_tree.addAddress(str); }
   

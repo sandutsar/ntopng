@@ -1112,7 +1112,7 @@ typedef struct _MapsFilters {
   u_int16_t host_pool_id;
   u_int16_t port;
   u_int16_t ndpi_proto;
-  int16_t network_id;
+  int32_t network_id;
   u_int32_t first_seen;
   ServiceAcceptance status;
   char host_to_search[32];

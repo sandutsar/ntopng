@@ -1001,9 +1001,9 @@ NetworkInterface::~NetworkInterface() {
   if (ndpiStats) delete ndpiStats;
   if (dscpStats) delete dscpStats;
   if (networkStats) {
-    u_int16_t numNetworks = ntop->getNumLocalNetworks();
+    u_int32_t numNetworks = ntop->getNumLocalNetworks();
 
-    for (u_int16_t i = 0; i < numNetworks; i++) delete networkStats[i];
+    for (u_int32_t i = 0; i < numNetworks; i++) delete networkStats[i];
 
     delete[] networkStats;
   }
@@ -4071,7 +4071,7 @@ void NetworkInterface::periodicStatsUpdate() {
 
   if (host_pools) host_pools->updateStats(&tv);
 
-  for (u_int16_t network_id = 0; network_id < ntop->getNumLocalNetworks(); network_id++) {
+  for (u_int32_t network_id = 0; network_id < ntop->getNumLocalNetworks(); network_id++) {
     NetworkStats *ns = getNetworkStats(network_id);
 
     if(ns != NULL)
@@ -4817,7 +4817,7 @@ struct flowHostRetriever {
   u_int32_t asnFilter;
   u_int32_t uidFilter;
   u_int32_t pidFilter;
-  int16_t networkFilter;
+  int32_t networkFilter;
   u_int16_t poolFilter;
   u_int8_t devtypeFilter;
   u_int8_t locationFilter;
@@ -4842,7 +4842,7 @@ struct flowHostRetriever {
 static bool flow_matches(Flow *f, struct flowHostRetriever *retriever) {
   int ndpi_proto_master_proto, ndpi_proto_app_proto, ndpi_cat;
   u_int16_t port;
-  int16_t local_network_id;
+  int32_t local_network_id;
   u_int16_t vlan_id = 0;
   u_int16_t cli_pool, srv_pool, pool_filter;
   AlertLevelGroup flow_status_severity_filter = alert_level_group_none;
@@ -5153,8 +5153,8 @@ static bool flow_matches(Flow *f, struct flowHostRetriever *retriever) {
 
     if (retriever->pag &&
         retriever->pag->localNetworkFilter(&local_network_id)) {
-      if(local_network_id != (int16_t) CONST_MAX_NUM_NETWORKS + 1) {
-        int16_t cli_local_network_id, srv_local_network_id;
+      if(local_network_id != (int32_t) CONST_MAX_NUM_NETWORKS + 1) {
+        int32_t cli_local_network_id, srv_local_network_id;
 
         f->get_cli_ip_addr()->isLocalHost(&cli_local_network_id),
         f->get_srv_ip_addr()->isLocalHost(&srv_local_network_id);
@@ -6372,7 +6372,7 @@ int NetworkInterface::sortHosts(u_int32_t *begin_slot, bool walk_all, struct flo
 				u_int8_t bridge_iface_idx, AddressTree *allowed_hosts, bool host_details,
 				LocationPolicy location, char *countryFilter, char *mac_filter,
 				u_int16_t vlan_id, OSType osFilter, u_int32_t asnFilter,
-				int16_t networkFilter, u_int16_t pool_filter, bool filtered_hosts,
+				int32_t networkFilter, u_int16_t pool_filter, bool filtered_hosts,
 				bool blacklisted_hosts, bool anomalousOnly, bool dhcpOnly,
 				const AddressTree *const cidr_filter, u_int8_t ipver_filter,
 				int proto_filter, TrafficType traffic_type_filter, u_int32_t device_ip,
@@ -6803,7 +6803,7 @@ int NetworkInterface::getActiveHostsList(lua_State *vm, u_int32_t *begin_slot, b
 					 u_int8_t bridge_iface_idx, AddressTree *allowed_hosts, bool host_details,
 					 LocationPolicy location, char *countryFilter, char *mac_filter,
 					 u_int16_t vlan_id, OSType osFilter, u_int32_t asnFilter,
-					 int16_t networkFilter, u_int16_t pool_filter, bool filtered_hosts,
+					 int32_t networkFilter, u_int16_t pool_filter, bool filtered_hosts,
 					 bool blacklisted_hosts, u_int8_t ipver_filter, int proto_filter,
 					 TrafficType traffic_type_filter, u_int32_t device_ip, bool tsLua,
 					 bool anomalousOnly, bool dhcpOnly, const AddressTree *const cidr_filter,
@@ -7047,7 +7047,7 @@ void NetworkInterface::getFlowsStats(lua_State *vm) {
 
 /* **************************************************** */
 
-void NetworkInterface::getNetworkStats(lua_State *vm, u_int16_t network_id,
+void NetworkInterface::getNetworkStats(lua_State *vm, u_int32_t network_id,
                                        AddressTree *allowed_hosts,
                                        bool diff) const {
   NetworkStats *network_stats;
@@ -7070,11 +7070,11 @@ void NetworkInterface::getNetworkStats(lua_State *vm, u_int16_t network_id,
 void NetworkInterface::getNetworksStats(lua_State *vm,
                                         AddressTree *allowed_hosts,
                                         bool diff) const {
-  u_int16_t num_local_networks = ntop->getNumLocalNetworks();
+  u_int32_t num_local_networks = ntop->getNumLocalNetworks();
 
   lua_newtable(vm);
 
-  for (u_int16_t network_id = 0; network_id < num_local_networks; network_id++)
+  for (u_int32_t network_id = 0; network_id < num_local_networks; network_id++)
     getNetworkStats(vm, network_id, allowed_hosts, diff);
 }
 
@@ -8454,7 +8454,7 @@ void NetworkInterface::FillObsHash() {
 /* **************************************** */
 
 void NetworkInterface::allocateStructures(bool disable_dump) {
-  u_int16_t numNetworks = ntop->getNumLocalNetworks();
+  u_int32_t numNetworks = ntop->getNumLocalNetworks();
   char buf[16];
 
   try {
@@ -8530,7 +8530,7 @@ void NetworkInterface::allocateStructures(bool disable_dump) {
       alertsQueue = new AlertsQueue(this);
     }
 
-    for (u_int16_t i = 0; i < numNetworks; i++)
+    for (u_int32_t i = 0; i < numNetworks; i++)
       networkStats[i] = new NetworkStats(this, i);
   } catch (std::bad_alloc &ba) {
     static bool oom_warning_sent = false;
@@ -8580,7 +8580,7 @@ AlertsQueue *NetworkInterface::getAlertsQueue() const {
 
 /* **************************************** */
 
-NetworkStats *NetworkInterface::getNetworkStats(u_int16_t networkId) const {
+NetworkStats *NetworkInterface::getNetworkStats(u_int32_t networkId) const {
   if ((networkStats == NULL) || (networkId >= ntop->getNumLocalNetworks()))
     return (NULL);
   else
@@ -10400,9 +10400,9 @@ void NetworkInterface::walkAlertables(AlertEntity alert_entity,
   /* Networks */
   if (((alert_entity == alert_entity_none) ||
        (alert_entity == alert_entity_network))) {
-    u_int16_t num_local_networks = ntop->getNumLocalNetworks();
+    u_int32_t num_local_networks = ntop->getNumLocalNetworks();
 
-    for (u_int16_t network_id = 0; network_id < num_local_networks;
+    for (u_int32_t network_id = 0; network_id < num_local_networks;
          network_id++) {
       NetworkStats *netstats = getNetworkStats(network_id);
 
@@ -10976,7 +10976,7 @@ int NetworkInterface::exec_csv_query(const char *sql, bool dump_in_json_format,
 
 struct host_walker_metadata {
   std::vector<ActiveHostWalkerInfo> info;
-  int16_t networkIdFilter;
+  int32_t networkIdFilter;
   HostWalkMode mode;
   bool localHostsOnly;
 };
@@ -11011,7 +11011,7 @@ static bool walkerSort(const ActiveHostWalkerInfo &a,
 
 int NetworkInterface::walkActiveHosts(
 				      lua_State *vm, HostWalkMode mode, u_int32_t maxHits,
-				      int16_t networkIdFilter, /* -1 = means any network */
+				      int32_t networkIdFilter, /* -1 = means any network */
 				      bool localHostsOnly, bool treeMapMode) {
   u_int32_t begin_slot = 0;
   struct host_walker_metadata m;
