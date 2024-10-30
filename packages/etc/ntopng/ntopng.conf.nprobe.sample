@@ -16,7 +16,7 @@
 #        the trailing 'c' below,  and nProbe as connection initiator (with the --zmq-probe-mode 
 #        option).
 #
-# -i=tcp://*:5556c
+#-i=tcp://*:5556c
 #
 #
 #       -m|--local-networks
@@ -25,7 +25,7 @@
 #        using commas to separate them. Both netmask and CIDR notation may be used,
 #        even mixed together. Example: "131.114.21.0/24,10.0.0.0/255.0.0.0".
 #
-# -m=10.10.123.0/24
+#-m=10.10.123.0/24
 #
 #
 #       -G|--pid-path
