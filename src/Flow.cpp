@@ -7753,9 +7753,13 @@ void Flow::getDNSInfo(ndpi_serializer *serializer) const {
       ndpi_serialize_string_string(serializer, "last_query",
                                    protos.dns.last_query);
 
-      if (protos.dns.last_rsp)
-	ndpi_serialize_string_string(serializer, "last_rsp",
-				     protos.dns.last_rsp);
+      if (protos.dns.last_rsp) {
+        ndpi_serialize_string_string(serializer, "last_rsp",
+                                     protos.dns.last_rsp);
+        std::string array = Utils::list2JsonArray(protos.dns.last_rsp);
+        ndpi_serialize_string_raw(serializer, "last_rsp_arr",
+                                  array.c_str(), array.length());
+      }
       if (hasInvalidDNSQueryChars())
         ndpi_serialize_string_boolean(serializer, "invalid_chars_in_query",
                                       true);

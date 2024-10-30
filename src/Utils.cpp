@@ -5520,6 +5520,26 @@ char *Utils::toLowerResolvedNames(const char *const resolvedName) {
 
 /* ************************************************ */
 
+/* Convert comma-separated list to array */
+std::string Utils::list2JsonArray(const char *s) {
+  const char *start = s, *end;
+
+  std::string array("[");
+  if (s != NULL && s[0] != '\0') {
+    while ((end = strchr(start, ',')) != NULL) {
+      int len = end - start;
+      array.append("\""); array.append(start, len); array.append("\",");
+      start = end + 1;
+    }
+    array.append("\""); array.append(start); array.append("\"");
+  }
+  array.append("]");
+
+  return array;
+}
+
+/* ************************************************ */
+
 bool const Utils::isIpEmpty(ipAddress addr) {
   if ((addr.ipVersion == 0) ||
       ((addr.ipVersion == 4) && (addr.ipType.ipv4 == 0))) {
