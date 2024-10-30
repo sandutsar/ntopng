@@ -349,6 +349,7 @@ end
 
 local function dt_format_mac(mac)
    if mac == nil then return "" end
+   if type(mac) == "string" and isMacAddress(mac) then return mac end
    mac = tonumber(mac)
    if not mac or mac == 0 then return "" end
    return ntop.decodeMac64(mac)
