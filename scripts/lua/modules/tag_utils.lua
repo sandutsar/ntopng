@@ -470,6 +470,16 @@ tag_utils.defined_tags = {
         i18n_label = i18n('db_search.tags.netbios_name'),
         operators = { 'eq', 'neq', 'in', 'nin' }
     },
+    dns_answer = {
+        value_type = 'dns_answer',
+        i18n_label = i18n('db_search.tags.dns_answer'),
+        operators = { 'eq', 'neq', 'in', 'nin' }
+    },
+    dns_answer = {
+        value_type = 'dns_answer',
+        i18n_label = i18n('db_search.tags.dns_answer'),
+        operators = { 'eq', 'neq', 'in', 'nin' }
+    },
     mdns_answer = {
         value_type = 'mdns_answer',
         i18n_label = i18n('db_search.tags.mdns_answer'),

@@ -2195,6 +2195,7 @@ local lang = {
             ["confidence"] = "Confidence",
             ["country"] = "Country",
             ["dga_domain_name"] = "Requested Domain Name",
+            ["dns_answer"] = "DNS Answer",
             ["domain_name"] = "Domain Name",
             ["dscp_id"] = "DSCP ID",
             ["dst2src_dscp"] = "Server DSCP",
