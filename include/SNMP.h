@@ -97,6 +97,10 @@ class SNMP {
   int getnext(lua_State *vm, bool skip_first_param);
   int getnextbulk(lua_State *vm, bool skip_first_param);
   int set(lua_State *vm, bool skip_first_param);
+
+#ifdef HAVE_LIBSNMP
+  lua_State* get_vm() { return(vm); }
+#endif
 };
 
 #endif /* _SNMP_H_ */
