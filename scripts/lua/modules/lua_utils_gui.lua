@@ -1133,7 +1133,7 @@ function format_tls_info(tls_info, no_html)
     if tls_info.notBefore and tls_info.notAfter then
         formatted_tls_info["tls_certificate_validity"] = string.format("%s - %s", tls_info.notBefore, tls_info.notAfter)
         formatted_tls_info.notBefore = nil
-        tlformatted_tls_infos_info.notAfter = nil
+        formatted_tls_info.notAfter = nil
     end
 
     if (tls_info.tls_version) and (tls_info.tls_version > 0) then
