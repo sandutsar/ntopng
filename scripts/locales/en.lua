@@ -401,6 +401,7 @@ local lang = {
     ["label"] = "Label",
     ["label_alerts"] = "Label Alerts",
     ["language"] = "Language",
+    ["last_answer"] = "Answer",
     ["last_downlink_usage"] = "Last Downlink (In) Usage",
     ["last_method"] = "Method",
     ["last_query"] = "Query",

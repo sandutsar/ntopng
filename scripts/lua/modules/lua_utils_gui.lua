@@ -1113,6 +1113,11 @@ function format_dns_query_info(dns_info, no_html)
         end
     end
 
+    if dns_info.last_rsp_arr and type(dns_info.last_rsp_arr) == 'table' and #dns_info.last_rsp_arr > 0 then
+        local answers = table.concat(dns_info.last_rsp_arr, ", ")
+        formatted_dns_query_info["last_answer"] = answers
+    end
+
     return formatted_dns_query_info
 end
 
