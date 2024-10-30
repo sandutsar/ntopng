@@ -211,8 +211,8 @@ ZMQParserInterface::ZMQParserInterface(const char *endpoint,
 ZMQParserInterface::~ZMQParserInterface() {
   map<u_int32_t, nProbeStats *>::iterator it;
 
-  if (zmq_remote_stats) free(zmq_remote_stats);
-  if (zmq_remote_stats_shadow) free(zmq_remote_stats_shadow);
+  if (zmq_remote_stats) delete (zmq_remote_stats);
+  if (zmq_remote_stats_shadow) delete (zmq_remote_stats_shadow);
 #ifdef NTOPNG_PRO
   if (custom_app_maps) delete (custom_app_maps);
 #endif
@@ -3186,7 +3186,7 @@ void ZMQParserInterface::setRemoteStats(nProbeStats *zrs) {
     zmq_remote_initial_exported_flows = cumulative_zrs->num_flow_exports;
 
   /* Swap values */
-  if (zmq_remote_stats_shadow) free(zmq_remote_stats_shadow);
+  if (zmq_remote_stats_shadow) delete (zmq_remote_stats_shadow);
   zmq_remote_stats_shadow = zmq_remote_stats;
   zmq_remote_stats = cumulative_zrs;
 
