@@ -447,13 +447,13 @@ schema:addMetric("bytes_rcvd")
 schema = ts_utils.newSchema("snmp_device:poll_duration", {
     step = 300,
     rrd_heartbeat = 3000,
-    rrd_fname = "duration",
+    rrd_fname = "poll_duration",
     metrics_type = ts_utils.metrics.gauge,
     is_system_schema = true
 })
 schema:addTag("ifid")
 schema:addTag("device")
-schema:addMetric("duration")
+schema:addMetric("poll_duration")
 
 schema = ts_utils.newSchema("snmp_if:traffic", {
     step = 300,
