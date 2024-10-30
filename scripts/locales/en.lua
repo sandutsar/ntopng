@@ -2197,6 +2197,7 @@ local lang = {
             ["country"] = "Country",
             ["dga_domain_name"] = "Requested Domain Name",
             ["dns_answer"] = "DNS Answer",
+            ["dns_query"] = "DNS Query",
             ["domain_name"] = "Domain Name",
             ["dscp_id"] = "DSCP ID",
             ["dst2src_dscp"] = "Server DSCP",

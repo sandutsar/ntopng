@@ -2017,6 +2017,7 @@ local known_parameters = {
    ["entity"] = validateNumber,                                                       -- An alert entity type
    ["by_24h"] = validateBool,                                                         -- Used to know if the new or the old timeseries format is requested
    ["dns_answer"] = validateListOfTypeInline(validateFilters(validateSingleWord)),
+   ["dns_query"] = validateListOfTypeInline(validateFilters(validateSingleWord)),
    ["role"] = validateListOfTypeInline(validateFilters(validateSingleWord)),          -- attacker/victim
    ["role_cli_srv"] = validateListOfTypeInline(validateFilters(validateSingleWord)),  -- client/server
    ["l7_error_id"] = validateListOfTypeInline(validateFilters(validateNumber)),       -- client/server

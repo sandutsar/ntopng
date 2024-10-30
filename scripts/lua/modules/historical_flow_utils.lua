@@ -1453,6 +1453,7 @@ function historical_flow_utils.get_tags()
    flow_defined_tags["user_agent"] = tag_utils.defined_tags["user_agent"]
    flow_defined_tags["last_server"] = tag_utils.defined_tags["last_server"]
    flow_defined_tags["netbios_name"] = tag_utils.defined_tags["netbios_name"]
+   flow_defined_tags["dns_query"] = tag_utils.defined_tags["dns_query"]
    flow_defined_tags["dns_answer"] = tag_utils.defined_tags["dns_answer"]
    flow_defined_tags["mdns_answer"] = tag_utils.defined_tags["mdns_answer"]
    flow_defined_tags["mdns_name"] = tag_utils.defined_tags["mdns_name"]
