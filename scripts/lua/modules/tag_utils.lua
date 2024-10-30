@@ -483,7 +483,7 @@ tag_utils.defined_tags = {
     mdns_answer = {
         value_type = 'mdns_answer',
         i18n_label = i18n('db_search.tags.mdns_answer'),
-        operators = { 'eq', 'neq', 'in', 'nin' }
+        operators = { 'eq', 'neq' }
     },
     mdns_name = {
         value_type = 'mdns_name',
