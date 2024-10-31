@@ -7734,9 +7734,11 @@ void Flow::lua_get_dns_info(lua_State *vm) const {
       lua_push_str_table_entry(vm, "protos.dns.last_query",
                                protos.dns.last_query);
 
+      if(protos.dns.last_rsp)
+	lua_push_str_table_entry(vm, "protos.dns.last_rsp", protos.dns.last_rsp);
+      
       if (hasInvalidDNSQueryChars())
-        lua_push_bool_table_entry(vm, "protos.dns.invalid_chars_in_query",
-                                  true);
+        lua_push_bool_table_entry(vm, "protos.dns.invalid_chars_in_query", true);
     }
   }
 }

@@ -1699,7 +1699,7 @@ else
         end
 
         historicalProtoHostHref(ifid, flow["cli.ip"], flow["proto.l4"], flow["proto.ndpi_id"],
-            page_utils.safe_html(flow["protos.dns.last_query"] or ''))
+				page_utils.safe_html(flow["protos.dns.last_query"] or ''))
 
         if (flow["category"] ~= nil) then
             print(" " .. getCategoryIcon(flow["protos.dns.last_query"], flow["category"]))
@@ -1707,6 +1707,16 @@ else
 
         printAddCustomHostRule(flow["protos.dns.last_query"])
 
+	if(flow["protos.dns.last_rsp"] ~= nil) then
+	   local ips = split(flow["protos.dns.last_rsp"], ",")
+
+	   -- print("<p>".. i18n("response") ..":<ul>")
+	   for id  = 1, #ips do
+	      print("<li>"..ips[id].."</li>\n")
+	   end
+	   print("</ul>")
+	end
+	
         print("</td></tr>\n")
     end
 
