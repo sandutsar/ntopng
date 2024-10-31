@@ -481,22 +481,22 @@ tag_utils.defined_tags = {
         operators = { 'eq', 'neq', 'in', 'nin' }
     },
     mdns_answer = {
-        value_type = 'mdns_answer',
+        value_type = 'text',
         i18n_label = i18n('db_search.tags.mdns_answer'),
         operators = { 'eq', 'neq' }
     },
     mdns_name = {
-        value_type = 'mdns_name',
+        value_type = 'text',
         i18n_label = i18n('db_search.tags.mdns_name'),
         operators = { 'eq', 'neq', 'in', 'nin' }
     },
     mdns_name_txt = {
-        value_type = 'mdns_name_txt',
+        value_type = 'text',
         i18n_label = i18n('db_search.tags.mdns_name_txt'),
         operators = { 'eq', 'neq', 'in', 'nin' }
     },
     mdns_ssid = {
-        value_type = 'mdns_ssid',
+        value_type = 'text',
         i18n_label = i18n('db_search.tags.mdns_ssid'),
         operators = { 'eq', 'neq', 'in', 'nin' }
     },
