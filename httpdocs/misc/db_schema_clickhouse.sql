@@ -748,7 +748,6 @@ WHERE f.STATUS != 0
 @
 
 CREATE TABLE IF NOT EXISTS `asset_management` (
-`rowid` UUID DEFAULT generateUUIDv4(),
 `type` String NOT NULL,
 `key` String NOT NULL,
 `ip` String NULL,
@@ -760,6 +759,6 @@ CREATE TABLE IF NOT EXISTS `asset_management` (
 `manufacturer` String NULL,
 `first_seen` DateTime NOT NULL DEFAULT 0,
 `last_seen` DateTime NOT NULL DEFAULT 0,
-`trigger_alert` UInt8 MATERIALIZED IF(trigger_alert = 1, 1, 0),
+`trigger_alert` Boolean NULL,
 `device_status` String NULL
-) ENGINE = ReplacingMergeTree() PARTITION BY toYYYYMMDD(first_seen) ORDER BY (first_seen);
+) ENGINE = MergeTree() PRIMARY KEY (`key`) ORDER BY (`key`);
