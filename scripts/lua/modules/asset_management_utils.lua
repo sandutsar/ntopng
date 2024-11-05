@@ -47,6 +47,7 @@ function asset_management_utils.insert_host(entry)
             entry["last_seen"],
             entry["key"]
         )
+        --tprint(insert_host)
         interface.alert_store_query(insert_host)
         return interface.alert_store_query(update_host)
     else
@@ -84,7 +85,7 @@ function asset_management_utils.insert_mac(entry)
             "WHERE NOT EXISTS ( SELECT 1 FROM %s WHERE key = %s )",
             table_name, 
             entry["type"],
-            entry["key"],
+            entry["mac"],
             entry["mac"],
             entry["device_type"],
             entry["first_seen"],
@@ -97,6 +98,7 @@ function asset_management_utils.insert_mac(entry)
             entry["last_seen"],
             entry["key"]
         )
+        --tprint(insert_mac)
         interface.alert_store_query(insert_mac)
         return interface.alert_store_query(update_host)
     else
