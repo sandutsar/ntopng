@@ -95,7 +95,7 @@ class ObservationPoint : public GenericHashEntry,
       json_object_object_add(obj, "flows", json_object_new_int64(num_flows));
     }
   }
-  inline char *getSerializationKey(char *buf, uint bufsize) {
+  inline char *getSerializationKey(char *buf, u_int bufsize) {
     snprintf(buf, bufsize, OBS_POINT_SERIALIZED_KEY, iface->get_id(),
              obs_point);
     return (buf);

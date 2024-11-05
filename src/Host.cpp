@@ -2248,8 +2248,7 @@ void Host::alert2JSON(HostAlert *alert, bool released, ndpi_serializer *s) {
   alert_json_serializer = alert->getSerializedAlert();
 
   if (alert_json_serializer)
-    alert_json =
-        ndpi_serializer_get_buffer(alert_json_serializer, &alert_json_len);
+    alert_json = ndpi_serializer_get_buffer(alert_json_serializer, &alert_json_len);
 
   ndpi_serialize_string_string(s, "json", alert_json ? alert_json : "");
 

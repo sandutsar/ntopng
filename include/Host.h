@@ -982,7 +982,7 @@ class Host : public GenericHashEntry,
   inline int32_t getInterfaceIndex()            { return(iface_index); };
 
   virtual SPSCQueue<std::pair<u_int16_t, u_int16_t>> *getContactedServerPorts() { return (NULL);};
-  virtual char *getSerializationKey(char *buf, uint bufsize) { return (NULL); };
+  virtual char *getSerializationKey(char *buf, u_int bufsize, bool short_format = false) { return (NULL); };
 
   void setTCPfingerprint(char *tcp_fingerprint, enum operating_system_hint os);
 };

@@ -87,7 +87,7 @@ class AutonomousSystem : public GenericHashEntry,
 
   virtual void updateStats(const struct timeval *tv);
 
-  inline char *getSerializationKey(char *buf, uint bufsize) {
+  inline char *getSerializationKey(char *buf, u_int bufsize) {
     snprintf(buf, bufsize, AS_SERIALIZED_KEY, iface->get_id(), asn);
     return (buf);
   }

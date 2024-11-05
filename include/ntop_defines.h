@@ -267,7 +267,9 @@
 #define HOST_LABEL_NAMES_KEY          "ntopng.cache.host_labels.%s"
 #define IFACE_DHCP_RANGE_KEY          "ntopng.prefs.ifid_%u.dhcp_ranges"
 #define HOST_SERIALIZED_KEY           "ntopng.serialized_hosts.ifid_%u_%s@%d"
+#define HOST_SERIALIZED_SHORT_KEY     "%u_%s@%d"
 #define MAC_SERIALIZED_KEY            "ntopng.serialized_macs.ifid_%u_%s" /* /lua/enterprise/get_inactive_macs_data.lua */
+#define MAC_SERIALIZED_SHORT_KEY      "%u_%s" /* /lua/enterprise/get_inactive_macs_data.lua */
 #define IP_MAC_ASSOCIATION            "ntopng.ip_to_mac.ifid_%u_%s@%d"
 #define HOST_PREF_MUD_RECORDING       "ntopng.prefs.iface_%d.mud.recording.%s"
 #define MUD_RECORDING_GENERAL_PURPOSE "general_purpose"

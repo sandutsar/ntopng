@@ -62,7 +62,7 @@ class OperatingSystem : public GenericHashEntry, public GenericTrafficElement {
   }
 
   void lua(lua_State* vm, DetailsLevel details_level, bool asListElement);
-  inline char* getSerializationKey(char* buf, uint bufsize) {
+  inline char* getSerializationKey(char* buf, u_int bufsize) {
     snprintf(buf, bufsize, AS_SERIALIZED_KEY, iface->get_id(), os_type);
     return (buf);
   }

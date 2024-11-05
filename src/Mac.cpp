@@ -102,13 +102,16 @@ Mac::~Mac() {
     ndpi_init_serializer(&device_json, ndpi_serialization_format_json);
     ndpi_serialize_string_string(&device_json, "type", "mac");
     ndpi_serialize_string_string(&device_json, "mac", mac);
+    ndpi_serialize_string_string(&device_json, "manufacturer", get_manufacturer());
     ndpi_serialize_string_uint32(&device_json, "first_seen", first_seen);
     ndpi_serialize_string_uint32(&device_json, "last_seen", last_seen);
     ndpi_serialize_string_uint32(&device_json, "device_type", getDeviceType());
-	
+    ndpi_serialize_string_string(&device_json, "key", getSerializationKey(redis_key, sizeof(redis_key), true));
+    
     json_str = ndpi_serializer_get_buffer(&device_json, &json_str_len);
     if ((json_str != NULL) && (json_str_len > 0)) {
       snprintf(redis_key, sizeof(redis_key), OFFLINE_LOCAL_HOSTS_MACS_QUEUE_NAME, iface->get_id());
+      
       ntop->getRedis()->lpush(redis_key, json_str, CONST_MAX_INACTIVE_HOSTS_MAC_QUEUE_LEN);
     }
 
@@ -247,11 +250,11 @@ bool Mac::equal(const u_int8_t _mac[6]) {
 
 /* *************************************** */
 
-char *Mac::getSerializationKey(char *buf, uint bufsize) {
+char *Mac::getSerializationKey(char *buf, u_int bufsize, bool short_format) {
   char buf1[32];
   char *mac_ptr = Utils::formatMac(mac, buf1, sizeof(buf1));
 
-  snprintf(buf, bufsize, MAC_SERIALIZED_KEY, iface->get_id(), mac_ptr);
+  snprintf(buf, bufsize, short_format ? MAC_SERIALIZED_SHORT_KEY : MAC_SERIALIZED_KEY, iface->get_id(), mac_ptr);
   return (buf);
 }
 

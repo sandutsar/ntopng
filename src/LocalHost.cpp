@@ -234,13 +234,14 @@ void LocalHost::addInactiveData() {
   if (cur_mac) {
     ndpi_serialize_string_uint32(&host_json, "device_type", getDeviceType());
     ndpi_serialize_string_string(&host_json, "mac", cur_mac->print(buf, sizeof(buf)));
+    ndpi_serialize_string_string(&host_json, "manufacturer", cur_mac->get_manufacturer());
   }
 
   ndpi_serialize_string_uint32(&host_json, "vlan", (u_int16_t)get_vlan_id());
   ndpi_serialize_string_uint32(&host_json, "network", (u_int32_t)get_local_network_id());
   ndpi_serialize_string_string(&host_json, "name", get_name(buf, sizeof(buf), false));
 
-  serialization_key = getSerializationKey(key, sizeof(key));
+  serialization_key = getSerializationKey(key, sizeof(key), true);
 
   ndpi_serialize_string_string(&host_json, "key", serialization_key);
 
@@ -305,7 +306,7 @@ void LocalHost::checkGatewayInfo() {
 
 /* *************************************** */
 
-char *LocalHost::getSerializationKey(char *redis_key, uint bufsize) {
+char *LocalHost::getSerializationKey(char *redis_key, u_int bufsize, bool short_format) {
   Mac *mac = getMac();
 
   if (mac && serializeByMac()) {
@@ -316,7 +317,7 @@ char *LocalHost::getSerializationKey(char *redis_key, uint bufsize) {
     return (getMacBasedSerializationKey(redis_key, bufsize, mac_buf));
   }
 
-  return (getIpBasedSerializationKey(redis_key, bufsize));
+  return (getIPBasedSerializationKey(redis_key, bufsize, short_format));
 }
 
 /* *************************************** */
@@ -583,10 +584,10 @@ char *LocalHost::getMacBasedSerializationKey(char *redis_key, size_t size,
 
 /* *************************************** */
 
-char *LocalHost::getIpBasedSerializationKey(char *redis_key, size_t size) {
+char *LocalHost::getIPBasedSerializationKey(char *redis_key, size_t size, bool short_format) {
   char buf[CONST_MAX_LEN_REDIS_KEY];
 
-  snprintf(redis_key, size, HOST_SERIALIZED_KEY, iface->get_id(),
+  snprintf(redis_key, size, short_format ? HOST_SERIALIZED_SHORT_KEY : HOST_SERIALIZED_KEY, iface->get_id(),
            ip.print(buf, sizeof(buf)), vlan_id);
 
   return redis_key;
@@ -754,8 +755,7 @@ void LocalHost::dumpAssetInfo() {
 
   ndpi_serialize_string_string(&device_json, "mac", mac_ptr);
   if (mac->get_manufacturer())
-    ndpi_serialize_string_string(&device_json, "manufacturer",
-                                 mac->get_manufacturer());
+    ndpi_serialize_string_string(&device_json, "manufacturer", mac->get_manufacturer());
 
   if (isIPv6())
     ndpi_serialize_string_string(&device_json, "ipv6", ip);

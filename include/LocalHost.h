@@ -48,9 +48,8 @@ class LocalHost : public Host {
   void removeInactiveData();
   virtual void deleteHostData();
 
-  char *getMacBasedSerializationKey(char *redis_key, size_t size,
-                                    char *mac_key);
-  char *getIpBasedSerializationKey(char *redis_key, size_t size);
+  char *getMacBasedSerializationKey(char *redis_key, size_t size, char *mac_key);
+  char *getIPBasedSerializationKey(char *redis_key, size_t size, bool short_format);
   void luaDoHDot(lua_State *vm);
 #ifdef NTOPNG_PRO
   void dumpAssetInfo();
@@ -131,7 +130,7 @@ class LocalHost : public Host {
   virtual void serialize(json_object *obj, DetailsLevel details_level) {
     return Host::serialize(obj, details_level);
   };
-  virtual char *getSerializationKey(char *buf, uint bufsize);
+  virtual char *getSerializationKey(char *buf, u_int bufsize, bool short_format = false);
   char *getRedisKey(char *buf, uint buf_len, bool skip_prefix = false);
 
   virtual void lua(lua_State *vm, AddressTree *ptree, bool host_details,

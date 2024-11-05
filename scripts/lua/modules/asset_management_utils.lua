@@ -30,10 +30,10 @@ function asset_management_utils.insert_host(entry)
             table_name, 
             entry["type"],
             entry["key"],
-            entry["ip"],
-            entry["mac"],
-            entry["vlan"],
-            entry["network"],
+            entry["ip"] or "",
+            entry["mac"] or "",
+            entry["vlan"] or 0,
+            entry["network"] or 0,
             ternary(not isEmptyString(entry["name"]),string.format("'%s'",entry["name"]),"NULL"),
             entry["device_type"],
             ternary(not isEmptyString(entry["manufacturer"]),string.format("'%s'",entry["manufacturer"]), "NULL"),
@@ -42,7 +42,7 @@ function asset_management_utils.insert_host(entry)
             table_name,
             entry["key"]
         )
-        local update_host = string.format("ALTER TABLE `%s` UPDATE `last_seen` = %u WHERE `key` == '%s'",
+        local update_host = string.format("ALTER TABLE `%s` UPDATE `last_seen` = %u WHERE `key`='%s'",
             table_name,
             entry["last_seen"],
             entry["key"]
@@ -60,9 +60,9 @@ function asset_management_utils.insert_host(entry)
             entry["type"],
             entry["key"],
             entry["ip"],
-            entry["mac"],
-            entry["vlan"],
-            entry["network"],
+            entry["mac"] or "",
+            entry["vlan"] or 0,
+            entry["network"] or 0,
             ternary(not isEmptyString(entry["name"]),string.format("'%s'",entry["name"]),"NULL"),
             entry["device_type"],
             ternary(not isEmptyString(entry["manufacturer"]),string.format("'%s'",entry["manufacturer"]), "NULL"),
@@ -70,52 +70,58 @@ function asset_management_utils.insert_host(entry)
             entry["last_seen"],
             entry["last_seen"]
         )
+
+	-- traceError(TRACE_NORMAL, TRACE_CONSOLE, insert_host)	
         return interface.alert_store_query(insert_host)
     end
-
-    -- traceError(TRACE_NORMAL, TRACE_CONSOLE, insert_host)
 end
 
 function asset_management_utils.insert_mac(entry)
     if hasClickHouseSupport() then
         local insert_mac = string.format(
             "INSERT INTO %s " ..
-            "(type, key, mac, device_type, first_seen, last_seen) " ..
-            "SELECT '%s','%s','%s','%s', %u, %u "..
+            "(type, key, mac, manufacturer, vlan, device_type, first_seen, last_seen) " ..
+            "SELECT '%s','%s','%s','%s','%d', %u, %u, %u "..
             "WHERE NOT EXISTS ( SELECT 1 FROM %s WHERE key = '%s' )",
             table_name, 
             entry["type"],
+            entry["key"],
             entry["mac"],
-            entry["mac"],
+	    entry["manufacturer"],
+	    0, -- VLAN
             entry["device_type"],
             entry["first_seen"],
             entry["last_seen"],
             table_name,
             entry["mac"]
         )
-        local update_mac = string.format("ALTER TABLE `%s` UPDATE `last_seen` = %u WHERE `key` == '%s'",
+        local update_mac = string.format("ALTER TABLE `%s` UPDATE `last_seen` = %u WHERE `key`='%s'",
             table_name,
             entry["last_seen"],
-            entry["mac"]
+            entry["key"]
         )
+
         --tprint(insert_mac)
-        interface.alert_store_query(insert_mac)
+	interface.alert_store_query(insert_mac)
         return interface.alert_store_query(update_mac)
     else
         local insert_mac = string.format(
             "INSERT INTO %s " ..
-            "(type, key, mac, device_type, first_seen, last_seen) " ..
-            "VALUES ('%s','%s','%s','%s', %u, %u) "..
+            "(type, key, mac, manufacturer, vlan, device_type, first_seen, last_seen) " ..
+            "VALUES ('%s','%s','%s','%s', %u, %u, %u, %u) "..
             "ON CONFLICT(key) DO UPDATE SET last_seen = %u ;",
             table_name, 
             entry["type"],
+            entry["key"],
             entry["mac"],
-            entry["mac"],
+	    entry["manufacturer"],
+	    0,
             entry["device_type"],
             entry["first_seen"],
             entry["last_seen"],
             entry["last_seen"]
         )
+	
         return interface.alert_store_query(insert_mac)
     end
     -- traceError(TRACE_NORMAL, TRACE_CONSOLE, insert_mac)
