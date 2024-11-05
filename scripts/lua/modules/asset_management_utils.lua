@@ -26,7 +26,7 @@ function asset_management_utils.insert_host(entry)
             "INSERT INTO %s " ..
             "(type, key, ip, mac, vlan, network, name, device_type, manufacturer, first_seen, last_seen) " ..
             "SELECT '%s','%s','%s','%s', %u, %u, %s, %u, %s, %u "..
-            "WHERE NOT EXISTS ( SELECT 1 FROM %s WHERE key = %s )",
+            "WHERE NOT EXISTS ( SELECT 1 FROM %s WHERE key = '%s' )",
             table_name, 
             entry["type"],
             entry["key"],
@@ -82,7 +82,7 @@ function asset_management_utils.insert_mac(entry)
             "INSERT INTO %s " ..
             "(type, key, mac, device_type, first_seen, last_seen) " ..
             "SELECT '%s','%s','%s','%s', %u, %u "..
-            "WHERE NOT EXISTS ( SELECT 1 FROM %s WHERE key = %s )",
+            "WHERE NOT EXISTS ( SELECT 1 FROM %s WHERE key = '%s' )",
             table_name, 
             entry["type"],
             entry["mac"],
@@ -91,7 +91,7 @@ function asset_management_utils.insert_mac(entry)
             entry["first_seen"],
             entry["last_seen"],
             table_name,
-            entry["key"]
+            entry["mac"]
         )
         local update_mac = string.format("ALTER TABLE `%s` UPDATE `last_seen` = %u WHERE `key` == '%s'",
             table_name,
