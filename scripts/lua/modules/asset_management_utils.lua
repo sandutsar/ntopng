@@ -93,14 +93,14 @@ function asset_management_utils.insert_mac(entry)
             table_name,
             entry["key"]
         )
-        local update_host = string.format("ALTER TABLE `%s` UPDATE `last_seen` = %u WHERE `key` == '%s'",
+        local update_mac = string.format("ALTER TABLE `%s` UPDATE `last_seen` = %u WHERE `key` == '%s'",
             table_name,
             entry["last_seen"],
-            entry["key"]
+            entry["mac"]
         )
         --tprint(insert_mac)
         interface.alert_store_query(insert_mac)
-        return interface.alert_store_query(update_host)
+        return interface.alert_store_query(update_mac)
     else
         local insert_mac = string.format(
             "INSERT INTO %s " ..
