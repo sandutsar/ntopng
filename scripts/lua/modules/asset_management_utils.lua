@@ -25,7 +25,7 @@ function asset_management_utils.insert_host(entry)
         insert_host = string.format(
             "INSERT INTO %s " ..
             "(type, key, ip, mac, vlan, network, name, device_type, manufacturer, first_seen, last_seen) " ..
-            "SELECT '%s','%s','%s','%s', %u, %u, %s, %u, %s, %u "..
+            "SELECT '%s','%s','%s','%s', %u, %u, %s, %u, %s, %u, %u "..
             "WHERE NOT EXISTS ( SELECT 1 FROM %s WHERE key = '%s' )",
             table_name, 
             entry["type"],
