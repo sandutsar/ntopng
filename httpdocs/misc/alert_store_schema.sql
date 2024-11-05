@@ -26,7 +26,7 @@ CREATE INDEX IF NOT EXISTS `am_alerts_i_id` ON `active_monitoring_alerts`(alert_
 CREATE INDEX IF NOT EXISTS `am_alerts_i_alert_status` ON `active_monitoring_alerts`(alert_status);
 CREATE INDEX IF NOT EXISTS `am_alerts_i_severity` ON `active_monitoring_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `am_alerts_i_tstamp` ON `active_monitoring_alerts`(tstamp);
-
+@
 -- -----------------------------------------------------
 -- Table `flow_alerts`
 -- -----------------------------------------------------
@@ -85,7 +85,7 @@ CREATE INDEX IF NOT EXISTS `flow_alerts_i_l7_proto` ON `flow_alerts`(`l7_proto`)
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_l7_master_proto` ON `flow_alerts`(`l7_master_proto`);
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_l7_cat` ON `flow_alerts`(`l7_cat`);
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_flow_risk_bitmap` ON `flow_alerts`(`flow_risk_bitmap`);
-
+@
 -- -----------------------------------------------------
 -- Table `host_alerts`
 -- -----------------------------------------------------
@@ -124,7 +124,7 @@ CREATE INDEX IF NOT EXISTS `host_alerts_i_is_victim` ON `host_alerts`(`is_victim
 CREATE INDEX IF NOT EXISTS `host_alerts_i_is_client` ON `host_alerts`(`is_client`);
 CREATE INDEX IF NOT EXISTS `host_alerts_i_is_victim` ON `host_alerts`(`is_victim`);
 CREATE INDEX IF NOT EXISTS `host_alerts_i_is_server` ON `host_alerts`(`is_server`);
-
+@
 -- -----------------------------------------------------
 -- Table `mac_alerts`
 -- -----------------------------------------------------
@@ -157,7 +157,7 @@ CREATE INDEX IF NOT EXISTS `mac_alerts_i_tstamp` ON `mac_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_address` ON `mac_alerts`(`address`);
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_is_attacker` ON `mac_alerts`(`is_attacker`);
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_is_victim` ON `mac_alerts`(`is_victim`);
-
+@
 -- -----------------------------------------------------
 -- Table `snmp_alerts`
 -- -----------------------------------------------------
@@ -187,7 +187,7 @@ CREATE INDEX IF NOT EXISTS `snmp_alerts_i_alert_status` ON `snmp_alerts`(alert_s
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_severity` ON `snmp_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_tstamp` ON `snmp_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_ip` ON `snmp_alerts`(`ip`);
-
+@
 -- -----------------------------------------------------
 -- Table `network_alerts`
 -- -----------------------------------------------------
@@ -215,7 +215,7 @@ CREATE INDEX IF NOT EXISTS `network_alerts_i_id` ON `network_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `network_alerts_i_severity` ON `network_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `network_alerts_i_tstamp` ON `network_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `network_alerts_i_alert_status` ON `network_alerts`(alert_status);
-
+@
 -- -----------------------------------------------------
 -- Table `interface_alerts`
 -- -----------------------------------------------------
@@ -244,7 +244,7 @@ CREATE INDEX IF NOT EXISTS `interface_alerts_i_id` ON `interface_alerts`(alert_i
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_severity` ON `interface_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_tstamp` ON `interface_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_alert_status` ON `interface_alerts`(alert_status);
-
+@
 -- -----------------------------------------------------
 -- Table `user_alerts`
 -- -----------------------------------------------------
@@ -270,7 +270,7 @@ CREATE INDEX IF NOT EXISTS `user_alerts_i_id` ON `user_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `user_alerts_i_severity` ON `user_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `user_alerts_i_tstamp` ON `user_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `user_alerts_i_alert_status` ON `user_alerts`(alert_status);
-
+@
 -- -----------------------------------------------------
 -- Table `system_alerts`
 -- -----------------------------------------------------
@@ -336,7 +336,7 @@ ALTER TABLE `network_alerts` ADD `interface_id` INTEGER NULL;
 ALTER TABLE `interface_alerts` ADD `interface_id` INTEGER NULL;
 ALTER TABLE `user_alerts` ADD `interface_id` INTEGER NULL;
 ALTER TABLE `system_alerts` ADD `interface_id` INTEGER NULL;
-
+@
 -- -----------------------------------------------------
 -- Table `asset_management`
 -- -----------------------------------------------------
