@@ -443,6 +443,7 @@ class Flow : public GenericHashEntry {
   
   void setProtocolJSONInfo();
   void getProtocolJSONInfo(ndpi_serializer *serializer);
+  void getCustomFieldsInfo(ndpi_serializer *serializer);
 
   inline char *getJa4CliHash() { return (protos.tls.ja4.client_hash); }
 

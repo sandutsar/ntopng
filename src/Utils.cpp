@@ -5112,6 +5112,93 @@ void Utils::deferredExec(const char *command) {
 
 /* ****************************************************** */
 
+void Utils::tlv2serializer(ndpi_serializer *tvl_serializer, ndpi_serializer *serializer) {
+  ndpi_deserializer deserializer;
+  ndpi_serialization_type kt, et;
+  int rc;
+
+  rc = ndpi_init_deserializer(&deserializer, tvl_serializer);
+
+  if (rc == -1) return;
+
+  while ((et = ndpi_deserialize_get_item_type(&deserializer, &kt)) != ndpi_serialization_unknown) {
+    char key[64];
+    u_int32_t k32;
+    ndpi_string ks, vs;
+    u_int32_t v32;
+    int32_t i32;
+    float f = 0;
+    u_int64_t v64;
+    int64_t i64;
+    u_int8_t bkp;
+
+    if (et == ndpi_serialization_end_of_record) {
+      ndpi_deserialize_next(&deserializer);
+      return;
+    }
+
+    switch (kt) {
+      case ndpi_serialization_uint32:
+        ndpi_deserialize_key_uint32(&deserializer, &k32);
+        snprintf(key, sizeof(key), "%u", k32);
+        break;
+
+      case ndpi_serialization_string:
+        ndpi_deserialize_key_string(&deserializer, &ks);
+        bkp = ks.str[ks.str_len];
+        ks.str[ks.str_len] = '\0';
+        snprintf(key, sizeof(key), "%s", ks.str);
+        ks.str[ks.str_len] = bkp;
+        break;
+
+      default:
+        /* Unexpected type */
+        return;
+    }
+
+    switch (et) {
+      case ndpi_serialization_uint32:
+        ndpi_deserialize_value_uint32(&deserializer, &v32);
+        ndpi_serialize_string_uint32(serializer, key, v32);
+        break;
+
+      case ndpi_serialization_uint64:
+        ndpi_deserialize_value_uint64(&deserializer, &v64);
+        ndpi_serialize_string_uint64(serializer, key, v64);
+        break;
+
+      case ndpi_serialization_int32:
+        ndpi_deserialize_value_int32(&deserializer, &i32);
+        ndpi_serialize_string_int32(serializer, key, i32);
+        break;
+
+      case ndpi_serialization_int64:
+        ndpi_deserialize_value_int64(&deserializer, &i64);
+        ndpi_serialize_string_int64(serializer, key, i64);
+        break;
+
+      case ndpi_serialization_string:
+        ndpi_deserialize_value_string(&deserializer, &vs);
+        bkp = vs.str[vs.str_len];
+        vs.str[vs.str_len] = '\0';
+        ndpi_serialize_string_string(serializer, key, vs.str);
+        vs.str[vs.str_len] = bkp;
+        break;
+
+      default:
+        ntop->getTrace()->traceEvent(TRACE_WARNING,
+                        "Unrecognized json value type : %d", et);
+        /* Unexpected type */
+        break;
+    }
+
+    /* Move to the next element */
+    ndpi_deserialize_next(&deserializer);
+  }
+}
+
+/* ****************************************************** */
+
 void Utils::tlv2lua(lua_State *vm, ndpi_serializer *serializer) {
   ndpi_deserializer deserializer;
   ndpi_serialization_type kt, et;

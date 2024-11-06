@@ -7954,33 +7954,36 @@ void Flow::setNormalToAlertedCounters() {
 /* ***************************************************** */
 
 void Flow::setProtocolJSONInfo() {
-  if (!json_protocol_info) {
-    ndpi_serializer *json_serializer = NULL;
-    char *json = NULL;
-    u_int32_t json_len = 0;
+  ndpi_serializer *json_serializer = NULL;
+  char *json = NULL;
+  u_int32_t json_len = 0;
 
-    json_serializer = (ndpi_serializer *)malloc(sizeof(ndpi_serializer));
+  json_serializer = (ndpi_serializer *)malloc(sizeof(ndpi_serializer));
 
-    if (json_serializer == NULL) return;
+  if (json_serializer == NULL) return;
 
-    if (ndpi_init_serializer(json_serializer, ndpi_serialization_format_json) == -1) {
-      free(json_serializer);
-      return;
-    }
+  if (ndpi_init_serializer(json_serializer, ndpi_serialization_format_json) == -1) {
+    free(json_serializer);
+    return;
+  }
 
-    /* Serialize alert JSON
-     * Note: this is called by setPredominantAlertInfo in case of alerts */
-    getProtocolJSONInfo(json_serializer);
+  /* Serialize alert JSON
+    * Note: this is called by setPredominantAlertInfo in case of alerts */
+  getProtocolJSONInfo(json_serializer);
+  getCustomFieldsInfo(json_serializer);
 
-    if (json_serializer)
-      json = ndpi_serializer_get_buffer(json_serializer, &json_len);
+  if (json_serializer)
+    json = ndpi_serializer_get_buffer(json_serializer, &json_len);
 
-    json_protocol_info = strdup(json ? json : "");
+  if (json_protocol_info) {
+    free(json_protocol_info);
+  }
 
-    if (json_serializer) {
-      ndpi_term_serializer(json_serializer);
-      free(json_serializer);
-    }
+  json_protocol_info = strdup(json ? json : "");
+
+  if (json_serializer) {
+    ndpi_term_serializer(json_serializer);
+    free(json_serializer);
   }
 }
 
@@ -7989,6 +7992,16 @@ void Flow::setProtocolJSONInfo() {
 void Flow::getJSONRiskInfo(ndpi_serializer *serializer) {
   if (serializer && riskInfo) {
     ndpi_serialize_string_string(serializer, "flow_risk_info", riskInfo);
+  }
+}
+
+/* ***************************************************** */
+
+void Flow::getCustomFieldsInfo(ndpi_serializer *serializer) {
+  if (get_tlv_info()) {
+    ndpi_serialize_start_of_block(serializer, "custom_fields"); /* Custom fields block */
+    Utils::tlv2serializer(get_tlv_info(), serializer);
+    ndpi_serialize_end_of_block(serializer);
   }
 }
 

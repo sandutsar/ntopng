@@ -47,7 +47,6 @@ function asset_management_utils.insert_host(entry)
             entry["last_seen"],
             entry["key"]
         )
-        --tprint(insert_host)
         interface.alert_store_query(insert_host)
         return interface.alert_store_query(update_host)
     else

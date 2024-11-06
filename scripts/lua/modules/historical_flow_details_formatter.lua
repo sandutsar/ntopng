@@ -526,6 +526,34 @@ local function format_historical_proto_info(flow_details, proto_info)
     local info = format_proto_info(flow_details, proto_info)
     return info
 end
+
+-- ###############################################
+
+local function format_historical_custom_fields(flow_details, custom_fields)
+    if table.len(custom_fields) > 0 then
+        require "flow_utils"
+        local flow_field_value_maps = require "flow_field_value_maps"
+        flow_details[#flow_details + 1] = {
+            name = i18n("flow_details.additional_flow_elements"),
+            values = {""}
+        }
+
+        for key, value in pairs(custom_fields) do
+            key, value = flow_field_value_maps.map_field_value(interface.getId(), key, value)
+            local nprobe_description = interface.getZMQFlowFieldDescr(key)
+            if isEmptyString(nprobe_description) then
+                nprobe_description = key
+            end
+            flow_details[#flow_details + 1] = {
+                name = "",
+                values = { nprobe_description , value }
+            }
+        end
+    end
+
+    return flow_details
+end
+
 -- ###############################################
 
 local function format_historical_flow_traffic_stats(rowspan, cli2srv_retr, srv2cli_retr, cli2srv_ooo, srv2cli_ooo,
@@ -701,6 +729,10 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
                 (table.len(flow_details[#flow_details]['values']) == 0) then
                 table.remove(flow_details, #flow_details)
             end
+        end
+
+        if table.len(alert_json["proto"]) > 0 then
+            flow_details = format_historical_custom_fields(flow_details, alert_json["custom_fields"])
         end
     end
 
