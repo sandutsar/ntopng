@@ -93,6 +93,11 @@ local function parsenDPIMetadata(event_ndpi, flow)
       else
          flow.app_protocol = tonumber(event_ndpi.proto_id)
       end
+      if event_ndpi.confidence then
+         for id, label in pairs(event_ndpi.confidence) do
+            flow.confidence = tonumber(id)
+         end
+      end
    end
 end
 

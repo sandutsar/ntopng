@@ -271,6 +271,8 @@ void ParsedFlow::fromLua(lua_State *L, int index) {
           l7_proto.proto.master_protocol = lua_tonumber(L, -1);
         else if (!strcmp(key, "app_protocol"))
           l7_proto.proto.app_protocol = lua_tonumber(L, -1);
+        else if (!strcmp(key, "confidence"))
+          confidence = (ndpi_confidence_t) lua_tonumber(L, -1);
         else if (!strcmp(key, "dns_query_type"))
           dns_query_type = lua_tonumber(L, -1);
         else if (!strcmp(key, "dns_ret_code"))
