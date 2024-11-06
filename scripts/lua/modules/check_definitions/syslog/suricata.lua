@@ -81,6 +81,23 @@ end
 
 -- #################################################################
 
+local function parsenDPIMetadata(event_ndpi, flow)
+
+   -- Read nDPI metadata coming from the ndpi plugin in Suricata
+
+   if event_ndpi.proto_id then
+      local parts = string.split(event_ndpi.proto_id, "%.")
+      if parts and #parts > 1 then
+         flow.master_protocol = tonumber(parts[1])
+         flow.app_protocol = tonumber(parts[2])
+      else
+         flow.app_protocol = tonumber(event_ndpi.proto_id)
+      end
+   end
+end
+
+-- #################################################################
+
 local function parseNetflowMetadata(event_flow, flow)
    flow.first_switched_iso8601 = event_flow.start
    flow.last_switched_iso8601 = event_flow['end']
@@ -192,6 +209,10 @@ function syslog_module.hooks.handleEvent(syslog_conf, message, host, priority)
    flow.SURICATA_FLOW_ID = event.flow_id
    flow.SURICATA_APP_PROTO = event.app_proto
    flow.COMMUNITY_ID = event.community_id
+
+   if event.ndpi then
+      parsenDPIMetadata(event.ndpi, flow)
+   end
 
    if event.event_type == "alert" then
 

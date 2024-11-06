@@ -267,6 +267,8 @@ void ParsedFlow::fromLua(lua_State *L, int index) {
           out_pkts = lua_tonumber(L, -1);
         else if (!strcmp(key, "out_bytes"))
           out_bytes = lua_tonumber(L, -1);
+        else if (!strcmp(key, "master_protocol"))
+          l7_proto.proto.master_protocol = lua_tonumber(L, -1);
         else if (!strcmp(key, "app_protocol"))
           l7_proto.proto.app_protocol = lua_tonumber(L, -1);
         else if (!strcmp(key, "dns_query_type"))
