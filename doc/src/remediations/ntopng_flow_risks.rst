@@ -246,28 +246,18 @@ This alert is considered high severity, as it indicates potential C2 activity. I
 
 .. _Risk 010:
 
-EXTERNAL COMMUNICATION
-======================
+EXTERNAL ALERT
+==============
 
 #. **Description:**
-This alert triggers when a device on the monitored network establishes an unexpected outbound connection to an IP address outside of its configured range or known trusted networks.
+This alert is triggered when an event is received from an external third-party security tool. An example of this is when ntopng is integrated with Suricata, which exports alerts in EVE JSON format to syslog. ntopng collects Suricata alerts though the syslog interface and exports them as ntopng alerts to the configured endpoints for dispatching.
 
 #. **Implied Security Risk:**
-Detecting this alert may indicate unauthorized outbound communication, data exfiltration, malware infection, or command and control (C2) traffic from compromised devices within the network.
-
-#. **Potential Causes:**
-  1. Malware infection: A compromised device communicating with its command and control server.
-  2. Unauthorized remote access: An employee or attacker using legitimate credentials to initiate unauthorized connections.
-  3. Misconfiguration: Incorrectly configured network devices or applications causing unexpected outbound communication.
+Detecting this alert may indicate a multitude of different issues, depending on the source.
 
 #. **Recommended Actions:**
-  1. Investigate the source device(s) to identify any malicious software or unauthorized applications.
-  2. Review and update network configurations to ensure they align with expected behavior.
-  3. Monitor user activity for unusual patterns and enforce access controls as needed.
-
-#. **Additional Notes:**
-- This alert is typically triggered in corporate networks where strict control over outbound communication is enforced.
-- The severity level of this alert depends on the organization's security policies and the frequency of occurrences.
+Investigate and identify any security risk based on the reported message, which comes from the alert source.
+In case the alert comes from Suricata, check the signature matching the specific alert for remediation.
 
 .. _Risk 011:
 
