@@ -1897,10 +1897,10 @@ else
         -- Convert the array to symbolic identifiers if necessary
         local syminfo = {}
         for key, value in pairs(info) do
-            key, value = flow_field_value_maps.map_field_value(ifid, key, value)
+            local tmp_key, value = flow_field_value_maps.map_field_value(ifid, key, value)
 
-            if (key ~= nil) then
-                syminfo[key] = value
+            if (tmp_key) then
+                syminfo[tmp_key] = value
             else
                 local nprobe_description = interface.getZMQFlowFieldDescr(key)
 

@@ -167,6 +167,7 @@
 #define SRC_AS_MAP NTOP_BASE_ID + 443
 #define DST_AS_MAP NTOP_BASE_ID + 444
 #define NPROBE_IPV4_ADDRESS NTOP_BASE_ID + 471 /* Exported only via ZMQ */
+#define NPROBE_IPV6_ADDRESS NTOP_BASE_ID + 472 /* Exported only via ZMQ */
 /* NTOP_BASE_ID+82 ->87  Available (deprecated) */
 #define CLIENT_TCP_FLAGS NTOP_BASE_ID + 78
 #define SERVER_TCP_FLAGS NTOP_BASE_ID + 79

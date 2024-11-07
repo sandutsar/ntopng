@@ -539,14 +539,19 @@ local function format_historical_custom_fields(flow_details, custom_fields)
         }
 
         for key, value in pairs(custom_fields) do
-            key, value = flow_field_value_maps.map_field_value(interface.getId(), key, value)
-            local nprobe_description = interface.getZMQFlowFieldDescr(key)
-            if isEmptyString(nprobe_description) then
-                nprobe_description = key
+            local nprobe_descr, value = flow_field_value_maps.map_field_value(interface.getId(), key, value)
+
+            if not (nprobe_descr) then
+                nprobe_descr = interface.getZMQFlowFieldDescr(key)
+                if isEmptyString(nprobe_descr) then
+                    nprobe_descr = key
+                end
+            else
+                nprobe_descr = getFlowKey(nprobe_descr)
             end
             flow_details[#flow_details + 1] = {
                 name = "",
-                values = { nprobe_description , value }
+                values = { nprobe_descr , value }
             }
         end
     end
@@ -735,7 +740,6 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
             flow_details = format_historical_custom_fields(flow_details, alert_json["custom_fields"])
         end
     end
-
     return flow_details
 end
 

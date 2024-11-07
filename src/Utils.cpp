@@ -5127,7 +5127,6 @@ void Utils::tlv2serializer(ndpi_serializer *tvl_serializer, ndpi_serializer *ser
     ndpi_string ks, vs;
     u_int32_t v32;
     int32_t i32;
-    float f = 0;
     u_int64_t v64;
     int64_t i64;
     u_int8_t bkp;

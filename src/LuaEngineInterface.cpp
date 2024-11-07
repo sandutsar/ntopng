@@ -1190,6 +1190,28 @@ static int ntop_update_syslog_producers(lua_State *vm) {
 
 /* ****************************************** */
 
+static int ntop_get_all_zmq_flow_field_descr(lua_State *vm) {
+#ifdef HAVE_ZMQ
+  NetworkInterface *curr_iface = getCurrentInterface(vm);
+  ZMQParserInterface *zmq_curr_iface;
+
+  ntop->getTrace()->traceEvent(TRACE_DEBUG, "%s() called", __FUNCTION__);
+
+  if (!curr_iface ||
+      !(zmq_curr_iface =
+            dynamic_cast<ZMQParserInterface *>(curr_iface)))
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+
+  zmq_curr_iface->luaGetAllKeyDescription(vm);
+
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+#else
+  return (-1);
+#endif
+}
+
+/* ****************************************** */
+
 static int ntop_get_zmq_flow_field_descr(lua_State *vm) {
 #ifdef HAVE_ZMQ
   NetworkInterface *curr_iface = getCurrentInterface(vm);
@@ -5363,6 +5385,7 @@ static luaL_Reg _ntop_interface_reg[] = {
     {"processFlow", ntop_process_flow},
     {"updateSyslogProducers", ntop_update_syslog_producers},
     {"getZMQFlowFieldDescr", ntop_get_zmq_flow_field_descr},
+    {"getAllZMQFlowFieldDescr", ntop_get_all_zmq_flow_field_descr},
 #endif
 
     {"getActiveFlowsStats", ntop_get_active_flows_stats},

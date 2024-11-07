@@ -94,8 +94,8 @@ ZMQParserInterface::ZMQParserInterface(const char *endpoint,
   addMapping("DIRECTION", DIRECTION);
   addMapping("POST_NAT_SRC_IPV4_ADDR", POST_NAT_SRC_IPV4_ADDR);
   addMapping("POST_NAT_DST_IPV4_ADDR", POST_NAT_DST_IPV4_ADDR);
-  addMapping("POST_NAT_SRC_TRANSPORT_PORT", POST_NAT_SRC_TRANSPORT_PORT);
-  addMapping("POST_NAT_DST_TRANSPORT_PORT", POST_NAT_DST_TRANSPORT_PORT);
+  addMapping("POST_NAPT_SRC_TRANSPORT_PORT", POST_NAT_SRC_TRANSPORT_PORT);
+  addMapping("POST_NAPT_DST_TRANSPORT_PORT", POST_NAT_DST_TRANSPORT_PORT);
   addMapping("OBSERVATION_POINT_ID", OBSERVATION_POINT_ID);
   addMapping("INGRESS_VRFID", INGRESS_VRFID);
   addMapping("IPV4_SRC_MASK", IPV4_SRC_MASK);
@@ -108,6 +108,9 @@ ZMQParserInterface::ZMQParserInterface(const char *endpoint,
   addMapping("FLOW_END_REASON", FLOW_END_REASON);
   addMapping("WLAN_SSID", WLAN_SSID);
   addMapping("WTP_MAC_ADDRESS", WTP_MAC_ADDRESS);
+  addMapping("L7_RISK_SCORE", L7_RISK_SCORE);
+  addMapping("CLIENT_TCP_FLAGS", CLIENT_TCP_FLAGS);
+  addMapping("SERVER_TCP_FLAGS", SERVER_TCP_FLAGS);
 
   /* ntop IEs */
   addMapping("L7_PROTO", L7_PROTO, NTOP_PEN);
@@ -116,6 +119,7 @@ ZMQParserInterface::ZMQParserInterface(const char *endpoint,
   addMapping("L7_CONFIDENCE", L7_CONFIDENCE, NTOP_PEN);
   addMapping("L7_ERROR_CODE", L7_ERROR_CODE, NTOP_PEN);
   addMapping("NPROBE_IPV4_ADDRESS", NPROBE_IPV4_ADDRESS, NTOP_PEN);
+  addMapping("NPROBE_IPV6_ADDRESS", NPROBE_IPV6_ADDRESS, NTOP_PEN);
   addMapping("NPROBE_INSTANCE_NAME", NPROBE_INSTANCE_NAME, NTOP_PEN);
   addMapping("OOORDER_IN_PKTS", OOORDER_IN_PKTS, NTOP_PEN);
   addMapping("OOORDER_OUT_PKTS", OOORDER_OUT_PKTS, NTOP_PEN);
@@ -235,17 +239,22 @@ void ZMQParserInterface::addMapping(const char *sym, u_int32_t num,
   string label(sym);
   labels_map_t::iterator it;
   pen_value_t cur_pair = make_pair(pen, num);
+  bool native_value = false;
 
   if ((it = labels_map.find(label)) == labels_map.end())
     labels_map.insert(make_pair(label, cur_pair));
-  else
+  else {
     it->second.first = pen, it->second.second = num;
+    native_value = true;
+  }
 
   if (descr) {
     descriptions_map_t::iterator dit;
+    description_value_t descr_pair = make_pair(descr, native_value);
 
-    if ((dit = descriptions_map.find(cur_pair)) == descriptions_map.end())
-      descriptions_map.insert(make_pair(cur_pair, descr));
+    if ((dit = descriptions_map.find(cur_pair)) == descriptions_map.end()) {
+      descriptions_map.insert(make_pair(cur_pair, descr_pair));
+    }
   }
 }
 
@@ -317,9 +326,36 @@ const char *ZMQParserInterface::getKeyDescription(u_int32_t pen,
 
   if ((it = descriptions_map.find(make_pair(pen, field))) !=
       descriptions_map.end())
-    return it->second.c_str();
+    return it->second.first.c_str();
 
   return NULL;
+}
+
+/* **************************************************** */
+
+void ZMQParserInterface::luaGetAllKeyDescription(lua_State *vm) {
+  std::map<pen_value_t, description_value_t>::iterator it;
+
+  lua_newtable(vm);
+
+  lock.rdlock(__FILE__, __LINE__);
+
+  for (it = descriptions_map.begin();
+       it != descriptions_map.end(); ++it) {
+      char pen_field[128];
+      snprintf(pen_field, sizeof(pen_field), "%u.%u", it->first.first, it->first.second);
+      
+      lua_newtable(vm);
+
+      lua_push_str_table_entry(vm, "description", it->second.first.c_str());
+      lua_push_bool_table_entry(vm, "is_native_field", it->second.second);
+      
+      lua_pushstring(vm, pen_field);
+      lua_insert(vm, -2);
+      lua_settable(vm, -3);
+  }
+  
+  lock.unlock(__FILE__, __LINE__);
 }
 
 /* **************************************************** */

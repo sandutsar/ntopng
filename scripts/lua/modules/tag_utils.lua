@@ -782,10 +782,15 @@ end
 
 function tag_utils.get_tag_filters_from_request()
     local filters = {}
-
     for key, value in pairs(tag_utils.defined_tags) do
         if _GET[key] ~= nil then
             filters[key] = _GET[key]
+        end
+    end
+
+    for key, value in pairs(_GET or {}) do
+        if key:starts('custom_fields') then
+            filters[key] = value
         end
     end
 

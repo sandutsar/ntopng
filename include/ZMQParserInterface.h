@@ -27,8 +27,9 @@
 class ZMQParserInterface : public ParserInterface {
  private:
   typedef std::pair<u_int32_t, u_int32_t> pen_value_t;
+  typedef std::pair<string, bool> description_value_t; /* < Description , Native Value > */
   typedef std::map<string, pen_value_t> labels_map_t;
-  typedef std::map<pen_value_t, string> descriptions_map_t;
+  typedef std::map<pen_value_t, description_value_t> descriptions_map_t;
   typedef std::map<string, u_int32_t> counters_map_t;
   std::unordered_map<u_int32_t, bool> cloud_flow_exporters;
   u_int16_t top_vlan_id;
@@ -106,6 +107,7 @@ class ZMQParserInterface : public ParserInterface {
   bool getKeyId(char *sym, u_int32_t sym_len, u_int32_t *const pen,
                 u_int32_t *const field) const;
   const char *getKeyDescription(u_int32_t pen, u_int32_t field) const;
+  void luaGetAllKeyDescription(lua_State *vm);
   bool matchField(ParsedFlow *const flow, const char *key, ParsedValue *value);
 
   bool getCounterId(char *sym, u_int32_t sym_len, u_int32_t *id) const;

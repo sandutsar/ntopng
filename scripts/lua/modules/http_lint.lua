@@ -2865,6 +2865,18 @@ local function validateParameter(k, v)
 
          -- Success, all the table keys have been validated successfully
          return true, "OK", v
+      elseif k:starts('custom_fields') then
+         -- Possible error, try the last check for historical custom_fields
+         local tmp_1 = k:split("_")
+         local i = 3
+         while (tmp_1[i]) do
+            if not tonumber(tmp_1[i]) then
+               return false, nil
+            end
+            i = i + 1
+         end
+         local success = validateListOfTypeInline(validateFilters(validateSingleWord))(v)
+         return success, nil, v
       else
          if (trace_failures) then
             error("[LINT] Validation error: Unknown key '" .. k .. "' [" .. v .. "]: missing validation perhaps?\n")
