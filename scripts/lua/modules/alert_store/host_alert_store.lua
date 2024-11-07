@@ -455,6 +455,8 @@ function host_alert_store:format_record(value, no_html)
         mitre_subtechnique_i18n = (mitre_utils.sub_technique_by_id[mitre_subtechnique] and mitre_utils.sub_technique_by_id[mitre_subtechnique].i18n_label) or "",
     }
 
+    local is_engaged = self._status == alert_consts.alert_status.engaged.alert_status_id
+    record["is_engaged"] = is_engaged
     record[RNAME.IS_VICTIM.name] = ""
     record[RNAME.IS_ATTACKER.name] = ""
     record[RNAME.IS_CLIENT.name] = ""

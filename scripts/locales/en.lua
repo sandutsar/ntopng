@@ -239,6 +239,7 @@ local lang = {
     ["enable_them"] = "Enable Them",
     ["enabled"] = "Enabled",
     ["end"] = "End",
+    ["engaged_alert"] = "Engaged Alert",
     ["enterpriseOnly"] = "This feature is only available in the ntopng Enterprise edition",
     ["err_del_inactive_hosts"] = "Error while deleting Inactive Hosts",
     ["error"] = "Error",
