@@ -151,6 +151,20 @@ end
 
 -- ##############################################
 
+function host_alert_store:insert_engaged(alert)
+    --traceError(TRACE_NORMAL, TRACE_CONSOLE, "host_alert_store:insert_engaged")
+    -- TODO
+end
+
+-- ##############################################
+
+function host_alert_store:delete_engaged(alert)
+    --traceError(TRACE_NORMAL, TRACE_CONSOLE, "host_alert_store:delete_engaged")
+    -- TODO
+end
+
+-- ##############################################
+
 -- @brief Performs a query for the top hosts by alert count
 function host_alert_store:top_ip_historical()
     -- Preserve all the filters currently set

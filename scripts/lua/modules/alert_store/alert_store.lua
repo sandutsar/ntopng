@@ -918,6 +918,18 @@ end
 
 -- ##############################################
 
+function alert_store:insert_engaged(alert)
+    return false
+end
+
+-- ##############################################
+
+function alert_store:delete_engaged(alert)
+    return false
+end
+
+-- ##############################################
+
 -- @brief Deletes data according to specified filters
 function alert_store:delete()
     local table_name = self:get_write_table_name()

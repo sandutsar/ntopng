@@ -95,22 +95,32 @@ function alert_store_db.dequeueRecipientAlerts(recipient, budget)
       for _, json_message in ipairs(notifications) do
          local alert = json.decode(json_message)
 
-         if alert.action ~= "engage" then
-            -- Do not store alerts engaged - they're are handled only in-memory
+         if alert then
+            local alert_store = get_alert_store(alert.entity_id)
+            if alert_store then
 
-            if(alert) then
+
                interface.select(string.format("%d", alert.ifid or 0))
 
-               local alert_store = get_alert_store(alert.entity_id)
+               if alert.action == "engage" then
+                  -- Add to the in-memory table (in addition to the C++ data structures)
+                  alert_store:insert_engaged(alert)
 
-               if alert_store then
+               else -- alert.action == "release"
+                  -- Remove from the in-memory table if previously engaged
+                  if alert.alert_id ~= 4 then -- Not alert_entity_flow (historical only)
+                     alert_store:delete_engaged(alert)
+                  end
+
+                  -- Add to the historical table
                   alert_store:insert(alert)
+
                   if(debugme) then io.write("Stored alert in alert.entity_id "..alert.entity_id) end
-               else
-                  if(debugme) then io.write("Unable to find alert.entity_id "..alert.entity_id) end
                end
+
+            else
+               if(debugme) then io.write("Unable to find alert.entity_id "..alert.entity_id) end
             end
-   
          end
       end
 
