@@ -33,7 +33,8 @@ function host_alert_store:init(args)
         self._table_name = "host_alerts_view"
         self._write_table_name = "host_alerts"
     else
-        self._table_name = "host_alerts"
+        self._table_name = "host_alerts_view"
+        self._write_table_name = "host_alerts"
     end
 
     self._alert_entity = alert_entities.host

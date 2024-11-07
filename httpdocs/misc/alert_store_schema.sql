@@ -26,7 +26,9 @@ CREATE INDEX IF NOT EXISTS `am_alerts_i_id` ON `active_monitoring_alerts`(alert_
 CREATE INDEX IF NOT EXISTS `am_alerts_i_alert_status` ON `active_monitoring_alerts`(alert_status);
 CREATE INDEX IF NOT EXISTS `am_alerts_i_severity` ON `active_monitoring_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `am_alerts_i_tstamp` ON `active_monitoring_alerts`(tstamp);
+
 @
+
 -- -----------------------------------------------------
 -- Table `flow_alerts`
 -- -----------------------------------------------------
@@ -85,7 +87,9 @@ CREATE INDEX IF NOT EXISTS `flow_alerts_i_l7_proto` ON `flow_alerts`(`l7_proto`)
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_l7_master_proto` ON `flow_alerts`(`l7_master_proto`);
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_l7_cat` ON `flow_alerts`(`l7_cat`);
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_flow_risk_bitmap` ON `flow_alerts`(`flow_risk_bitmap`);
+
 @
+
 -- -----------------------------------------------------
 -- Table `host_alerts`
 -- -----------------------------------------------------
@@ -124,7 +128,9 @@ CREATE INDEX IF NOT EXISTS `host_alerts_i_is_victim` ON `host_alerts`(`is_victim
 CREATE INDEX IF NOT EXISTS `host_alerts_i_is_client` ON `host_alerts`(`is_client`);
 CREATE INDEX IF NOT EXISTS `host_alerts_i_is_victim` ON `host_alerts`(`is_victim`);
 CREATE INDEX IF NOT EXISTS `host_alerts_i_is_server` ON `host_alerts`(`is_server`);
+
 @
+
 -- -----------------------------------------------------
 -- Table `mac_alerts`
 -- -----------------------------------------------------
@@ -157,7 +163,9 @@ CREATE INDEX IF NOT EXISTS `mac_alerts_i_tstamp` ON `mac_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_address` ON `mac_alerts`(`address`);
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_is_attacker` ON `mac_alerts`(`is_attacker`);
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_is_victim` ON `mac_alerts`(`is_victim`);
+
 @
+
 -- -----------------------------------------------------
 -- Table `snmp_alerts`
 -- -----------------------------------------------------
@@ -187,7 +195,9 @@ CREATE INDEX IF NOT EXISTS `snmp_alerts_i_alert_status` ON `snmp_alerts`(alert_s
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_severity` ON `snmp_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_tstamp` ON `snmp_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_ip` ON `snmp_alerts`(`ip`);
+
 @
+
 -- -----------------------------------------------------
 -- Table `network_alerts`
 -- -----------------------------------------------------
@@ -215,7 +225,9 @@ CREATE INDEX IF NOT EXISTS `network_alerts_i_id` ON `network_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `network_alerts_i_severity` ON `network_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `network_alerts_i_tstamp` ON `network_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `network_alerts_i_alert_status` ON `network_alerts`(alert_status);
+
 @
+
 -- -----------------------------------------------------
 -- Table `interface_alerts`
 -- -----------------------------------------------------
@@ -244,7 +256,9 @@ CREATE INDEX IF NOT EXISTS `interface_alerts_i_id` ON `interface_alerts`(alert_i
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_severity` ON `interface_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_tstamp` ON `interface_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_alert_status` ON `interface_alerts`(alert_status);
+
 @
+
 -- -----------------------------------------------------
 -- Table `user_alerts`
 -- -----------------------------------------------------
@@ -270,7 +284,9 @@ CREATE INDEX IF NOT EXISTS `user_alerts_i_id` ON `user_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `user_alerts_i_severity` ON `user_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `user_alerts_i_tstamp` ON `user_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `user_alerts_i_alert_status` ON `user_alerts`(alert_status);
+
 @
+
 -- -----------------------------------------------------
 -- Table `system_alerts`
 -- -----------------------------------------------------
@@ -336,7 +352,9 @@ ALTER TABLE `network_alerts` ADD `interface_id` INTEGER NULL;
 ALTER TABLE `interface_alerts` ADD `interface_id` INTEGER NULL;
 ALTER TABLE `user_alerts` ADD `interface_id` INTEGER NULL;
 ALTER TABLE `system_alerts` ADD `interface_id` INTEGER NULL;
+
 @
+
 -- -----------------------------------------------------
 -- Table `asset_management`
 -- -----------------------------------------------------
@@ -356,3 +374,110 @@ CREATE TABLE IF NOT EXISTS `asset_management` (
 `trigger_alert` INTEGER NULL CHECK(`trigger_alert` IN (0,1)),
 `device_status` TEXT NULL
 );
+
+@
+
+-- -----------------------------------------------------
+-- In-Memory DataBase
+-- -----------------------------------------------------
+
+ATTACH DATABASE ':memory:' AS mem_db;
+
+@
+
+CREATE TABLE mem_db.engaged_host_alerts (
+rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
+alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0,
+interface_id INTEGER NULL,
+ip_version INTEGER NOT NULL DEFAULT 0 CHECK(ip_version = 4 OR ip_version = 6),
+ip TEXT NOT NULL,
+vlan_id INTEGER NULL DEFAULT 0 CHECK(vlan_id >= 0),
+name TEXT NULL,
+is_attacker INTEGER NULL CHECK(is_attacker IN (0,1)),
+is_victim INTEGER NULL CHECK(is_victim IN (0,1)),
+is_client INTEGER NULL CHECK(is_client IN (0,1)),
+is_server INTEGER NULL CHECK(is_server IN (0,1)),
+tstamp DATETIME NOT NULL,
+tstamp_end DATETIME NULL DEFAULT 0,
+severity INTEGER NOT NULL CHECK(severity >= 0),
+score INTEGER NOT NULL DEFAULT 0 CHECK(score >= 0),
+granularity INTEGER NOT NULL DEFAULT 0 CHECK(granularity >= 0),
+counter INTEGER NOT NULL DEFAULT 0 CHECK(counter >= 0),
+description TEXT NULL,
+json TEXT NULL,
+user_label TEXT NULL,
+user_label_tstamp DATETIME NULL DEFAULT 0,
+country TEXT NULL,
+network INTEGER NULL,
+host_pool_id INTEGER NULL,
+alert_category INTEGER NULL
+);
+
+@
+
+-- View with engaged and historical alerts
+-- Note: columns are listed manually as order may change due to alter table
+CREATE TEMP VIEW host_alerts_view AS
+SELECT 
+    rowid,
+    alert_id,
+    alert_status,
+    interface_id,
+    ip_version,
+    ip,
+    vlan_id,
+    name,
+    is_attacker,
+    is_victim,
+    is_client,
+    is_server,
+    tstamp,
+    tstamp_end,
+    severity,
+    score,
+    granularity,
+    counter,
+    description,
+    json,
+    user_label,
+    user_label_tstamp,
+    country,
+    network,
+    host_pool_id,
+    alert_category
+FROM host_alerts
+UNION ALL
+SELECT
+    rowid,
+    alert_id,
+    alert_status,
+    interface_id,
+    ip_version,
+    ip,
+    vlan_id,
+    name,
+    is_attacker,
+    is_victim,
+    is_client,
+    is_server,
+    tstamp,
+    tstamp_end,
+    severity,
+    score,
+    granularity,
+    counter,
+    description,
+    json,
+    user_label,
+    user_label_tstamp,
+    country,
+    network,
+    host_pool_id,
+    alert_category
+FROM mem_db.engaged_host_alerts;
+
+@
+
+SELECT severity, (tstamp - tstamp % 58) as slot, count(*) count FROM host_alerts_view WHERE (tstamp >= 1730967760 AND tstamp <= 1730969560) AND ( ((alert_status = 0) OR (alert_status = 1)) ) GROUP BY severity, slot ORDER BY severity, slot ASC
+
