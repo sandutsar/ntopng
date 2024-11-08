@@ -386,7 +386,7 @@ ATTACH DATABASE ':memory:' AS mem_db;
 @
 
 CREATE TABLE mem_db.engaged_host_alerts (
-rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+rowid INTEGER PRIMARY KEY,
 alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
 alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0,
 interface_id INTEGER NULL,
@@ -449,7 +449,7 @@ SELECT
 FROM host_alerts
 UNION ALL
 SELECT
-    rowid,
+    (rowid+1000000000) rowid, -- Avoid conflicts
     alert_id,
     alert_status,
     interface_id,

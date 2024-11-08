@@ -93,6 +93,17 @@ end
 
 -- ##############################################
 
+-- Get the table name for write operations for engaged alerts (in-memory)
+function alert_store:get_engaged_write_table_name()
+    if self._engaged_write_table_name then
+        return self._engaged_write_table_name
+    else
+        return nil
+    end
+end
+
+-- ##############################################
+
 function alert_store:_escape(str)
     if not str then
         return ""
@@ -179,8 +190,11 @@ function alert_store:_build_alert_status_condition(status, is_write)
     field = self:get_column_name(field, is_write)
 
     if status == "any" then
-        return string.format(" ((%s = %u) OR (%s = %u)) ", field, alert_consts.alert_status.historical.alert_status_id,
-            field, alert_consts.alert_status.acknowledged.alert_status_id)
+        -- This condition has been removed as was hiding engaged alerts since the introduction
+        -- of the in-memory table for engaged alerts (was it really required?)
+        -- return string.format(" ((%s = %u) OR (%s = %u)) ", field, alert_consts.alert_status.historical.alert_status_id,
+        --     field, alert_consts.alert_status.acknowledged.alert_status_id)
+        return nil
     else
         return string.format(" %s = %u ", field, alert_consts.alert_status[status].alert_status_id)
     end
@@ -203,7 +217,10 @@ function alert_store:add_status_filter(status, is_write)
             if status == "engaged" then
                 -- Engaged alerts don't add a database filter as they are in-memory only
             else
-                self:add_filter_condition_raw('alert_status', self:_build_alert_status_condition(status, is_write))
+                local alert_status_cond = self:_build_alert_status_condition(status, is_write)
+                if alert_status_cond then
+                    self:add_filter_condition_raw('alert_status', alert_status_cond)
+                end
             end
         end
 
@@ -1943,14 +1960,19 @@ function alert_store:get_earliest_available_epoch(status)
         end
     else -- Historical
         local q
+        local extra_cond = ""
+        local alert_status_cond = self:_build_alert_status_condition(status)
+        if alert_status_cond then
+            extra_cond = " AND " .. alert_status_cond
+        end
         if ntop.isClickHouseEnabled() then
             q = string.format(
-                " SELECT toUnixTimestamp(tstamp) earliest_epoch FROM `%s` WHERE interface_id = %d AND %s ORDER BY tstamp ASC LIMIT 1",
-                table_name, interface.getId(), self:_build_alert_status_condition(status))
+                " SELECT toUnixTimestamp(tstamp) earliest_epoch FROM `%s` WHERE interface_id = %d %s ORDER BY tstamp ASC LIMIT 1",
+                table_name, interface.getId(), extra_cond)
         else
             q = string.format(
-                " SELECT tstamp earliest_epoch FROM `%s` WHERE interface_id = %d AND %s ORDER BY tstamp ASC LIMIT 1",
-                table_name, interface.getId(), self:_build_alert_status_condition(status))
+                " SELECT tstamp earliest_epoch FROM `%s` WHERE interface_id = %d %s ORDER BY tstamp ASC LIMIT 1",
+                table_name, interface.getId(), extra_cond)
         end
 
         local res = interface.alert_store_query(q)
