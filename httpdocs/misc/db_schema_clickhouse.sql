@@ -318,6 +318,41 @@ ALTER TABLE `host_alerts` ADD COLUMN IF NOT EXISTS `alert_category` UInt8;
 
 @
 
+DROP TABLE IF EXISTS `engaged_host_alerts`;
+
+@
+
+CREATE TABLE `engaged_host_alerts` (
+`rowid` UUID,
+`alert_id` UInt32 NOT NULL,
+`alert_status` UInt8 NOT NULL,
+`interface_id` UInt16 NULL,
+`ip_version` UInt8 NOT NULL,
+`ip` String NOT NULL,
+`vlan_id` UInt16,
+`name` String,
+`is_attacker` UInt8,
+`is_victim` UInt8,
+`is_client` UInt8,
+`is_server` UInt8,
+`tstamp` DateTime NOT NULL,
+`tstamp_end` DateTime,
+`severity` UInt8 NOT NULL,
+`score` UInt16 NOT NULL,
+`granularity` UInt8 NOT NULL,
+`counter` UInt32 NOT NULL,
+`description` String,
+`json` String,
+`user_label` String,
+`user_label_tstamp` DateTime,
+`host_pool_id` UInt16,
+`network` UInt16,
+`country` String,
+`alert_category` UInt8
+) ENGINE = Memory;
+
+@
+
 CREATE TABLE IF NOT EXISTS `mac_alerts` (
 `rowid` UUID,
 `alert_id` UInt32 NOT NULL,
@@ -660,7 +695,12 @@ SELECT
   mitre.SUB_TECHNIQUE AS mitre_subtechnique,
   mitre.MITRE_ID AS mitre_id
 FROM
-  `host_alerts` AS ha
+(
+  SELECT * FROM `host_alerts`
+  UNION ALL
+  SELECT * FROM `engaged_host_alerts`
+)
+  AS ha
 LEFT JOIN
   `mitre_table_info` AS mitre
 ON

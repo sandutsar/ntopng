@@ -32,7 +32,7 @@ function host_alert_store:init(args)
     if ntop.isClickHouseEnabled() then
         self._table_name = "host_alerts_view"
         self._write_table_name = "host_alerts"
-        -- TODO self._engaged_write_table_name = "..."
+        self._engaged_write_table_name = "engaged_host_alerts"
     else
         self._table_name = "host_alerts_view"
         self._write_table_name = "host_alerts"
@@ -124,12 +124,19 @@ function host_alert_store:_build_insert_query(alert, write_table, engaged, rowid
 
     local extra_columns = ""
     local extra_values = ""
-    if rowid then
+
+    if ntop.isClickHouseEnabled() then
         extra_columns = "rowid, "
-        extra_values = string.format("%u, ", rowid)
-    elseif ntop.isClickHouseEnabled() then
-        extra_columns = "rowid, "
-        extra_values = "generateUUIDv4(), "
+        if rowid then
+            extra_values = string.format("concat('00000000-0000-0000-0000-', toFixedString(hex(%u), 12)), ", rowid)
+        else
+            extra_values = "generateUUIDv4(), "
+        end
+    else
+        if rowid then
+            extra_columns = "rowid, "
+            extra_values = string.format("%u, ", rowid)
+        end
     end
 
     local alert_status = 0
@@ -211,7 +218,7 @@ function host_alert_store:delete_engaged(alert)
         local q
 
         if ntop.isClickHouseEnabled() then
-            q = string.format("ALTER TABLE %s DELETE WHERE rowid = %u", tengaged_write_tabl, alert.rowid)
+            q = string.format("ALTER TABLE %s DELETE WHERE rowid = concat('00000000-0000-0000-0000-', toFixedString(hex(%u), 12))", engaged_write_table, alert.rowid)
         else
             q = string.format("DELETE FROM %s WHERE rowid = %u", engaged_write_table, alert.rowid)
         end
