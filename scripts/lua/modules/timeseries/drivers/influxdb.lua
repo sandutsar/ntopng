@@ -241,6 +241,7 @@ local function getSchemaRetentionPolicy(schema, tstart, tend, options)
     if schema.options.influx_internal_query then
         return "raw"
     end
+    tstart = tonumber(tstart)
 
     options = options or {}
     local first_aggr_time = tonumber(ntop.getPref(FIRST_AGGREGATION_TIME_KEY))

@@ -197,6 +197,7 @@ local lang = {
     ["device_ip"] = "Device IP",
     ["device_protocols_description"] = "In this page it is possible to configure the list of acceptable applications per device type and direction (device as client or server with respect to the application). By enabling the flow user script Device Application Not Allowed in the Checks configuration page, alerts are generated when an anomalous application is detected.",
     ["device_type_filter"] = "Device Filter",
+    ["device_type"] = "Device Type",
     ["devices"] = "Devices",
     ["difference"] = "Difference",
     ["disable"] = "Disable",
