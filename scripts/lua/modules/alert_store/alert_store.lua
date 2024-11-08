@@ -196,6 +196,10 @@ function alert_store:_build_alert_status_condition(status, is_write)
         --     field, alert_consts.alert_status.historical.alert_status_id,
         --     field, alert_consts.alert_status.acknowledged.alert_status_id)
         return nil
+    elseif status == 'historical' then -- 'Require Attention' alerts - also include engaged
+        return string.format(" ((%s = %u) OR (%s = %u)) ",
+            field, alert_consts.alert_status.historical.alert_status_id,
+            field, alert_consts.alert_status.engaged.alert_status_id)
     else
         return string.format(" %s = %u ", field, alert_consts.alert_status[status].alert_status_id)
     end
