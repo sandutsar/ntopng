@@ -1135,7 +1135,11 @@ function alert_store:select_historical(filter, fields, download --[[ Available o
             count_res = tonumber(count_r[1]["totalRows"])
         end
     else
-        count_res = #res
+        if res then
+            count_res = #res
+        else
+            count_res = 0
+        end
     end
 
     local end_time = ntop.gettimemsec() -- Format: 1637330701.5767
