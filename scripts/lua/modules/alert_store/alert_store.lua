@@ -1481,6 +1481,7 @@ function alert_store:count_by_severity_and_time_historical()
 end
 
 -- With duration support (use tstamp and tstamp_end as interval)
+-- TODO This should be extended to also show engaged alerts with tstamp < begin (note they have tstamp_end = 0) 
 --[[
 function alert_store:count_by_severity_and_time_historical()
    local table_name = self:get_table_name()
