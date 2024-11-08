@@ -192,7 +192,8 @@ function alert_store:_build_alert_status_condition(status, is_write)
     if status == "any" then
         -- This condition has been removed as was hiding engaged alerts since the introduction
         -- of the in-memory table for engaged alerts (was it really required?)
-        -- return string.format(" ((%s = %u) OR (%s = %u)) ", field, alert_consts.alert_status.historical.alert_status_id,
+        -- return string.format(" ((%s = %u) OR (%s = %u)) ",
+        --     field, alert_consts.alert_status.historical.alert_status_id,
         --     field, alert_consts.alert_status.acknowledged.alert_status_id)
         return nil
     else
@@ -254,8 +255,12 @@ function alert_store:add_time_filter(epoch_begin, epoch_end, is_write)
         local field = tstamp_column
         field = self:get_column_name(field, is_write)
 
-        self:add_filter_condition_raw(tstamp_column, string.format("%s >= %u AND %s <= %u", field, self._epoch_begin,
-            field, self._epoch_end))
+        self:add_filter_condition_raw(tstamp_column,
+            string.format("((%s >= %u AND %s <= %u) OR (%s < %u AND alert_status = %u))",
+                field, self._epoch_begin,
+                field, self._epoch_end,
+                field, self._epoch_begin,
+                alert_consts.alert_status.engaged.alert_status_id))
     end
 
     return true
