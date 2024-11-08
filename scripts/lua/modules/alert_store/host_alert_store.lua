@@ -371,6 +371,7 @@ end
 -- @brief Get info about additional available filters
 function host_alert_store:_get_additional_available_filters()
     local filters = {
+        alert_status = tag_utils.defined_tags.alert_status,
         vlan_id = tag_utils.defined_tags.vlan_id,
         ip_version = tag_utils.defined_tags.ip_version,
         ip = tag_utils.defined_tags.ip,

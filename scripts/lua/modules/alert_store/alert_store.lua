@@ -2020,6 +2020,7 @@ function alert_store:add_request_filters(is_write)
     local epoch_end = tonumber(_GET["epoch_end"])
     local alert_id = _GET["alert_id"] or _GET["alert_type"] --[[ compatibility ]] --
     local alert_category = _GET["alert_category"]
+    local alert_status = _GET["alert_status"]
     local alert_severity = _GET["severity"] or _GET["alert_severity"]
     local score = _GET["score"]
     local rowid = _GET["row_id"]
@@ -2042,6 +2043,7 @@ function alert_store:add_request_filters(is_write)
 
     self:add_filter_condition_list('alert_id', alert_id, 'number')
     self:add_filter_condition_list('alert_category', alert_category, 'number')
+    self:add_filter_condition_list('alert_status', alert_status, 'number')
     self:add_filter_condition_list('severity', alert_severity, 'number')
     self:add_filter_condition_list('score', score, 'number')
     self:add_filter_condition_list('tstamp', tstamp, 'number')

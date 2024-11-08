@@ -74,20 +74,40 @@ alert_consts.alert_status = {
    ["historical"] = {
       -- Alerts written to the database that require attention
       alert_status_id = 0,
+      i18n_title = "db_search.alert_status.historical",
+      on_db = true
    },
    ["acknowledged"] = {
       -- Acknowledged (automatically or from the user) alerts written to the database
       alert_status_id = 1,
+      i18n_title = "db_search.alert_status.acknowledged",
+      on_db = true
    },
    ["engaged"] = {
       -- Engaged (not actually used in the database as engaged alerts are in memory)
       alert_status_id = 2,
+      i18n_title = "db_search.alert_status.engaged",
+      on_db = true
    },
    ["any"] = {
       -- Not actually used in the database (historical | acknowledged)
       alert_status_id = 3,
+      i18n_title = "db_search.alert_status.any",
+      on_db = false
    },
 }
+
+-- ################################################################################
+
+function alert_consts.alertStatusById(status)
+   for key, info in pairs(alert_consts.alert_status) do
+      if info.alert_status_id == status then
+         return info
+      end
+   end
+
+   return nil
+end
 
 -- ################################################################################
 

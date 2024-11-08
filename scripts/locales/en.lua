@@ -2160,6 +2160,12 @@ local lang = {
         ["vlan_id"] = "VLAN",
         ["wlan_ssid"] = "WLAN SSID",
         ["where_note"] = "Use &lt;field&gt; &lt;operator&gt; &lt;value&gt; conditions, where &lt;operator&gt; could be &lt;, &gt;, =, !=. AND/OR operators are also allowed to combine conditions. Please use quotes for string fields (e.g. INFO='www.ntop.org')",
+        ["alert_status"] = {
+            ["acknowledged"] = "Acknowledged",
+            ["any"] = "All",
+            ["engaged"] = "Engaged",
+            ["historical"] = "Requiring Attention"
+        },
         ["all"] = {
             ["host_pool"] = "All Host Pools",
             ["input_snmp"] = "All Interfaces",
@@ -2177,6 +2183,7 @@ local lang = {
             ["alert_category"] = "Category",
             ["alert_description"] = "Description",
             ["alert_id"] = "Alert Type",
+            ["alert_status"] = "Alert Status",
             ["apn_mac"] = "APN MAC",
             ["asn"] = "ASN",
             ["bytes"] = "Bytes",
