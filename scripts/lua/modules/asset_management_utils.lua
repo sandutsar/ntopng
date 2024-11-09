@@ -140,7 +140,7 @@ function asset_management_utils.get_inactive_hosts(ifid, order, sort, start, len
     end
     local where = ""
     
-    for key, value in pairs(filters) do
+    for key, value in pairs(filters or {}) do
         where = where .. "AND"
         if tonumber(value) then
             value = tonumber(value)
@@ -151,19 +151,22 @@ function asset_management_utils.get_inactive_hosts(ifid, order, sort, start, len
         where = string.format("%s %s=%s ", where, key, value)
     end
 
+    if sort and order then
+        where = string.format("%s ORDER BY %s %s", where, sort, order)
+    end
+
+    if start and length then
+        where = string.format("%s LIMIT %s, %s", where, start, length)
+    end
+
     local query = string.format("SELECT key, ip, mac, vlan, network, name, device_type, manufacturer, %s, %s " ..
-        "FROM %s WHERE type='%s' %s AND last_seen!=%d " ..
-        "ORDER BY %s %s LIMIT %s, %s ",
+        "FROM %s WHERE type='%s' AND last_seen!=%d %s",
         ternary(hasClickHouseSupport(), "toUnixTimestamp(last_seen) as last_seen", "last_seen"),
         ternary(hasClickHouseSupport(), "toUnixTimestamp(first_seen) as first_seen", "first_seen"),
         table_name,
         "host", -- Only hosts here
-        where,
         0, -- 0 Because by default an host that is still in memory has a last_seen 0
-        sort,
-        order,
-        start, -- Offset, quante righe saltare
-        length -- Limit
+        where
     )
     local res = interface.alert_store_query(query)
     return res
