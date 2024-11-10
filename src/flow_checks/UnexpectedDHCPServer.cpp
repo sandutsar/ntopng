@@ -25,15 +25,16 @@
 /* ***************************************************** */
 
 bool UnexpectedDHCPServer::isAllowedHost(Flow *f) {
-  IpAddress *p = (IpAddress *) getServerIP(f);
-
-  if (p == NULL || p->isBroadcastAddress()) return true;
-
-  if (p->isDhcpServer() && !ntop->getPrefs()->isDHCPServer(p, f->get_vlan_id())) {
-    return false;
+  if(ntop->getPrefs()->getConfiguredDHCPServers()->isEmptyConfiguration())
+    return(true);
+  else {
+    IpAddress *ip = f->get_cli_ip_addr();
+    
+    if (ip == NULL || ip->isBroadcastAddress())
+      return(true);
+    
+    return(ntop->getPrefs()->isDHCPServer(ip, f->get_vlan_id()));
   }
-
-  return (true);
 }
 
 /* ***************************************************** */

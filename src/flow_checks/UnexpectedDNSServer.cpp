@@ -26,9 +26,11 @@
 /* ***************************************************** */
 
 bool UnexpectedDNSServer::isAllowedHost(Flow *f) {
-  if(f->isDNS()) {
+  if(ntop->getPrefs()->getConfiguredDNSServers()->isEmptyConfiguration())
+    return(true);
+  else {
     IpAddress *ip = (IpAddress *)getServerIP(f);
-
+    
     if(ip != NULL) {
 #ifdef DEBUG_DNS_SERVER
       char buf[64];
@@ -39,11 +41,10 @@ bool UnexpectedDNSServer::isAllowedHost(Flow *f) {
 				   ntop->getPrefs()->isDNSServer(ip, f->get_vlan_id()) ? "Yes" : "No");
 #endif
       
-      return(ntop->getPrefs()->isDNSServer(ip, f->get_vlan_id()));
-    }
+      return(ntop->getPrefs()->isDNSServer(ip, f->get_vlan_id()));    
+    } else
+      return(true);
   }
-  
-  return(true);
 }
 
 /* ***************************************************** */
