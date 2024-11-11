@@ -197,10 +197,13 @@ CREATE TABLE IF NOT EXISTS `active_monitoring_alerts` (
 `json` String,
 `user_label` String,
 `user_label_tstamp` DateTime NULL,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `active_monitoring_alerts` ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `active_monitoring_alerts` ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
 
@@ -383,10 +386,13 @@ CREATE TABLE IF NOT EXISTS `mac_alerts` (
 `json` String,
 `user_label` String,
 `user_label_tstamp` DateTime,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `mac_alerts` ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `mac_alerts` ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
 
@@ -409,12 +415,15 @@ CREATE TABLE IF NOT EXISTS `snmp_alerts` (
 `json` String,
 `user_label` String,
 `user_label_tstamp` DateTime,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `snmp_alerts` MODIFY COLUMN `port` UInt32;
 @
 ALTER TABLE `snmp_alerts` ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `snmp_alerts` ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
 
@@ -436,10 +445,13 @@ CREATE TABLE IF NOT EXISTS `network_alerts` (
 `json` String,
 `user_label` String,
 `user_label_tstamp` DateTime,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `network_alerts` ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `network_alerts` ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
 
@@ -462,10 +474,13 @@ CREATE TABLE IF NOT EXISTS `interface_alerts` (
 `json` String,
 `user_label` String,
 `user_label_tstamp` DateTime,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `interface_alerts` ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `interface_alerts` ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
 
@@ -485,10 +500,13 @@ CREATE TABLE IF NOT EXISTS `user_alerts` (
 `json` String,
 `user_label` String,
 `user_label_tstamp` DateTime,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `user_alerts` ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `user_alerts` ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
 
@@ -508,12 +526,16 @@ CREATE TABLE IF NOT EXISTS `system_alerts` (
 `json` String,
 `user_label` String,
 `user_label_tstamp` DateTime,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `system_alerts` ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `system_alerts` ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
+
 DROP VIEW IF EXISTS `all_alerts_view`;
 @
 CREATE VIEW IF NOT EXISTS `all_alerts_view` AS
