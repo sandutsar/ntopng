@@ -267,8 +267,9 @@ function alert_store:add_time_filter(epoch_begin, epoch_end, is_write)
 
         if self._alert_entity ~= alert_entities.flow then
             -- Include engaged alerts triggered before epoch_begin
-            local ext_time_interval_cond = string.format("(%s OR (%s < %u AND alert_status = %u))",
+            local ext_time_interval_cond = string.format("(%s OR (%s >= %u AND %s < %u AND alert_status = %u))",
                 time_interval_cond,
+                field, self._epoch_begin - (24*60*60), -- tstamp >= 1 day before (avoid full db scan)
                 field, self._epoch_begin,
                 alert_consts.alert_status.engaged.alert_status_id)
             time_interval_cond = ext_time_interval_cond
