@@ -19,9 +19,14 @@ CREATE TABLE IF NOT EXISTS `active_monitoring_alerts` (
 `description` TEXT NULL,
 `json` TEXT NULL,
 `user_label` TEXT NULL, -- A label that can be set by the user
-`user_label_tstamp` DATETIME NULL DEFAULT 0 -- Timestamp of the last user_label change
+`user_label_tstamp` DATETIME NULL DEFAULT 0, -- Timestamp of the last user_label change
+`require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `active_monitoring_alerts` ADD `alert_category` INTEGER NULL;
+@
+ALTER TABLE `active_monitoring_alerts` ADD `require_attention` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `am_alerts_i_id` ON `active_monitoring_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `am_alerts_i_alert_status` ON `active_monitoring_alerts`(alert_status);
 CREATE INDEX IF NOT EXISTS `am_alerts_i_severity` ON `active_monitoring_alerts`(severity);
@@ -75,7 +80,34 @@ CREATE TABLE IF NOT EXISTS `flow_alerts` (
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
 `require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `flow_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `alert_category` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `output_snmp` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `input_snmp` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `probe_ip` TEXT NULL;
+@
+ALTER TABLE `flow_alerts` ADD `cli_location` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `srv_location` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `info` TEXT NULL;
+@
+ALTER TABLE `flow_alerts` ADD `cli_host_pool_id` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `srv_host_pool_id` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `cli_network` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `srv_network` INTEGER NULL;
+@
+-- Added for compatibility reasons but not used by SQLite
+ALTER TABLE `flow_alerts` ADD `interface_id` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_id` ON `flow_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_alert_status` ON `flow_alerts`(alert_status);
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_severity` ON `flow_alerts`(severity);
@@ -119,7 +151,20 @@ CREATE TABLE IF NOT EXISTS `host_alerts` (
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
 `require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `host_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `host_alerts` ADD `alert_category` INTEGER NULL;
+@
+ALTER TABLE `host_alerts` ADD `host_pool_id` INTEGER NULL;
+@
+ALTER TABLE `host_alerts` ADD `network` INTEGER NULL;
+@
+ALTER TABLE `host_alerts` ADD `country` TEXT NULL;
+@
+-- Added for compatibility reasons but not used by SQLite
+ALTER TABLE `host_alerts` ADD `interface_id` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `host_alerts_i_id` ON `host_alerts`(`alert_id`);
 CREATE INDEX IF NOT EXISTS `host_alerts_i_alert_status` ON `host_alerts`(`alert_status`);
 CREATE INDEX IF NOT EXISTS `host_alerts_i_severity` ON `host_alerts`(`severity`);
@@ -155,9 +200,17 @@ CREATE TABLE IF NOT EXISTS `mac_alerts` (
 `description` TEXT NULL,
 `json` TEXT NULL,
 `user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0
+`user_label_tstamp` DATETIME NULL DEFAULT 0,
+`require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `mac_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `mac_alerts` ADD `alert_category` INTEGER NULL;
+@
+-- Added for compatibility reasons but not used by SQLite
+ALTER TABLE `mac_alerts` ADD `interface_id` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_id` ON `mac_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_alert_status` ON `mac_alerts`(alert_status);
 CREATE INDEX IF NOT EXISTS `mac_alerts_i_severity` ON `mac_alerts`(severity);
@@ -189,9 +242,17 @@ CREATE TABLE IF NOT EXISTS `snmp_alerts` (
 `description` TEXT NULL,
 `json` TEXT NULL,
 `user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0
+`user_label_tstamp` DATETIME NULL DEFAULT 0,
+`require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `snmp_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `snmp_alerts` ADD `alert_category` INTEGER NULL;
+@
+-- Added for compatibility reasons but not used by SQLite
+ALTER TABLE `snmp_alerts` ADD `interface_id` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_id` ON `snmp_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_alert_status` ON `snmp_alerts`(alert_status);
 CREATE INDEX IF NOT EXISTS `snmp_alerts_i_severity` ON `snmp_alerts`(severity);
@@ -220,9 +281,17 @@ CREATE TABLE IF NOT EXISTS `network_alerts` (
 `description` TEXT NULL,
 `json` TEXT NULL,
 `user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0
+`user_label_tstamp` DATETIME NULL DEFAULT 0,
+`require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `network_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `network_alerts` ADD `alert_category` INTEGER NULL;
+@
+-- Added for compatibility reasons but not used by SQLite
+ALTER TABLE `network_alerts` ADD `interface_id` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `network_alerts_i_id` ON `network_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `network_alerts_i_severity` ON `network_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `network_alerts_i_tstamp` ON `network_alerts`(tstamp);
@@ -251,9 +320,17 @@ CREATE TABLE IF NOT EXISTS `interface_alerts` (
 `description` TEXT NULL,
 `json` TEXT NULL,
 `user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0
+`user_label_tstamp` DATETIME NULL DEFAULT 0,
+`require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `interface_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `interface_alerts` ADD `alert_category` INTEGER NULL;
+@
+-- Added for compatibility reasons but not used by SQLite
+ALTER TABLE `interface_alerts` ADD `interface_id` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_id` ON `interface_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_severity` ON `interface_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `interface_alerts_i_tstamp` ON `interface_alerts`(tstamp);
@@ -279,9 +356,17 @@ CREATE TABLE IF NOT EXISTS `user_alerts` (
 `description` TEXT NULL,
 `json` TEXT NULL,
 `user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0
+`user_label_tstamp` DATETIME NULL DEFAULT 0,
+`require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `user_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `user_alerts` ADD `alert_category` INTEGER NULL;
+@
+-- Added for compatibility reasons but not used by SQLite
+ALTER TABLE `user_alerts` ADD `interface_id` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `user_alerts_i_id` ON `user_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `user_alerts_i_severity` ON `user_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `user_alerts_i_tstamp` ON `user_alerts`(tstamp);
@@ -307,85 +392,21 @@ CREATE TABLE IF NOT EXISTS `system_alerts` (
 `description` TEXT NULL,
 `json` TEXT NULL,
 `user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0
+`user_label_tstamp` DATETIME NULL DEFAULT 0,
+`require_attention` INTEGER NULL DEFAULT 0
 );
-
+@
+ALTER TABLE `system_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `system_alerts` ADD `alert_category` INTEGER NULL;
+@
+-- Added for compatibility reasons but not used by SQLite
+ALTER TABLE `system_alerts` ADD `interface_id` INTEGER NULL;
+@
 CREATE INDEX IF NOT EXISTS `system_alerts_i_id` ON `system_alerts`(alert_id);
 CREATE INDEX IF NOT EXISTS `system_alerts_i_severity` ON `system_alerts`(severity);
 CREATE INDEX IF NOT EXISTS `system_alerts_i_tstamp` ON `system_alerts`(tstamp);
 CREATE INDEX IF NOT EXISTS `system_alerts_i_alert_status` ON `system_alerts`(alert_status);
-
-/* NOTE: add new ALTER TABLE statements before any pre existing ALTER TABLE statement,
- * this because SQLite does not support IF NOT EXISTS on ALTER TABLE, thus they will fail
- * on the second execution, preventing any subsequent statement to be executed.  */
-
-@
-
-ALTER TABLE `flow_alerts` ADD `require_attention` INTEGER NULL;
-@
-ALTER TABLE `host_alerts` ADD `require_attention` INTEGER NULL;
-@
-ALTER TABLE `active_monitoring_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `host_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `mac_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `snmp_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `network_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `interface_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `user_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `system_alerts` ADD `alert_category` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `output_snmp` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `input_snmp` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `probe_ip` TEXT NULL;
-@
-ALTER TABLE `flow_alerts` ADD `cli_location` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `srv_location` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `info` TEXT NULL;
-@
-ALTER TABLE `flow_alerts` ADD `cli_host_pool_id` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `srv_host_pool_id` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `cli_network` INTEGER NULL;
-@
-ALTER TABLE `flow_alerts` ADD `srv_network` INTEGER NULL;
-@
-ALTER TABLE `host_alerts` ADD `host_pool_id` INTEGER NULL;
-@
-ALTER TABLE `host_alerts` ADD `network` INTEGER NULL;
-@
-ALTER TABLE `host_alerts` ADD `country` TEXT NULL;
-@
--- New field not present in the original table added for compatibility reasons but not used by SQLite
--- IMPORTANT: leave them at the end and remove in future versions and update SQLiteAlertStore::openStore()
-ALTER TABLE `flow_alerts` ADD `interface_id` INTEGER NULL;
-@
-ALTER TABLE `host_alerts` ADD `interface_id` INTEGER NULL;
-@
-ALTER TABLE `mac_alerts` ADD `interface_id` INTEGER NULL;
-@
-ALTER TABLE `snmp_alerts` ADD `interface_id` INTEGER NULL;
-@
-ALTER TABLE `network_alerts` ADD `interface_id` INTEGER NULL;
-@
-ALTER TABLE `interface_alerts` ADD `interface_id` INTEGER NULL;
-@
-ALTER TABLE `user_alerts` ADD `interface_id` INTEGER NULL;
-@
-ALTER TABLE `system_alerts` ADD `interface_id` INTEGER NULL;
 
 @
 

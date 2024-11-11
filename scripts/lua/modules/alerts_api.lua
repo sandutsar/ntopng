@@ -362,6 +362,7 @@ function alerts_api.trigger(entity_info, type_info, when, cur_alerts)
 
     triggered.ifid = ifid
     triggered.action = "engage"
+    triggered.require_attention = true
 
     -- Emit the notification only if the notification hasn't already been emitted.
     -- This is to avoid alert storms when ntopng is restarted. Indeeed,
@@ -450,6 +451,7 @@ function alerts_api.release(entity_info, type_info, when, cur_alerts)
 
     released.ifid = ifid
     released.action = "release"
+    triggered.require_attention = true
 
     addAlertPoolAndNetworkInfo(entity_info, released)
 
