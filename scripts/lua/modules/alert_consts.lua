@@ -90,7 +90,7 @@ alert_consts.alert_status = {
       on_db = true
    },
    ["any"] = {
-      -- This status is not actually stored in the database (any = historical | acknowledged)
+      -- This status is not actually stored in the database (any = historical | acknowledged | engaged)
       alert_status_id = 3,
       i18n_title = "db_search.alert_status.any",
       on_db = false

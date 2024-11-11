@@ -1166,6 +1166,7 @@ local flow_columns = {
    
    -- Alert data
    ['ALERT_STATUS'] =         { tag = "alert_status" },
+   ['REQUIRE_ATTENTION'] =    { tag = "require_attention" },
    ['USER_LABEL'] =           { tag = "user_label" },
    ['USER_LABEL_TSTAMP'] =    { tag = "user_label_tstamp" },
 }

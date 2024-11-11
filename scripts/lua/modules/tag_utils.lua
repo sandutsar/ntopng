@@ -284,6 +284,11 @@ tag_utils.defined_tags = {
         i18n_label = i18n('db_search.tags.alert_status'),
         operators = { 'eq', 'neq' }
     },
+    require_attention = {
+        value_type = 'boolean',
+        i18n_label = i18n('db_search.tags.require_attention'),
+        operators = { 'eq', 'neq' }
+    },
     severity = {
         type = tag_utils.input_types.select,
         value_type = 'severity',

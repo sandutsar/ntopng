@@ -185,36 +185,33 @@ end
 -- ##############################################
 
 function alert_store:_build_alert_status_condition(status, is_write)
-    local field = 'alert_status'
+    local status_field = 'alert_status'
+    local require_attention_field = 'require_attention'
 
-    field = self:get_column_name(field, is_write)
+    status_field = self:get_column_name(status_field, is_write)
+    require_attention_field = self:get_column_name(require_attention_field, is_write)
 
     if status == "any" then
-        -- This condition has been removed as was hiding engaged alerts since the introduction
-        -- of the in-memory table for engaged alerts (was it really required?)
-        -- return string.format(" ((%s = %u) OR (%s = %u)) ",
-        --     field, alert_consts.alert_status.historical.alert_status_id,
-        --     field, alert_consts.alert_status.acknowledged.alert_status_id)
         return nil
     elseif status == 'historical' then -- 'Require Attention' alerts - also include engaged
         -- Note: alert_status for engaged is always engaged, acknowledged (historical) is hidden in that case
-        return string.format(" ((%s = %u) OR (%s = %u)) ",
-            field, alert_consts.alert_status.historical.alert_status_id,
-            field, alert_consts.alert_status.engaged.alert_status_id)
+        return string.format(" (%s = 1 AND NOT %s = %u) ",
+            require_attention_field,
+            status_field, alert_consts.alert_status.acknowledged.alert_status_id)
     else
-        return string.format(" %s = %u ", field, alert_consts.alert_status[status].alert_status_id)
+        return string.format(" %s = %u ", status_field, alert_consts.alert_status[status].alert_status_id)
     end
 end
 
 -- ##############################################
 
--- @brief Add filters on status (any, engaged, historical, or acknowledged)
+-- @brief Add filters on status/tab (any, engaged, historical, or acknowledged)
 -- @param status A status key (one of those enumerated in `alert_consts.alert_status`)
 -- @return True if set is successful, false otherwise
 function alert_store:add_status_filter(status, is_write)
     if not self._status then
         if not status then
-            status = "historical"
+            status = "historical" -- "require attention" by default
         end
 
         if alert_consts.alert_status[status] then
@@ -2032,6 +2029,7 @@ end
 -- @brief Add filters according to what is specified inside the REST API
 function alert_store:add_request_filters(is_write)
     local ifid = self:get_ifid()
+    local status = _GET["status"] -- Tab: engaged, require-attention (hitorical), all (any)
     local epoch_begin = tonumber(_GET["epoch_begin"])
     local epoch_end = tonumber(_GET["epoch_end"])
     local alert_id = _GET["alert_id"] or _GET["alert_type"] --[[ compatibility ]] --
@@ -2041,7 +2039,6 @@ function alert_store:add_request_filters(is_write)
     local score = _GET["score"]
     local rowid = _GET["row_id"]
     local tstamp = _GET["tstamp"]
-    local status = _GET["status"]
     local info = _GET["info"]
     local description = _GET["description"]
 

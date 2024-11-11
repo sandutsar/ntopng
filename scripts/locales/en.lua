@@ -2264,6 +2264,7 @@ local lang = {
             ["pre_nat_ipv4_src_addr"] = "Pre-NAT IPv4 Src IP",
             ["pre_nat_src_port"] = "Pre-NAT Src Port",
             ["probe_ip"] = "Flow Exporter",
+            ["require_attention"] = "Require Attention",
             ["retransmissions"] = "Packets Retransmissions",
             ["role"] = "Role",
             ["role_cli_srv"] = "Client/Server",

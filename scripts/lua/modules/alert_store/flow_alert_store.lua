@@ -124,8 +124,8 @@ function flow_alert_store:get_column_name(field, is_write, value)
 	       col = 'IPV4_DST_ADDR'
 	    end
 	 end
-      else
 
+      else
 	 -- Convert columns to tags for those who differ
 	 if field == 'proto' then
 	    field = 'l4proto'
