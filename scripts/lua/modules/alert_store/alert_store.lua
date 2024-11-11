@@ -197,6 +197,7 @@ function alert_store:_build_alert_status_condition(status, is_write)
         --     field, alert_consts.alert_status.acknowledged.alert_status_id)
         return nil
     elseif status == 'historical' then -- 'Require Attention' alerts - also include engaged
+        -- Note: alert_status for engaged is always engaged, acknowledged (historical) is hidden in that case
         return string.format(" ((%s = %u) OR (%s = %u)) ",
             field, alert_consts.alert_status.historical.alert_status_id,
             field, alert_consts.alert_status.engaged.alert_status_id)
@@ -259,12 +260,21 @@ function alert_store:add_time_filter(epoch_begin, epoch_end, is_write)
         local field = tstamp_column
         field = self:get_column_name(field, is_write)
 
-        self:add_filter_condition_raw(tstamp_column,
-            string.format("((%s >= %u AND %s <= %u) OR (%s < %u AND alert_status = %u))",
+        -- Time interval confition (epoch_begin, epoch_end)
+        local time_interval_cond = string.format("(%s >= %u AND %s <= %u)",
                 field, self._epoch_begin,
-                field, self._epoch_end,
+                field, self._epoch_end)
+
+        if self._alert_entity ~= alert_entities.flow then
+            -- Include engaged alerts triggered before epoch_begin
+            local ext_time_interval_cond = string.format("(%s OR (%s < %u AND alert_status = %u))",
+                time_interval_cond,
                 field, self._epoch_begin,
-                alert_consts.alert_status.engaged.alert_status_id))
+                alert_consts.alert_status.engaged.alert_status_id)
+            time_interval_cond = ext_time_interval_cond
+        end
+
+        self:add_filter_condition_raw(tstamp_column, time_interval_cond)
     end
 
     return true
