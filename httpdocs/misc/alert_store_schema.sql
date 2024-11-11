@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS `flow_alerts` (
 `alerts_map` BLOB DEFAULT 0, -- An HEX bitmap of all flow statuses
 `flow_risk_bitmap` INTEGER NOT NULL DEFAULT 0,
 `user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0
+`user_label_tstamp` DATETIME NULL DEFAULT 0,
+`require_attention` INTEGER NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS `flow_alerts_i_id` ON `flow_alerts`(alert_id);
@@ -115,7 +116,8 @@ CREATE TABLE IF NOT EXISTS `host_alerts` (
 `description` TEXT NULL,
 `json` TEXT NULL,
 `user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0
+`user_label_tstamp` DATETIME NULL DEFAULT 0,
+`require_attention` INTEGER NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS `host_alerts_i_id` ON `host_alerts`(`alert_id`);
@@ -317,40 +319,72 @@ CREATE INDEX IF NOT EXISTS `system_alerts_i_alert_status` ON `system_alerts`(ale
  * this because SQLite does not support IF NOT EXISTS on ALTER TABLE, thus they will fail
  * on the second execution, preventing any subsequent statement to be executed.  */
 
+@
+
+ALTER TABLE `flow_alerts` ADD `require_attention` INTEGER NULL;
+@
+ALTER TABLE `host_alerts` ADD `require_attention` INTEGER NULL;
+@
 ALTER TABLE `active_monitoring_alerts` ADD `alert_category` INTEGER NULL;
+@
 ALTER TABLE `flow_alerts` ADD `alert_category` INTEGER NULL;
+@
 ALTER TABLE `host_alerts` ADD `alert_category` INTEGER NULL;
+@
 ALTER TABLE `mac_alerts` ADD `alert_category` INTEGER NULL;
+@
 ALTER TABLE `snmp_alerts` ADD `alert_category` INTEGER NULL;
+@
 ALTER TABLE `network_alerts` ADD `alert_category` INTEGER NULL;
+@
 ALTER TABLE `interface_alerts` ADD `alert_category` INTEGER NULL;
+@
 ALTER TABLE `user_alerts` ADD `alert_category` INTEGER NULL;
+@
 ALTER TABLE `system_alerts` ADD `alert_category` INTEGER NULL;
-
+@
 ALTER TABLE `flow_alerts` ADD `output_snmp` INTEGER NULL;
+@
 ALTER TABLE `flow_alerts` ADD `input_snmp` INTEGER NULL;
+@
 ALTER TABLE `flow_alerts` ADD `probe_ip` TEXT NULL;
+@
 ALTER TABLE `flow_alerts` ADD `cli_location` INTEGER NULL;
+@
 ALTER TABLE `flow_alerts` ADD `srv_location` INTEGER NULL;
+@
 ALTER TABLE `flow_alerts` ADD `info` TEXT NULL;
+@
 ALTER TABLE `flow_alerts` ADD `cli_host_pool_id` INTEGER NULL;
+@
 ALTER TABLE `flow_alerts` ADD `srv_host_pool_id` INTEGER NULL;
+@
 ALTER TABLE `flow_alerts` ADD `cli_network` INTEGER NULL;
+@
 ALTER TABLE `flow_alerts` ADD `srv_network` INTEGER NULL;
-
+@
 ALTER TABLE `host_alerts` ADD `host_pool_id` INTEGER NULL;
+@
 ALTER TABLE `host_alerts` ADD `network` INTEGER NULL;
+@
 ALTER TABLE `host_alerts` ADD `country` TEXT NULL;
-
+@
 -- New field not present in the original table added for compatibility reasons but not used by SQLite
 -- IMPORTANT: leave them at the end and remove in future versions and update SQLiteAlertStore::openStore()
 ALTER TABLE `flow_alerts` ADD `interface_id` INTEGER NULL;
+@
 ALTER TABLE `host_alerts` ADD `interface_id` INTEGER NULL;
+@
 ALTER TABLE `mac_alerts` ADD `interface_id` INTEGER NULL;
+@
 ALTER TABLE `snmp_alerts` ADD `interface_id` INTEGER NULL;
+@
 ALTER TABLE `network_alerts` ADD `interface_id` INTEGER NULL;
+@
 ALTER TABLE `interface_alerts` ADD `interface_id` INTEGER NULL;
+@
 ALTER TABLE `user_alerts` ADD `interface_id` INTEGER NULL;
+@
 ALTER TABLE `system_alerts` ADD `interface_id` INTEGER NULL;
 
 @
@@ -411,7 +445,8 @@ user_label_tstamp DATETIME NULL DEFAULT 0,
 country TEXT NULL,
 network INTEGER NULL,
 host_pool_id INTEGER NULL,
-alert_category INTEGER NULL
+alert_category INTEGER NULL,
+require_attention INTEGER NULL DEFAULT 0
 );
 
 @
@@ -445,7 +480,8 @@ SELECT
     country,
     network,
     host_pool_id,
-    alert_category
+    alert_category,
+    require_attention
 FROM host_alerts
 UNION ALL
 SELECT
@@ -474,10 +510,6 @@ SELECT
     country,
     network,
     host_pool_id,
-    alert_category
+    alert_category,
+    require_attention
 FROM mem_db.engaged_host_alerts;
-
-@
-
-SELECT severity, (tstamp - tstamp % 58) as slot, count(*) count FROM host_alerts_view WHERE (tstamp >= 1730967760 AND tstamp <= 1730969560) AND ( ((alert_status = 0) OR (alert_status = 1)) ) GROUP BY severity, slot ORDER BY severity, slot ASC
-

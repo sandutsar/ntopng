@@ -82,7 +82,8 @@ CREATE TABLE IF NOT EXISTS `flows` (
 `POST_NAT_DST_PORT` UInt32,
 `WLAN_SSID` String,
 `WTP_MAC_ADDRESS` UInt64,
-`DOMAIN_NAME` String
+`DOMAIN_NAME` String,
+`REQUIRE_ATTENTION` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(FIRST_SEEN) ORDER BY (IPV4_SRC_ADDR, IPV4_DST_ADDR, FIRST_SEEN);
 @
 ALTER TABLE flows ADD COLUMN IF NOT EXISTS `FLOW_ID` UInt64;
@@ -172,6 +173,8 @@ ALTER TABLE flows ADD COLUMN IF NOT EXISTS `WLAN_SSID` String;
 ALTER TABLE flows ADD COLUMN IF NOT EXISTS `WTP_MAC_ADDRESS` UInt64;
 @
 ALTER TABLE flows ADD COLUMN IF NOT EXISTS `DOMAIN_NAME` String;
+@
+ALTER TABLE flows ADD COLUMN IF NOT EXISTS `REQUIRE_ATTENTION` Boolean;
 
 @
 
@@ -252,7 +255,8 @@ CREATE TABLE IF NOT EXISTS `flow_alerts` (
 `probe_ip` String,
 `input_snmp` UInt32,
 `output_snmp` UInt32,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(first_seen) ORDER BY (first_seen);
 @
 ALTER TABLE `flow_alerts` ADD COLUMN IF NOT EXISTS cli_host_pool_id UInt16;
@@ -276,6 +280,8 @@ ALTER TABLE `flow_alerts` ADD COLUMN IF NOT EXISTS input_snmp UInt32;
 ALTER TABLE `flow_alerts` ADD COLUMN IF NOT EXISTS output_snmp UInt32;
 @
 ALTER TABLE `flow_alerts` ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `flow_alerts` ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
 
@@ -305,7 +311,8 @@ CREATE TABLE IF NOT EXISTS `host_alerts` (
 `host_pool_id` UInt16,
 `network` UInt16,
 `country` String,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `host_alerts` ADD COLUMN IF NOT EXISTS `host_pool_id` UInt16;
@@ -315,6 +322,8 @@ ALTER TABLE `host_alerts` ADD COLUMN IF NOT EXISTS `network` UInt16;
 ALTER TABLE `host_alerts` ADD COLUMN IF NOT EXISTS `country` String;
 @
 ALTER TABLE `host_alerts` ADD COLUMN IF NOT EXISTS `alert_category` UInt8;
+@
+ALTER TABLE `host_alerts` ADD COLUMN IF NOT EXISTS `require_attention` UInt8;
 
 @
 
@@ -348,7 +357,8 @@ CREATE TABLE `engaged_host_alerts` (
 `host_pool_id` UInt16,
 `network` UInt16,
 `country` String,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = Memory;
 
 @
@@ -690,6 +700,7 @@ SELECT
   ha.json,
   ha.user_label,
   ha.user_label_tstamp,
+  ha.require_attention,
   mitre.TACTIC AS mitre_tactic,
   mitre.TECHNIQUE AS mitre_technique,
   mitre.SUB_TECHNIQUE AS mitre_subtechnique,
@@ -775,6 +786,7 @@ SELECT
     f.ALERT_CATEGORY AS alert_category,
     f.MINOR_CONNECTION_STATE AS minor_connection_state,
     f.MAJOR_CONNECTION_STATE AS major_connection_state,
+    f.REQUIRE_ATTENTION AS require_attention,
     mitre.TACTIC AS mitre_tactic,
     mitre.TECHNIQUE AS mitre_technique,
     mitre.SUB_TECHNIQUE AS mitre_subtechnique,

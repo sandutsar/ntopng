@@ -142,7 +142,7 @@ function host_alert_store:_build_insert_query(alert, write_table, engaged, rowid
     local alert_status = 0
     if engaged then
         alert_status = alert_consts.alert_status.engaged.alert_status_id
-    elseif alert.acknowledged then
+    elseif not alert.require_attention then
         alert_status = alert_consts.alert_status.acknowledged.alert_status_id
     end
 
@@ -153,13 +153,14 @@ function host_alert_store:_build_insert_query(alert, write_table, engaged, rowid
 
     -- IMPORTANT: keep in sync with check_alert_params function, to be sure to not have issues with empty parameters
     local insert_stmt = string.format("INSERT INTO %s " ..
-        "(%salert_id, alert_status, alert_category, interface_id, ip_version, ip, vlan_id, name, country, is_attacker, is_victim, " ..
+        "(%salert_id, alert_status, require_attention, alert_category, interface_id, ip_version, ip, vlan_id, name, country, is_attacker, is_victim, " ..
         "is_client, is_server, tstamp, tstamp_end, severity, score, granularity, host_pool_id, network, json) " ..
-        "VALUES (%s%u, %u, %u, %d, %u, '%s', %u, '%s', '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s'); ",
+        "VALUES (%s%u, %u, %u, %u, %d, %u, '%s', %u, '%s', '%s', %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, '%s'); ",
         write_table,
         extra_columns, extra_values,
         alert.alert_id,
         alert_status,
+        ternary(alert.require_attention, 1, 0),
         alert.alert_category,
         self:_convert_ifid(interface.getId()),
         ip_version,

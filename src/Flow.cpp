@@ -4402,7 +4402,7 @@ void Flow::alert2JSON(FlowAlert *alert, ndpi_serializer *s) {
   ndpi_serialize_string_string(s, "action", "store");
   ndpi_serialize_string_int64(s, "first_seen", get_first_seen());
   ndpi_serialize_string_int32(s, "score", getScore());
-  ndpi_serialize_string_boolean(s, "acknowledged", alert->autoAck());
+  ndpi_serialize_string_boolean(s, "require_attention", !alert->autoAck());
 
   ndpi_serialize_string_boolean(s, "is_flow_alert", true);
   ndpi_serialize_string_int64(s, "tstamp", now);

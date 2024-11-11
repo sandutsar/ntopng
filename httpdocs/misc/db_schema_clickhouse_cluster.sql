@@ -309,7 +309,8 @@ CREATE TABLE IF NOT EXISTS `host_alerts` ON CLUSTER '$CLUSTER' (
 `host_pool_id` UInt16,
 `network` UInt16,
 `country` String,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = ReplicatedMergeTree('/clickhouse/{cluster}/tables/{database}/{table}', '{replica}') PARTITION BY toYYYYMMDD(tstamp) ORDER BY (tstamp);
 @
 ALTER TABLE `host_alerts` ON CLUSTER '$CLUSTER' ADD COLUMN IF NOT EXISTS host_pool_id UInt16;
@@ -319,6 +320,8 @@ ALTER TABLE `host_alerts` ON CLUSTER '$CLUSTER' ADD COLUMN IF NOT EXISTS network
 ALTER TABLE `host_alerts` ON CLUSTER '$CLUSTER' ADD COLUMN IF NOT EXISTS `country` String;
 @
 ALTER TABLE `host_alerts` ON CLUSTER '$CLUSTER' ADD COLUMN IF NOT EXISTS alert_category UInt8;
+@
+ALTER TABLE `host_alerts` ON CLUSTER '$CLUSTER' ADD COLUMN IF NOT EXISTS require_attention Boolean;
 
 @
 
@@ -352,7 +355,8 @@ CREATE TABLE `engaged_host_alerts` (
 `host_pool_id` UInt16,
 `network` UInt16,
 `country` String,
-`alert_category` UInt8
+`alert_category` UInt8,
+`require_attention` Boolean
 ) ENGINE = Memory;
 
 @
@@ -652,6 +656,7 @@ SELECT
   ha.json,
   ha.user_label,
   ha.user_label_tstamp,
+  ha.require_attention,
   mitre.TACTIC AS mitre_tactic,
   mitre.TECHNIQUE AS mitre_technique,
   mitre.SUB_TECHNIQUE AS mitre_subtechnique,
