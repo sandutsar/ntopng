@@ -192,6 +192,7 @@ local lang = {
     ["denied"] = "Denied",
     ["description"] = "Description",
     ["destination"] = "Destination",
+    ["detected_issues"] = "Detected Issues",
     ["developer"] = "Developer",
     ["device"] = "Device",
     ["device_ip"] = "Device IP",
