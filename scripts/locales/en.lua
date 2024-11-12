@@ -1028,7 +1028,7 @@ local lang = {
         ["host_alert_dns_server_contacts"] = "Too many DNS servers contacted by %{entity} [%{value} &gt; %{threshold} servers]",
         ["host_alert_domain_names_contacts"] = "Too many Domain Names contacted [Threshold: %{threshold}][Contacted: %{contacts}]",
         ["host_alert_score"] = "Score exceeded by %{entity} [%{value} %{op} %{threshold}]",
-        ["host_alert_server_ports_contacts"] = "%{entity} has been contacted on Port %{value} [Detected Protocol: %{threshold}]",
+        ["host_alert_server_ports_contacts"] = "Host contacted as a Server [Port: %{port}] [Protocol: %{protocol}]",
         ["host_alert_smtp_server_contacts"] = "Too many SMTP servers contacted by %{entity} [%{value} &gt; %{threshold} servers]",
         ["host_entity"] = "host %{entity_value}",
         ["host_log"] = "Log from <a href=\"%{url}\">%{host}</a> (%{facility}) %{line}",
