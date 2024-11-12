@@ -91,7 +91,7 @@ bool OtherAlertableEntity::triggerAlert(lua_State *vm, std::string key,
       alert.score = score;
       alert.alert_id = alert_id;
       alert.subtype = subtype;
-      alert.require_attention = true;
+      alert.require_attention = false;
       alert.json = json;
       alert.ip = ip ? ip : "";
       alert.name = name ? name : "";

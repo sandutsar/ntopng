@@ -119,16 +119,6 @@ end
 
 -- ##############################################
 
--- @brief Converts interface IDs into their database type
---       Normal interface IDs are untouched.
---       The system interface ID is converted from -1 to (u_int16_t)-1 to handle everything as unsigned integer
-function alert_store:_convert_ifid(ifid)
-    -- The system interface ID becomes (u_int16_t)-1
-    return 0xFFFF & tonumber(ifid)
-end
-
--- ##############################################
-
 -- @brief Check if the submitted fields are avalid (i.e., they are not injection attempts)
 function alert_store:_valid_fields(fields)
     local f = fields:split(",") or {fields}
@@ -147,23 +137,31 @@ end
 
 -- ##############################################
 
--- Get the system ifid
-function alert_store:get_system_ifid()
-    -- The System Interface has the id -1 and in u_int16_t is 65535
-    return 65535
+-- @brief Converts interface IDs into their database type
+--       Normal interface IDs are untouched.
+--       The system interface ID is converted from -1 to (u_int16_t)-1 to handle everything as unsigned integer
+function alert_store:_convert_ifid(ifid)
+    -- The system interface ID becomes (u_int16_t)-1
+    return 0xFFFF & tonumber(ifid)
 end
 
 -- ##############################################
 
--- @brief ifid
+-- @brief Get current ifid
 function alert_store:get_ifid()
-    local ifid = _GET["ifid"] or interface.getId()
-
+    local ifid = (_GET and _GET["ifid"]) or interface.getId()
     ifid = tonumber(ifid)
+    return ifid
+end
 
+-- ##############################################
+
+-- @bridf convert ifid to db notation of ifid
+function alert_store:ifid_2_db_ifid(ifid)
     -- The System Interface has the id -1 and in u_int16_t is 65535
-    if ifid == -1 then
-        ifid = self:get_system_ifid()
+    if ifid == getSystemInterfaceId() then
+        -- The System Interface has the id -1 and in u_int16_t is 65535
+        ifid = 65535
     end
 
     return ifid
@@ -918,8 +916,8 @@ function alert_store:add_order_by(sort_column, sort_order)
             user = _SESSION["user"]
         end
 
-        ntop.setCache(string.format(ALERT_SORTING_ORDER, self:get_ifid(), user, _GET["page"]), sort_order)
-        ntop.setCache(string.format(ALERT_SORTING_COLUMN, self:get_ifid(), user, _GET["page"]), sort_column)
+        ntop.setCache(string.format(ALERT_SORTING_ORDER, self:ifid_2_db_ifid(self:get_ifid()), user, _GET["page"]), sort_order)
+        ntop.setCache(string.format(ALERT_SORTING_COLUMN, self:ifid_2_db_ifid(self:get_ifid()), user, _GET["page"]), sort_column)
     end
 
     -- Creating the order by if not defined and valid
@@ -945,20 +943,98 @@ end
 
 -- ##############################################
 
+function alert_store:_build_insert_query(alert, write_table, engaged, rowid)
+    traceError(TRACE_NORMAL, TRACE_CONSOLE, "alert_store: _build_insert_query not defined for " .. self:get_family())
+    return ""
+end
+
+-- ##############################################
+
 function alert_store:insert(alert)
-    traceError(TRACE_NORMAL, TRACE_CONSOLE, "alert_store:insert")
+    local write_table = self:get_write_table_name()
+
+    if write_table then
+
+        local extra_columns = ""
+        local extra_values = ""
+        if ntop.isClickHouseEnabled() then
+            extra_columns = "rowid, "
+            extra_values = "generateUUIDv4(), "
+        end
+
+        -- Note: alert.require_attention depends on HostAlert::autoAck() for
+        -- host alerts, for all other families the default is set to false in 
+        -- OtherAlertableEntity::triggerAlert()
+
+        local alert_status = alert_consts.alert_status.historical.alert_status_id
+        if not alert.require_attention then
+            alert_status = alert_consts.alert_status.acknowledged.alert_status_id
+        end
+
+        local insert_stmt = self:_build_insert_query(alert, self:get_write_table_name(), alert_status, extra_columns, extra_values)
+        local ifid = ternary(self:get_ifid() == getSystemInterfaceId(), getSystemInterfaceId(), nil)
+        -- traceError(TRACE_NORMAL, TRACE_CONSOLE, insert_stmt)
+        return interface.alert_store_query(insert_stmt, ifid)
+    end
+
+    traceError(TRACE_NORMAL, TRACE_CONSOLE, "alert_store: write_table not defined for " .. self:get_family())
     return false
 end
 
 -- ##############################################
 
 function alert_store:insert_engaged(alert)
+    local engaged_write_table = self:get_engaged_write_table_name()
+
+    if engaged_write_table then
+
+        local extra_columns
+        local extra_values
+        if ntop.isClickHouseEnabled() then
+            extra_columns = "rowid, "
+            extra_values = string.format("concat('00000000-0000-0000-0000-', toFixedString(hex(%u), 12)), ", alert.rowid)
+        else
+            extra_columns = "rowid, "
+            extra_values = string.format("%u, ", alert.rowid)
+        end
+
+        local alert_status = alert_consts.alert_status.engaged.alert_status_id
+
+        local insert_stmt = self:_build_insert_query(alert, engaged_write_table, alert_status, extra_columns, extra_values)
+        local ifid = ternary(self:get_ifid() == getSystemInterfaceId(), getSystemInterfaceId(), nil)
+        -- traceError(TRACE_NORMAL, TRACE_CONSOLE, insert_stmt)
+        return interface.alert_store_query(insert_stmt, ifid)
+    end
+
+    traceError(TRACE_NORMAL, TRACE_CONSOLE, "alert_store: engaged_write_table not defined for " .. self:get_family())
     return false
 end
 
 -- ##############################################
 
 function alert_store:delete_engaged(alert)
+    local engaged_write_table = self:get_engaged_write_table_name()
+
+    if alert.rowid == nil then
+        -- rowid not defined, probably this comes from a store (not a release for an engaged)
+        -- traceError(TRACE_NORMAL, TRACE_CONSOLE, "alert_store: rowid not defined for " .. self:get_family())
+        return
+    end
+
+    if engaged_write_table then
+        local delete_stmt
+
+        if ntop.isClickHouseEnabled() then
+            delete_stmt = string.format("ALTER TABLE %s DELETE WHERE rowid = concat('00000000-0000-0000-0000-', toFixedString(hex(%u), 12))", engaged_write_table, alert.rowid)
+        else
+            delete_stmt = string.format("DELETE FROM %s WHERE rowid = %u", engaged_write_table, alert.rowid)
+        end
+        -- traceError(TRACE_NORMAL, TRACE_CONSOLE, delete_stmt)
+        local ifid = ternary(self:get_ifid() == getSystemInterfaceId(), getSystemInterfaceId(), nil)
+        return interface.alert_store_query(delete_stmt, ifid)
+    end
+
+    traceError(TRACE_NORMAL, TRACE_CONSOLE, "alert_store: engaged_write_table not defined for " .. self:get_family())
     return false
 end
 
@@ -970,14 +1046,16 @@ function alert_store:delete()
     local where_clause = self:build_where_clause(true)
 
     -- Prepare the final query
-    local q
+    local delete_stmt
     if ntop.isClickHouseEnabled() then
-        q = string.format("ALTER TABLE `%s` DELETE WHERE %s ", table_name, where_clause)
+        delete_stmt = string.format("ALTER TABLE `%s` DELETE WHERE %s ", table_name, where_clause)
     else
-        q = string.format("DELETE FROM `%s` WHERE %s ", table_name, where_clause)
+        delete_stmt = string.format("DELETE FROM `%s` WHERE %s ", table_name, where_clause)
     end
 
-    local res = interface.alert_store_query(q)
+    local ifid = ternary(self:get_ifid() == getSystemInterfaceId(), getSystemInterfaceId(), nil)
+    local res = interface.alert_store_query(delete_stmt, ifid)
+
     return res and table.len(res) == 0
 end
 
@@ -1963,7 +2041,7 @@ function alert_store:get_earliest_available_epoch(status)
     -- Add filters (only needed for the status, must ignore all other filters)
     self:add_status_filter(status)
     local cached_epoch_key =
-        string.format(EARLIEST_AVAILABLE_EPOCH_CACHE_KEY, self:get_ifid(), table_name, self._status)
+        string.format(EARLIEST_AVAILABLE_EPOCH_CACHE_KEY, self:ifid_2_db_ifid(self:get_ifid()), table_name, self._status)
     local earliest = 0
 
     -- Check if epoch has already been cached
@@ -2028,7 +2106,7 @@ end
 
 -- @brief Add filters according to what is specified inside the REST API
 function alert_store:add_request_filters(is_write)
-    local ifid = self:get_ifid()
+    local ifid = self:ifid_2_db_ifid(self:get_ifid())
     local status = _GET["status"] -- Tab: engaged, require-attention (hitorical), all (any)
     local epoch_begin = tonumber(_GET["epoch_begin"])
     local epoch_end = tonumber(_GET["epoch_end"])
@@ -2043,7 +2121,7 @@ function alert_store:add_request_filters(is_write)
     local description = _GET["description"]
 
     -- Remember the score filter (see also alert_stats.lua)
-    local alert_score_cached = string.format(ALERT_SCORE_FILTER_KEY, self:get_ifid())
+    local alert_score_cached = string.format(ALERT_SCORE_FILTER_KEY, self:ifid_2_db_ifid(self:get_ifid()))
 
     if isEmptyString(score) then
         ntop.delCache(alert_score_cached)
@@ -2065,7 +2143,7 @@ function alert_store:add_request_filters(is_write)
 
     if (ntop.isClickHouseEnabled()) then
         -- Clickhouse db has the column 'interface_id', filter by that per interface
-        if ifid ~= self:get_system_ifid() then
+        if ifid ~= self:ifid_2_db_ifid(getSystemInterfaceId()) then
             self:add_filter_condition_list('interface_id', ifid, 'number')
         end
         self:add_filter_condition_list('rowid', rowid, 'string')

@@ -101,7 +101,7 @@ end
 
 -- ##############################################
 
-function host_alert_store:_build_insert_query(alert, write_table, engaged, rowid)
+function host_alert_store:_build_insert_query(alert, write_table, alert_status, extra_columns, extra_values)
     local is_attacker = ternary(alert.is_attacker, 1, 0)
     local is_victim = ternary(alert.is_victim, 1, 0)
     local is_client = ternary(alert.is_client, 1, 0)
@@ -120,30 +120,6 @@ function host_alert_store:_build_insert_query(alert, write_table, engaged, rowid
         else
             ip_version = 6
         end
-    end
-
-    local extra_columns = ""
-    local extra_values = ""
-
-    if ntop.isClickHouseEnabled() then
-        extra_columns = "rowid, "
-        if rowid then
-            extra_values = string.format("concat('00000000-0000-0000-0000-', toFixedString(hex(%u), 12)), ", rowid)
-        else
-            extra_values = "generateUUIDv4(), "
-        end
-    else
-        if rowid then
-            extra_columns = "rowid, "
-            extra_values = string.format("%u, ", rowid)
-        end
-    end
-
-    local alert_status = 0
-    if engaged then
-        alert_status = alert_consts.alert_status.engaged.alert_status_id
-    elseif not alert.require_attention then
-        alert_status = alert_consts.alert_status.acknowledged.alert_status_id
     end
 
     -- In case of some parameter empty, do not insert the alert
@@ -179,52 +155,6 @@ function host_alert_store:_build_insert_query(alert, write_table, engaged, rowid
         self:_escape(alert.json or ""))
 
    return insert_stmt
-end
-
--- ##############################################
-
-function host_alert_store:insert(alert)
-
-    -- traceError(TRACE_NORMAL, TRACE_CONSOLE, insert_stmt)
-
-    local insert_stmt = self:_build_insert_query(alert, self:get_write_table_name(), false, nil)
-    return interface.alert_store_query(insert_stmt)
-end
-
--- ##############################################
-
-function host_alert_store:insert_engaged(alert)
-
-    -- traceError(TRACE_NORMAL, TRACE_CONSOLE, "host_alert_store:insert_engaged")
-
-    local engaged_write_table = self:get_engaged_write_table_name()
-
-    if engaged_write_table then
-        local insert_stmt = self:_build_insert_query(alert, engaged_write_table, true, alert.rowid)
-        return interface.alert_store_query(insert_stmt)
-    end
-
-    return false
-end
-
--- ##############################################
-
-function host_alert_store:delete_engaged(alert)
-
-    -- traceError(TRACE_NORMAL, TRACE_CONSOLE, "host_alert_store:delete_engaged")
-
-    local engaged_write_table = self:get_engaged_write_table_name()
-
-    if engaged_write_table then
-        local q
-
-        if ntop.isClickHouseEnabled() then
-            q = string.format("ALTER TABLE %s DELETE WHERE rowid = concat('00000000-0000-0000-0000-', toFixedString(hex(%u), 12))", engaged_write_table, alert.rowid)
-        else
-            q = string.format("DELETE FROM %s WHERE rowid = %u", engaged_write_table, alert.rowid)
-        end
-        interface.alert_store_query(q)
-    end
 end
 
 -- ##############################################
