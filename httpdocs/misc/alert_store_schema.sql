@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS `active_monitoring_alerts` (
 `json` TEXT NULL,
 `user_label` TEXT NULL, -- A label that can be set by the user
 `user_label_tstamp` DATETIME NULL DEFAULT 0, -- Timestamp of the last user_label change
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -84,6 +85,17 @@ CREATE TABLE IF NOT EXISTS `flow_alerts` (
 `flow_risk_bitmap` INTEGER NOT NULL DEFAULT 0,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
+`cli_network` INTEGER NULL,
+`srv_network` INTEGER NULL,
+`cli_host_pool_id` INTEGER NULL,
+`srv_host_pool_id` INTEGER NULL,
+`info` TEXT NULL,
+`cli_location` INTEGER NULL,
+`srv_location` INTEGER NULL,
+`probe_ip` TEXT NULL,
+`input_snmp` INTEGER NULL,
+`output_snmp` INTEGER NULL,
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -155,6 +167,7 @@ CREATE TABLE IF NOT EXISTS `host_alerts` (
 `json` TEXT NULL,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -207,6 +220,7 @@ CREATE TABLE IF NOT EXISTS `mac_alerts` (
 `json` TEXT NULL,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -249,6 +263,7 @@ CREATE TABLE IF NOT EXISTS `snmp_alerts` (
 `json` TEXT NULL,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -288,6 +303,7 @@ CREATE TABLE IF NOT EXISTS `network_alerts` (
 `json` TEXT NULL,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -327,6 +343,7 @@ CREATE TABLE IF NOT EXISTS `interface_alerts` (
 `json` TEXT NULL,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -363,6 +380,7 @@ CREATE TABLE IF NOT EXISTS `user_alerts` (
 `json` TEXT NULL,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -399,6 +417,7 @@ CREATE TABLE IF NOT EXISTS `system_alerts` (
 `json` TEXT NULL,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
+`alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
 @
@@ -446,189 +465,201 @@ CREATE TABLE IF NOT EXISTS `asset_management` (
 
 ATTACH DATABASE ':memory:' AS mem_db;
 
+@
+
 -- -----------------------------------------------------
--- Table `active_monitoring_alerts`
+-- Table engaged_active_monitoring_alerts
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mem_db.engaged_active_monitoring_alerts` (
-`rowid` INTEGER PRIMARY KEY,
-`alert_id` INTEGER NOT NULL CHECK(`alert_id` >= 0),
-`alert_status` INTEGER NOT NULL CHECK(`alert_status` >= 0) DEFAULT 0, -- e.g., historical [0], acknowledged [1], engaged (TBD)
-`resolved_ip` TEXT NULL,
-`resolved_name` TEXT NULL,
-`interface_id` INTEGER NULL,
-`measurement` TEXT NULL,
-`measure_threshold` INTEGER NULL DEFAULT 0,
-`measure_value` REAL NULL DEFAULT 0,
-`tstamp` DATETIME NOT NULL,
-`tstamp_end` DATETIME NULL DEFAULT 0,
-`severity` INTEGER NOT NULL CHECK(`severity` >= 0),
-`score` INTEGER NOT NULL DEFAULT 0 CHECK(`score` >= 0),
-`counter` INTEGER NOT NULL DEFAULT 0 CHECK(`counter` >= 0),
-`description` TEXT NULL,
-`json` TEXT NULL,
-`user_label` TEXT NULL, -- A label that can be set by the user
-`user_label_tstamp` DATETIME NULL DEFAULT 0, -- Timestamp of the last user_label change
-`require_attention` INTEGER NULL DEFAULT 0
+CREATE TABLE IF NOT EXISTS mem_db.engaged_active_monitoring_alerts (
+rowid INTEGER PRIMARY KEY,
+alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
+alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0, -- e.g., historical [0], acknowledged [1], engaged (TBD)
+resolved_ip TEXT NULL,
+resolved_name TEXT NULL,
+interface_id INTEGER NULL,
+measurement TEXT NULL,
+measure_threshold INTEGER NULL DEFAULT 0,
+measure_value REAL NULL DEFAULT 0,
+tstamp DATETIME NOT NULL,
+tstamp_end DATETIME NULL DEFAULT 0,
+severity INTEGER NOT NULL CHECK(severity >= 0),
+score INTEGER NOT NULL DEFAULT 0 CHECK(score >= 0),
+counter INTEGER NOT NULL DEFAULT 0 CHECK(counter >= 0),
+description TEXT NULL,
+json TEXT NULL,
+user_label TEXT NULL, -- A label that can be set by the user
+user_label_tstamp DATETIME NULL DEFAULT 0, -- Timestamp of the last user_label change
+alert_category INTEGER NULL,
+require_attention INTEGER NULL DEFAULT 0
 );
 
 @
 
 -- -----------------------------------------------------
--- Table `mac_alerts`
+-- Table engaged_mac_alerts
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mem_db.engaged_mac_alerts` (
-`rowid` INTEGER PRIMARY KEY,
-`alert_id` INTEGER NOT NULL CHECK(`alert_id` >= 0),
-`alert_status` INTEGER NOT NULL CHECK(`alert_status` >= 0) DEFAULT 0,
-`interface_id` INTEGER NULL,
-`address` TEXT NULL DEFAULT 0,
-`device_type` INTEGER NULL CHECK(`device_type` >= 0),
-`name` TEXT NULL,
-`is_attacker` INTEGER NULL CHECK(`is_attacker` IN (0,1)),
-`is_victim` INTEGER NULL CHECK(`is_victim` IN (0,1)),
-`tstamp` DATETIME NOT NULL,
-`tstamp_end` DATETIME NULL DEFAULT 0,
-`severity` INTEGER NOT NULL CHECK(`severity` >= 0),
-`score` INTEGER NOT NULL DEFAULT 0 CHECK(`score` >= 0),
-`granularity` INTEGER NOT NULL DEFAULT 0 CHECK(`granularity` >= 0),
-`counter` INTEGER NOT NULL DEFAULT 0 CHECK(`counter` >= 0),
-`description` TEXT NULL,
-`json` TEXT NULL,
-`user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0,
-`require_attention` INTEGER NULL DEFAULT 0
+CREATE TABLE IF NOT EXISTS mem_db.engaged_mac_alerts (
+rowid INTEGER PRIMARY KEY,
+alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
+alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0,
+interface_id INTEGER NULL,
+address TEXT NULL DEFAULT 0,
+device_type INTEGER NULL CHECK(device_type >= 0),
+name TEXT NULL,
+is_attacker INTEGER NULL CHECK(is_attacker IN (0,1)),
+is_victim INTEGER NULL CHECK(is_victim IN (0,1)),
+tstamp DATETIME NOT NULL,
+tstamp_end DATETIME NULL DEFAULT 0,
+severity INTEGER NOT NULL CHECK(severity >= 0),
+score INTEGER NOT NULL DEFAULT 0 CHECK(score >= 0),
+granularity INTEGER NOT NULL DEFAULT 0 CHECK(granularity >= 0),
+counter INTEGER NOT NULL DEFAULT 0 CHECK(counter >= 0),
+description TEXT NULL,
+json TEXT NULL,
+user_label TEXT NULL,
+user_label_tstamp DATETIME NULL DEFAULT 0,
+alert_category INTEGER NULL,
+require_attention INTEGER NULL DEFAULT 0
 );
 
 @
 
 -- -----------------------------------------------------
--- Table `snmp_alerts`
+-- Table engaged_snmp_alerts
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mem_db.engaged_snmp_alerts` (
-`rowid` INTEGER PRIMARY KEY,
-`alert_id` INTEGER NOT NULL CHECK(`alert_id` >= 0),
-`alert_status` INTEGER NOT NULL CHECK(`alert_status` >= 0) DEFAULT 0,
-`interface_id` INTEGER NULL,
-`ip` TEXT NOT NULL,
-`port` INTEGER NULL,
-`name` TEXT NULL,
-`port_name` TEXT NULL,
-`tstamp` DATETIME NOT NULL,
-`tstamp_end` DATETIME NULL DEFAULT 0,
-`severity` INTEGER NOT NULL CHECK(`severity` >= 0),
-`score` INTEGER NOT NULL DEFAULT 0 CHECK(`score` >= 0),
-`granularity` INTEGER NOT NULL DEFAULT 0 CHECK(`granularity` >= 0),
-`counter` INTEGER NOT NULL DEFAULT 0 CHECK(`counter` >= 0),
-`description` TEXT NULL,
-`json` TEXT NULL,
-`user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0,
-`require_attention` INTEGER NULL DEFAULT 0
+CREATE TABLE IF NOT EXISTS mem_db.engaged_snmp_alerts (
+rowid INTEGER PRIMARY KEY,
+alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
+alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0,
+interface_id INTEGER NULL,
+ip TEXT NOT NULL,
+port INTEGER NULL,
+name TEXT NULL,
+port_name TEXT NULL,
+tstamp DATETIME NOT NULL,
+tstamp_end DATETIME NULL DEFAULT 0,
+severity INTEGER NOT NULL CHECK(severity >= 0),
+score INTEGER NOT NULL DEFAULT 0 CHECK(score >= 0),
+granularity INTEGER NOT NULL DEFAULT 0 CHECK(granularity >= 0),
+counter INTEGER NOT NULL DEFAULT 0 CHECK(counter >= 0),
+description TEXT NULL,
+json TEXT NULL,
+user_label TEXT NULL,
+user_label_tstamp DATETIME NULL DEFAULT 0,
+alert_category INTEGER NULL,
+require_attention INTEGER NULL DEFAULT 0
 );
 
 @
 
 -- -----------------------------------------------------
--- Table `network_alerts`
+-- Table engaged_network_alerts
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mem_db.engaged_network_alerts` (
-`rowid` INTEGER PRIMARY KEY ,
-`local_network_id` INTEGER NOT NULL CHECK(`local_network_id` >= 0),
-`alert_id` INTEGER NOT NULL CHECK(`alert_id` >= 0),
-`alert_status` INTEGER NOT NULL CHECK(`alert_status` >= 0) DEFAULT 0,
-`interface_id` INTEGER NULL,
-`name` TEXT NULL,
-`alias` TEXT NULL,
-`tstamp` DATETIME NOT NULL,
-`tstamp_end` DATETIME NULL DEFAULT 0,
-`severity` INTEGER NOT NULL CHECK(`severity` >= 0),
-`score` INTEGER NOT NULL DEFAULT 0 CHECK(`score` >= 0),
-`granularity` INTEGER NOT NULL DEFAULT 0 CHECK(`granularity` >= 0),
-`counter` INTEGER NOT NULL DEFAULT 0 CHECK(`counter` >= 0),
-`description` TEXT NULL,
-`json` TEXT NULL,
-`user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0,
-`require_attention` INTEGER NULL DEFAULT 0
+CREATE TABLE IF NOT EXISTS mem_db.engaged_network_alerts (
+rowid INTEGER PRIMARY KEY ,
+local_network_id INTEGER NOT NULL CHECK(local_network_id >= 0),
+alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
+alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0,
+interface_id INTEGER NULL,
+name TEXT NULL,
+alias TEXT NULL,
+tstamp DATETIME NOT NULL,
+tstamp_end DATETIME NULL DEFAULT 0,
+severity INTEGER NOT NULL CHECK(severity >= 0),
+score INTEGER NOT NULL DEFAULT 0 CHECK(score >= 0),
+granularity INTEGER NOT NULL DEFAULT 0 CHECK(granularity >= 0),
+counter INTEGER NOT NULL DEFAULT 0 CHECK(counter >= 0),
+description TEXT NULL,
+json TEXT NULL,
+user_label TEXT NULL,
+user_label_tstamp DATETIME NULL DEFAULT 0,
+alert_category INTEGER NULL,
+require_attention INTEGER NULL DEFAULT 0
 );
 
 @
 
 -- -----------------------------------------------------
--- Table `interface_alerts`
+-- Table engaged_interface_alerts
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mem_db.engaged_interface_alerts` (
-`rowid` INTEGER PRIMARY KEY,
-`ifid` INTEGER NOT NULL CHECK(`ifid` >= -1),
-`alert_id` INTEGER NOT NULL CHECK(`alert_id` >= 0),
-`alert_status` INTEGER NOT NULL CHECK(`alert_status` >= 0) DEFAULT 0,
-`interface_id` INTEGER NULL,
-`subtype` TEXT NULL,
-`name` TEXT NULL,
-`alias` TEXT NULL,
-`tstamp` DATETIME NOT NULL,
-`tstamp_end` DATETIME NULL DEFAULT 0,
-`severity` INTEGER NOT NULL CHECK(`severity` >= 0),
-`score` INTEGER NOT NULL DEFAULT 0 CHECK(`score` >= 0),
-`granularity` INTEGER NOT NULL DEFAULT 0 CHECK(`granularity` >= 0),
-`counter` INTEGER NOT NULL DEFAULT 0 CHECK(`counter` >= 0),
-`description` TEXT NULL,
-`json` TEXT NULL,
-`user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0,
-`require_attention` INTEGER NULL DEFAULT 0
+CREATE TABLE IF NOT EXISTS mem_db.engaged_interface_alerts (
+rowid INTEGER PRIMARY KEY,
+ifid INTEGER NOT NULL CHECK(ifid >= -1),
+alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
+alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0,
+interface_id INTEGER NULL,
+subtype TEXT NULL,
+name TEXT NULL,
+alias TEXT NULL,
+tstamp DATETIME NOT NULL,
+tstamp_end DATETIME NULL DEFAULT 0,
+severity INTEGER NOT NULL CHECK(severity >= 0),
+score INTEGER NOT NULL DEFAULT 0 CHECK(score >= 0),
+granularity INTEGER NOT NULL DEFAULT 0 CHECK(granularity >= 0),
+counter INTEGER NOT NULL DEFAULT 0 CHECK(counter >= 0),
+description TEXT NULL,
+json TEXT NULL,
+user_label TEXT NULL,
+user_label_tstamp DATETIME NULL DEFAULT 0,
+alert_category INTEGER NULL,
+require_attention INTEGER NULL DEFAULT 0
 );
 
 @
 
 -- -----------------------------------------------------
--- Table `user_alerts`
+-- Table engaged_user_alerts
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mem_db.engaged_user_alerts` (
-`rowid` INTEGER PRIMARY KEY,
-`alert_id` INTEGER NOT NULL CHECK(`alert_id` >= 0),
-`alert_status` INTEGER NOT NULL CHECK(`alert_status` >= 0) DEFAULT 0,
-`interface_id` INTEGER NULL,
-`user` TEXT NULL,
-`tstamp` DATETIME NOT NULL,
-`tstamp_end` DATETIME NULL DEFAULT 0,
-`severity` INTEGER NOT NULL CHECK(`severity` >= 0),
-`score` INTEGER NOT NULL DEFAULT 0 CHECK(`score` >= 0),
-`granularity` INTEGER NOT NULL DEFAULT 0 CHECK(`granularity` >= 0),
-`counter` INTEGER NOT NULL DEFAULT 0 CHECK(`counter` >= 0),
-`description` TEXT NULL,
-`json` TEXT NULL,
-`user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0,
-`require_attention` INTEGER NULL DEFAULT 0
+CREATE TABLE IF NOT EXISTS mem_db.engaged_user_alerts (
+rowid INTEGER PRIMARY KEY,
+alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
+alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0,
+interface_id INTEGER NULL,
+user TEXT NULL,
+tstamp DATETIME NOT NULL,
+tstamp_end DATETIME NULL DEFAULT 0,
+severity INTEGER NOT NULL CHECK(severity >= 0),
+score INTEGER NOT NULL DEFAULT 0 CHECK(score >= 0),
+granularity INTEGER NOT NULL DEFAULT 0 CHECK(granularity >= 0),
+counter INTEGER NOT NULL DEFAULT 0 CHECK(counter >= 0),
+description TEXT NULL,
+json TEXT NULL,
+user_label TEXT NULL,
+user_label_tstamp DATETIME NULL DEFAULT 0,
+alert_category INTEGER NULL,
+require_attention INTEGER NULL DEFAULT 0
 );
 
 @
 
 -- -----------------------------------------------------
--- Table `system_alerts`
+-- Table engaged_system_alerts
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mem_db.engaged_system_alerts` (
-`rowid` INTEGER PRIMARY KEY,
-`alert_id` INTEGER NOT NULL CHECK(`alert_id` >= 0),
-`alert_status` INTEGER NOT NULL CHECK(`alert_status` >= 0) DEFAULT 0,
-`interface_id` INTEGER NULL,
-`name` TEXT NULL,
-`tstamp` DATETIME NOT NULL,
-`tstamp_end` DATETIME NULL DEFAULT 0,
-`severity` INTEGER NOT NULL CHECK(`severity` >= 0),
-`score` INTEGER NOT NULL DEFAULT 0 CHECK(`score` >= 0),
-`granularity` INTEGER NOT NULL DEFAULT 0 CHECK(`granularity` >= 0),
-`counter` INTEGER NOT NULL DEFAULT 0 CHECK(`counter` >= 0),
-`description` TEXT NULL,
-`json` TEXT NULL,
-`user_label` TEXT NULL,
-`user_label_tstamp` DATETIME NULL DEFAULT 0,
-`require_attention` INTEGER NULL DEFAULT 0
+CREATE TABLE IF NOT EXISTS mem_db.engaged_system_alerts (
+rowid INTEGER PRIMARY KEY,
+alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
+alert_status INTEGER NOT NULL CHECK(alert_status >= 0) DEFAULT 0,
+interface_id INTEGER NULL,
+name TEXT NULL,
+tstamp DATETIME NOT NULL,
+tstamp_end DATETIME NULL DEFAULT 0,
+severity INTEGER NOT NULL CHECK(severity >= 0),
+score INTEGER NOT NULL DEFAULT 0 CHECK(score >= 0),
+granularity INTEGER NOT NULL DEFAULT 0 CHECK(granularity >= 0),
+counter INTEGER NOT NULL DEFAULT 0 CHECK(counter >= 0),
+description TEXT NULL,
+json TEXT NULL,
+user_label TEXT NULL,
+user_label_tstamp DATETIME NULL DEFAULT 0,
+alert_category INTEGER NULL,
+require_attention INTEGER NULL DEFAULT 0
 );
 
 @
 
+-- -----------------------------------------------------
+-- Table engaged_host_alerts
+-- -----------------------------------------------------
 CREATE TABLE mem_db.engaged_host_alerts (
 rowid INTEGER PRIMARY KEY,
 alert_id INTEGER NOT NULL CHECK(alert_id >= 0),
