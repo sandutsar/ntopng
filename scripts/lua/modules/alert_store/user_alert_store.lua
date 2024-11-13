@@ -52,7 +52,7 @@ function user_alert_store:_build_insert_query(alert, write_table, alert_status, 
    local insert_stmt = string.format("INSERT INTO %s "..
       "(%salert_id, alert_status, require_attention, interface_id, tstamp, tstamp_end, severity, score, user, granularity, json) "..
       "VALUES (%s%u, %u, %u, %d, %u, %u, %u, %u, '%s', %u, '%s'); ",
-      swrite_table, 
+      write_table, 
       extra_columns,
       extra_values,
       alert.alert_id,
