@@ -37,7 +37,7 @@ OtherAlertableEntity::~OtherAlertableEntity() {}
 
 void OtherAlertableEntity::luaAlert(lua_State *vm, const Alert *alert,
                                     ScriptPeriodicity p) const {
-  lua_push_int64_table_entry(vm, "rowid", alert->alert_id);
+  lua_push_int64_table_entry(vm, "rowid", alert->rowid);
   lua_push_int32_table_entry(vm, "alert_id", alert->alert_id);
   lua_push_str_table_entry(vm, "subtype", alert->subtype.c_str());
   lua_push_int32_table_entry(vm, "entity_id", getEntityType());
