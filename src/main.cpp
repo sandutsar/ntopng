@@ -243,10 +243,12 @@ extern "C" {
           ntop->getTrace()->traceEvent(TRACE_WARNING, "\n");
         }
 #endif
-	
+
+#if !defined(HAVE_NEDGE)
 	if (iface == NULL && strncmp(ifName, "sflow:", 6) == 0)
           iface = new (std::nothrow) sFlowPktInterface(ifName);
-
+#endif
+	
 #if defined(HAVE_NEDGE)
         if (iface == NULL && strncmp(ifName, "nf:", 3) == 0)
           iface = new (std::nothrow) NetfilterInterface(ifName);
