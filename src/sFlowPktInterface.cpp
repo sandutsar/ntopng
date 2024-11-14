@@ -21,6 +21,7 @@
 
 #include "ntop_includes.h"
 
+#ifndef HAVE_NEDGE
 #include "../third-party/sflow_collect.c"
 
 /* **************************************************** */
@@ -128,3 +129,5 @@ void sFlowPktInterface::shutdown() {
 }
 
 /* **************************************************** */
+
+#endif

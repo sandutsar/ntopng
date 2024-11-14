@@ -3034,7 +3034,7 @@ static int readFlowSample_v2v4(SFSample *sample)
   -----------------___________________________------------------
 */
 
-static int lengthCheck(SFSample *sample, const char *description, u_char *start, int len) {
+static int lengthCheck(SFSample *sample, const char *description, u_char *start, u_int32_t len) {
   u_int32_t actualLen = (u_char *)sample->datap - start;
 
   if(actualLen != len)
@@ -3773,13 +3773,8 @@ static void handleSflowCountersSample(SFSample *sample) {
 
 /* =============================================================== */
 
-static void update_flow_stats(u_int32_t probe_ipv4_address, u_int32_t source_id, u_int32_t num_flows) {
-
-}
-
-/* =============================================================== */
-
-static void handleSflowSample(sFlowPktInterface *iface, SFSample *sample, int deviceId) {
+static void handleSflowSample(sFlowPktInterface *iface,
+			      SFSample *sample, int deviceId) {
   struct pcap_pkthdr pkthdr;
   u_int32_t msk = 0;
   
