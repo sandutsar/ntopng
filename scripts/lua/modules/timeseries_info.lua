@@ -2933,12 +2933,15 @@ end
 -- #################################
 
 local function add_top_flow_port_timeseries(tags, timeseries)
-    local series = ts_utils.listSeries("flowdev_port:ndpi", table.clone(tags), tags.epoch_begin) or {}
     local tmp_tags = table.clone(tags)
-
+    local ts_suffix = "" -- this is used just for influxdb
+    if highExporterTimeseriesResolution() and ts_utils.getDriverName() == "influxdb" then
+        ts_suffix = "_min"
+    end
+    local series = ts_utils.listSeries("flowdev_port:ndpi" .. ts_suffix, table.clone(tags), tags.epoch_begin) or {}
     if not table.empty(series) then
         timeseries[#timeseries + 1] = {
-            schema = "top:flowdev_port:ndpi",
+            schema = "top:flowdev_port:ndpi" .. ts_suffix,
             chart_type = "line",
             id = timeseries_id.snmp_device,
             label = i18n("db_search.top_l7proto"),
@@ -2959,7 +2962,7 @@ local function add_top_flow_port_timeseries(tags, timeseries)
         for _, serie in pairs(series or {}) do
             local tot = 0
             tmp_tags.protocol = serie.protocol
-            local tot_serie = ts_utils.queryTotal("flowdev_port:ndpi", tags.epoch_begin, tags.epoch_end, tmp_tags)
+            local tot_serie = ts_utils.queryTotal("flowdev_port:ndpi" .. ts_suffix, tags.epoch_begin, tags.epoch_end, tmp_tags)
             -- Remove serie with no data
             for _, value in pairs(tot_serie or {}) do
                 tot = tot + tonumber(value)
@@ -2967,7 +2970,7 @@ local function add_top_flow_port_timeseries(tags, timeseries)
 
             if (tot > 0) then
                 timeseries[#timeseries + 1] = {
-                    schema = "top:flowdev_port:ndpi",
+                    schema = "top:flowdev_port:ndpi" .. ts_suffix,
                     group = i18n("graphs.l7_proto"),
                     priority = 2,
                     query = "protocol:" .. serie.protocol,

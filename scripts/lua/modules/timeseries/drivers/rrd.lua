@@ -1015,8 +1015,6 @@ function driver:timeseries_top(options, top_tags)
         end
     end
 
-    local stats = nil
-
     return {
         metadata = {
             epoch_begin = options.epoch_begin,

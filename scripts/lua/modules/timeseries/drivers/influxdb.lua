@@ -1614,6 +1614,10 @@ function driver:timeseries_top(options, top_tags)
             if isEmptyString(ext_label) then
                 ext_label = ifindex
             end
+            -- Special case, top protocol timeseries, here the ext_label needs to be the protocol
+            if query_tag.protocol then
+                ext_label = value[3]
+            end
 
             sorted[#sorted + 1] = {
                 tags = query_tag,
