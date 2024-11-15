@@ -2980,11 +2980,12 @@ local function add_top_flow_port_timeseries(tags, timeseries)
                     timeseries = {
                         bytes_sent = {
                             label = serie.protocol .. " " .. i18n('graphs.metric_labels.sent'),
-                            color = timeseries_info.get_timeseries_color('bytes')
+                            color = timeseries_info.get_timeseries_color('bytes_sent')
                         },
                         bytes_rcvd = {
+                            invert_direction = true,
                             label = serie.protocol .. " " .. i18n('graphs.metric_labels.rcvd'),
-                            color = timeseries_info.get_timeseries_color('bytes')
+                            color = timeseries_info.get_timeseries_color('bytes_rcvd')
                         }
                     }
                 }
