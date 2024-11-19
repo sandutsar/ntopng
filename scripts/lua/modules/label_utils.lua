@@ -416,7 +416,7 @@ function getFullLocalNetworkName(network)
 
     local alias = getLocalNetworkAlias(network)
 
-    if network_id == nil or network_id >= network_consts.UNKNOWN_NETWORK then
+    if network_id ~= nil and network_id >= network_consts.UNKNOWN_NETWORK then
         return ""
     end
 
