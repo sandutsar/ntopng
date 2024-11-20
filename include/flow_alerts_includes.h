@@ -86,7 +86,6 @@
 #include "flow_alerts/BlacklistedClientContactAlert.h"
 #include "flow_alerts/BlacklistedServerContactAlert.h"
 #include "flow_alerts/TCPFlowResetAlert.h"
-#include "flow_alerts/TCPProbingAttemptAlert.h"
 
 /* Pro Alerts - do NOT use #ifdef as alerts must always be available */
 #include "flow_alerts/FlowRiskTLSUnsafeCiphersAlert.h"

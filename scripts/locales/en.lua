@@ -3873,7 +3873,6 @@ local lang = {
     },
     ["flow_risk"] = {        
         ["malicious_signature_detected"] = "Possibly Client Malicious JA3 Signature",
-        ["tcp_probing_attempt"] = "TCP Probing Attempt",
         ["ndpi_anonymous_subscriber"] = "Anonymous Subscriber",
         ["ndpi_anonymous_subscriber_descr"] = "Trigger an alert whenever the (source) IP address has been anonymized and it can’t be used to identify the subscriber (e.g. iCloud-private-relay)",
         ["ndpi_binary_application_transfer"] = "Binary App/.exe Transfer",
