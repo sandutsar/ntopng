@@ -718,7 +718,7 @@ page_utils.add_menubar_section({
         }, {
             entry = page_utils.menu_entries.category_lists,
             hidden = not is_admin,
-            url = '/lua/admin/blacklists.lua?enabled_status=enabled'
+            url = '/lua/admin/blacklists.lua?enabled_status=all'
         },  {entry = page_utils.menu_entries.divider}, {
             entry = page_utils.menu_entries.manage_configurations,
             hidden = not is_admin or not ntop.hasDumpCache(),
