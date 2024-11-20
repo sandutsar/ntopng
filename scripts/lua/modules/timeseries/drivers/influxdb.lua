@@ -12,7 +12,6 @@ require "locales_utils"
 require "lua_utils_generic"
 local ts_common = require("ts_common")
 local json = require("dkjson")
-local os_utils = require("os_utils")
 
 --
 -- Sample query:
