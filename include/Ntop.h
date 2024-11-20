@@ -129,8 +129,8 @@ class Ntop {
   char *local_network_aliases[CONST_MAX_NUM_NETWORKS];
   AddressTree local_network_tree, cloud_local_network_tree;
 
-  /* Local Autonomous Systems*/
-  std::set<u_int16_t> local_as;
+  /* Local Autonomous Systems */
+  std::map<u_int32_t, bool> local_asn;
 
   /* Alerts */
   FlowAlertsLoader flow_alerts_loader;
@@ -835,6 +835,7 @@ class Ntop {
   u_int16_t getNumberHostPools();
   u_int32_t getNumberHostPoolsMembers();
   u_int8_t getNumberProfiles();
+  bool isInLocalASN(IpAddress *ip);
 };
 
 extern Ntop *ntop;

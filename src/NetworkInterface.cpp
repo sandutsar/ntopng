@@ -3910,8 +3910,8 @@ void NetworkInterface::findFlowHosts(int32_t iface_idx, u_int16_t vlan_id,
       return;
     }
 
-    if (_src_ip &&
-        (_src_ip->isLocalHost() || _src_ip->isLocalInterfaceAddress())) {
+    if (_src_ip
+	&& (_src_ip->isLocalHost() || _src_ip->isLocalInterfaceAddress() || ntop->isInLocalASN(_src_ip))) {
       INTERFACE_PROFILING_SECTION_ENTER("NetworkInterface::findFlowHosts: new LocalHost", 4);
       (*src) = new (std::nothrow)LocalHost(this, iface_idx, src_mac, vlan_id, observation_domain_id, _src_ip);
       INTERFACE_PROFILING_SECTION_EXIT(4);
@@ -3927,8 +3927,7 @@ void NetworkInterface::findFlowHosts(int32_t iface_idx, u_int16_t vlan_id,
       INTERFACE_PROFILING_SECTION_EXIT(6);
 
       if (!add_res) {
-        // ntop->getTrace()->traceEvent(TRACE_WARNING, "Too many hosts in
-        // interface %s", ifname);
+        // ntop->getTrace()->traceEvent(TRACE_WARNING, "Too many hosts in interface %s", ifname);
         delete *src;
         *src = *dst = NULL;
         has_too_many_hosts = true;
@@ -3953,7 +3952,7 @@ void NetworkInterface::findFlowHosts(int32_t iface_idx, u_int16_t vlan_id,
     }
 
     if (_dst_ip &&
-        (_dst_ip->isLocalHost() || _dst_ip->isLocalInterfaceAddress())) {
+        (_dst_ip->isLocalHost() || _dst_ip->isLocalInterfaceAddress() || ntop->isInLocalASN(_dst_ip))) {
       INTERFACE_PROFILING_SECTION_ENTER("NetworkInterface::findFlowHosts: new LocalHost", 4);
       (*dst) = new (std::nothrow)LocalHost(this, iface_idx, dst_mac, vlan_id, observation_domain_id, _dst_ip);
       INTERFACE_PROFILING_SECTION_EXIT(4);

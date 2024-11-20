@@ -192,7 +192,7 @@ Geolocation::~Geolocation() {
 
 /* *************************************** */
 
-void Geolocation::getAS(IpAddress *addr, u_int32_t *asn, char **asname) {
+bool Geolocation::getAS(IpAddress *addr, u_int32_t *asn, char **asname) {
   if (asn) *asn = 0;
   if (asname) *asname = NULL;
 
@@ -203,7 +203,7 @@ void Geolocation::getAS(IpAddress *addr, u_int32_t *asn, char **asname) {
   MMDB_lookup_result_s result;
   MMDB_entry_data_s entry_data;
 
-  if (!mmdbs_ok) return;
+  if (!mmdbs_ok) return(false);
 
   if (addr && addr->get_sockaddr(&sa, &sa_len)) {
     result = MMDB_lookup_sockaddr(&geo_ip_asn_mmdb, sa, &mmdb_error);
@@ -234,6 +234,8 @@ void Geolocation::getAS(IpAddress *addr, u_int32_t *asn, char **asname) {
           }
         }
       }
+
+      return(true);
     } else
       ntop->getTrace()->traceEvent(TRACE_ERROR, "Lookup failed [%s]",
                                    MMDB_strerror(mmdb_error));
@@ -242,15 +244,15 @@ void Geolocation::getAS(IpAddress *addr, u_int32_t *asn, char **asname) {
   }
 #endif
 
-  return;
+  return(false);
 }
 
 /* *************************************** */
 
-void Geolocation::getInfo(IpAddress *addr, char **continent_code,
+bool Geolocation::getInfo(IpAddress *addr, char **continent_code,
                           char **country_code, char **city, float *latitude,
                           float *longitude) {
-  if ((!addr) || (addr->getVersion() == 0)) return;
+  if ((!addr) || (addr->getVersion() == 0)) return(false);
 
   if (continent_code) *continent_code = strdup((char *)UNKNOWN_CONTINENT);
   if (country_code) *country_code = strdup((char *)UNKNOWN_COUNTRY);
@@ -263,7 +265,7 @@ void Geolocation::getInfo(IpAddress *addr, char **continent_code,
   ssize_t sa_len;
   char *cdata;
 
-  if (!mmdbs_ok) return;
+  if (!mmdbs_ok) return(false);
 
   if (addr && addr->get_sockaddr(&sa, &sa_len)) {
     int mmdb_error, status;
@@ -336,6 +338,7 @@ void Geolocation::getInfo(IpAddress *addr, char **continent_code,
     }
 
     free(sa);
+    return(true);
   } else {
     char buf[64];
 
@@ -347,7 +350,7 @@ void Geolocation::getInfo(IpAddress *addr, char **continent_code,
   }
 #endif
 
-  return;
+  return(false);
 }
 
 /* *************************************** */

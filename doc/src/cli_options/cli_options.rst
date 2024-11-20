@@ -58,9 +58,8 @@ ntopng supports a large number of command line parameters. To see what they are,
                                         | -w [3ffe:2a00:100:7031::1]:3002
     [--https-port|-W] <[:]https port>   | HTTPS. See also -w above. Default: 3001
     [--http-log|-L] <path>              | Log HTTP requests in the specified file
-    [--local-networks|-m] <local nets>  | Local networks list.
-                                        | <local nets> is a comma-separated list of networks
-                                        | in CIDR format or a path to a file.
+    [--local-networks|-m] <local nets>  | Local networks in CIDR format and
+					| autonomous system in asn<number> format.
                                         | The file accepts multiple lines with networks in CIDR format.
                                         | An optional '=<alias>' is supported
                                         | to specify an alias.
@@ -315,11 +314,11 @@ Some of the most important parameters are briefly discussed here.
 
    A great deal of information can be stored for local hosts, including their Layer-7 application protocols. However, additional information comes at the cost of extra memory and space used. Therefore, although a user would virtually want to mark all possible networks as local, in practice he/she will have to find a good tradeoff.
 
-   Local networks can be specified as a comma separated list of IPv4 (IPv6) addresses and subnet masks. For example to mark three networks as local ntopng can be executed as follows:
+   Local networks can be specified as a comma separated list of IPv4 (IPv6) addresses and subnet masks or ASN (Authonomous Systems Number). For example to mark three networks as local ntopng can be executed as follows:
    
    .. code:: bash
 
-      ntopng --local-networks="192.168.2.0/24,10.0.0.0/8,8.8.8.0/24"
+      ntopng --local-networks="192.168.2.0/24,10.0.0.0/8,8.8.8.0/24,asn1234"
 
    In the ntopng web interface, local networks and hosts are displayed with green colors while remote networks and hosts hosts with gray colors. Extra information will be available in the contextual menus for local networks.
 
@@ -336,6 +335,7 @@ Some of the most important parameters are briefly discussed here.
    .. code:: bash
 
       192.168.2.0/24=office,192.168.2.1/32,8.8.8.8/32
+      asn5678
       9.9.9.9/32
       10.0.0.0/8
 

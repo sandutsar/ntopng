@@ -3680,22 +3680,32 @@ u_int32_t Ntop::getLocalNetworkId(const char *address_str) {
 /* ******************************************* */
 
 bool Ntop::addLocalNetwork(char *_net) {
-  char *net, *position_ptr, *_as;
-  char alias[64] = "";
-  u_int32_t id = local_network_tree.getNumAddresses();
-  u_int32_t i, pos = 0;
+  if (strncmp(_net, "asn", 3) == 0){
+    /* ASN */
+    u_int32_t asn = (u_int32_t) atoi(&_net[3]);
+    
+    if(local_asn.find(asn) == local_asn.end()) {
+      local_asn[asn] = true;
+      ntop->getTrace()->traceEvent(TRACE_INFO, "Added Autonomous System %u", asn);
+      return (true);
+    } else
+      return(false); /* Already present */      
+  } else {
+    /* Network */   
+    char *net, *position_ptr;
+    char alias[64] = "";
+    u_int32_t id = local_network_tree.getNumAddresses();
+    u_int32_t i, pos = 0;
 
-  _as = strchr(_net, ':');
-  if (_as){
-    u_int16_t as = (u_int16_t) atoi(_as + 1);
-    bool res = local_as.insert(as).second;
-    if(res) {
-      ntop->getTrace()->traceEvent(TRACE_INFO, "Added Autonomous System %s", _as + 1);
-    }else{
-      ntop->getTrace()->traceEvent(TRACE_WARNING, "Failure Adding Autonomous System %s", _as + 1);
+    if (id >= getMaxNumLocalNetworks()) {
+      ntop->getTrace()->traceEvent(TRACE_ERROR, "Too many networks defined (%d): ignored %s", id, _net);
       return (false);
     }
-  } else {
+
+    // Getting the pointer and the position to the "=" indicator
+    position_ptr = strstr(_net, "=");
+    pos = (position_ptr == NULL ? 0 : position_ptr - _net);
+
     if (pos) {
       // "=" indicator is present inside the string
       // Separating the alias from the network
@@ -3712,10 +3722,10 @@ bool Ntop::addLocalNetwork(char *_net) {
 
     for (i = 0; i < id; i++) {
       if (strcmp(local_network_names[i], net) == 0) {
-        /* Already present */
-        //ntop->getTrace()->traceEvent(TRACE_NORMAL, "Already present");
-        free(net);
-        return (false);
+	/* Already present */
+	//ntop->getTrace()->traceEvent(TRACE_NORMAL, "Already present");
+	free(net);
+	return (false);
       }
     }
 
@@ -3734,16 +3744,16 @@ bool Ntop::addLocalNetwork(char *_net) {
       u_int len = ndpi_min(strlen(alias), sizeof(out) - 2);
 
       for (u_int i = 0, j = 0; i < len; i++) {
-        if (isprint(alias[i])) out[j++] = alias[i];
+	if (isprint(alias[i])) out[j++] = alias[i];
       }
 
       local_network_aliases[id] = strdup(out);
     }
 
     ntop->getTrace()->traceEvent(TRACE_INFO, "Added Local Network %s", net);
-  }
 
-  return (true);
+    return (true);
+  }
 }
 
 /* ******************************************* */
@@ -4344,3 +4354,19 @@ u_int32_t Ntop::getMaxNumLocalNetworks() {
 
 /* ******************************************* */
 
+bool Ntop::isInLocalASN(IpAddress *ip) {
+  u_int32_t asn;
+  char *asname;
+  
+  if((geo == NULL) || (local_asn.size() == 0 /* No ASN defined */))
+    return(false);
+
+  if(geo->getAS(ip, &asn, &asname)) {
+    if(local_asn.find(asn) != local_asn.end())
+      return(true);
+  }
+
+  return(false);
+}
+
+/* ******************************************* */
