@@ -11,7 +11,6 @@ if (not do_am) then
   return
 end
 
-local ts_dump = require "ts_min_dump_utils"
 local am_utils = require  "am_utils"
 
 local hosts = am_utils.getHosts(nil, "hour")
