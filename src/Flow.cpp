@@ -7980,6 +7980,7 @@ void Flow::setProtocolJSONInfo() {
     * Note: this is called by setPredominantAlertInfo in case of alerts */
   getProtocolJSONInfo(json_serializer);
   getCustomFieldsInfo(json_serializer);
+  getJSONRiskInfo(json_serializer);
 
   if (json_serializer)
     json = ndpi_serializer_get_buffer(json_serializer, &json_len);
