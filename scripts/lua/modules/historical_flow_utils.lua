@@ -2,6 +2,7 @@
 -- (C) 2013-24 - ntop.org
 --
 
+require "lua_utils_get"
 local tag_utils = require "tag_utils"
 local dscp_consts = require "dscp_consts"
 local alert_consts = require "alert_consts"
@@ -1779,7 +1780,12 @@ function historical_flow_utils.getHistoricalFlowLabel(record, add_hyperlinks, ad
       if info.cli_asn and info.cli_asn.value > 0 and not isEmptyString(info.cli_asn.title) then
          label = label .. " [ " ..historical_flow_utils.get_historical_url(info.cli_asn.title, "cli_asn", info.cli_asn.value, add_hyperlinks) .. " ]"
       elseif not isEmptyString(info.cli_mac) and (info.cli_mac ~= '00:00:00:00:00:00') then
-         label = label .. " [ " .. historical_flow_utils.get_historical_mac(info.cli_mac) .. " ]"
+         local manufacturer = get_manufacturer_mac(info.cli_mac)
+         local mac = historical_flow_utils.get_historical_mac(info.cli_mac)
+         if not isEmptyString(manufacturer) then
+            mac = string.format("%s (%s)", mac, manufacturer)
+         end
+         label = label .. " [ " .. mac .. " ]"
       end
    end
    
@@ -1823,7 +1829,12 @@ function historical_flow_utils.getHistoricalFlowLabel(record, add_hyperlinks, ad
       if info.srv_asn and info.srv_asn.value > 0 and not isEmptyString(info.srv_asn.title) then
          label = label .. " [ " ..historical_flow_utils.get_historical_url(info.srv_asn.title, "srv_asn", info.srv_asn.value, add_hyperlinks) .. " ]"
       elseif not isEmptyString(info.srv_mac) and (info.srv_mac ~= '00:00:00:00:00:00') then
-         label = label .. " [ " .. historical_flow_utils.get_historical_mac(info.srv_mac) .. " ]"
+         local manufacturer = get_manufacturer_mac(info.srv_mac)
+         local mac = historical_flow_utils.get_historical_mac(info.srv_mac)
+         if not isEmptyString(manufacturer) then
+            mac = string.format("%s (%s)", mac, manufacturer)
+         end
+         label = label .. " [ " .. mac .. " ]"
       end
    end
 
