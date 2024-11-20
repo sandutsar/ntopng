@@ -6,8 +6,8 @@
 	"paging": false,
 	"display_empty_rows": true,
 	"default_sort": {
-		"column_id": "name",
-		"sort": 0
+		"column_id": "status",
+		"sort": 1
 	},
 	"columns": [
 		{
