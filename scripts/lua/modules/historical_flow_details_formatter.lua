@@ -84,18 +84,18 @@ local function format_pre_post_nat_info(flow, info)
 
     -- Format all info
     local pre_nat_flow = nat_values.pre_nat_src_ip .. ":" .. nat_values.pre_nat_src_port ..
-                             ' <i class="fas fa-exchange-alt fa-lg"></i> ' .. nat_values.post_nat_src_ip .. ":" ..
-                             nat_values.post_nat_src_port
+        ' <i class="fas fa-exchange-alt fa-lg"></i> ' .. nat_values.post_nat_src_ip .. ":" ..
+        nat_values.post_nat_src_port
     local post_nat_flow = nat_values.post_nat_src_ip .. ":" .. nat_values.post_nat_src_port ..
-                              ' <i class="fas fa-exchange-alt fa-lg"></i> ' .. nat_values.post_nat_dst_ip .. ":" ..
-                              nat_values.post_nat_dst_port
+        ' <i class="fas fa-exchange-alt fa-lg"></i> ' .. nat_values.post_nat_dst_ip .. ":" ..
+        nat_values.post_nat_dst_port
     flow[#flow + 1] = {
         name = i18n('db_explorer.pre_nat_info'),
-        values = {pre_nat_flow}
+        values = { pre_nat_flow }
     }
     flow[#flow + 1] = {
         name = i18n('db_explorer.post_nat_info'),
-        values = {post_nat_flow}
+        values = { post_nat_flow }
     }
 
     return flow
@@ -108,7 +108,7 @@ local function format_historical_flow_label(flow)
 
     return {
         name = i18n("flow_details.flow_peers_client_server"),
-        values = {historical_flow_utils.getHistoricalFlowLabel(flow, true)}
+        values = { historical_flow_utils.getHistoricalFlowLabel(flow, true) }
     }
 end
 
@@ -119,7 +119,7 @@ local function format_historical_protocol_label(flow)
 
     return {
         name = i18n("protocol") .. " / " .. i18n("application"),
-        values = {historical_flow_utils.getHistoricalProtocolLabel(flow, true)}
+        values = { historical_flow_utils.getHistoricalProtocolLabel(flow, true) }
     }
 end
 
@@ -140,7 +140,7 @@ end
 local function format_historical_total_traffic(flow)
     return {
         name = i18n("db_explorer.traffic_info"),
-        values = {formatPackets(flow['PACKETS']) .. ' / ' .. bytesToSize(flow['TOTAL_BYTES'])}
+        values = { formatPackets(flow['PACKETS']) .. ' / ' .. bytesToSize(flow['TOTAL_BYTES']) }
     }
 end
 
@@ -165,9 +165,9 @@ local function format_historical_bytes_progress_bar(flow, info)
 
     return {
         name = "",
-        values = {'<div class="progress"><div class="progress-bar bg-warning" style="width: ' .. cli2srv .. '%;">' ..
-            (info.cli_ip.label or '') .. '</div>' .. '<div class="progress-bar bg-success" style="width: ' ..
-            (100 - cli2srv) .. '%;">' .. (info.srv_ip.label or '') .. '</div></div>'}
+        values = { '<div class="progress"><div class="progress-bar bg-warning" style="width: ' .. cli2srv .. '%;">' ..
+        (info.cli_ip.label or '') .. '</div>' .. '<div class="progress-bar bg-success" style="width: ' ..
+        (100 - cli2srv) .. '%;">' .. (info.srv_ip.label or '') .. '</div></div>' }
     }
 end
 
@@ -176,7 +176,7 @@ end
 local function format_historical_wlan_ssid(flow, info)
     return {
         name = i18n("flow_fields_description.wlan_ssid"),
-        values = {info.wlan_ssid.label}
+        values = { info.wlan_ssid.label }
     }
 end
 
@@ -185,7 +185,7 @@ end
 local function format_historical_wtp_mac_address(flow, info)
     return {
         name = i18n("flow_fields_description.wtp_mac_address"),
-        values = {info.apn_mac.label}
+        values = { info.apn_mac.label }
     }
 end
 
@@ -229,7 +229,8 @@ end
 
 -- a###############################################
 
-local function format_historical_issue_description(alert_id, score, title, msg, info, alert_scores, add_remediation)
+local function format_historical_issue_description(alert_id, score, title, msg, info, alert_scores, add_remediation,
+                                                   riskInfo)
     local alert_consts = require "alert_consts"
     local alert_entities = require "alert_entities"
 
@@ -240,16 +241,20 @@ local function format_historical_issue_description(alert_id, score, title, msg, 
     if alert_scores and alert_scores[alert_id] then
         score = alert_scores[alert_id]
     end
-
     -- If alert risk is 0 then it comes from ntonpg, else nDPI
     local alert_risk = ntop.getFlowAlertRisk(tonumber(alert_id))
     local alert_src
+    local riskLabel = ""
 
     if (tonumber(alert_risk) == 0) then
         alert_src = "ntopng"
         alert_risk = alert_id
     else
         alert_src = "nDPI"
+    end
+
+    if riskInfo and table.len(riskInfo) > 0 then
+        riskLabel = riskInfo[tostring(alert_risk)]
     end
 
     local alert_source = " <span class='badge bg-info'>" .. alert_src .. "</span>"
@@ -259,8 +264,11 @@ local function format_historical_issue_description(alert_id, score, title, msg, 
     local remediation = flow_risk_utils.get_remediation_documentation_link(tostring(alert_risk), alert_src)
 
     local html = "<tr><td>" .. (msg or "") .. alert_source .. "</td>" .. '<td align=center><span style="color:' ..
-                     severity.color .. '">' .. score .. '</span></td>'
+        severity.color .. '">' .. score .. '</span></td>'
 
+    if riskLabel then
+        info = riskLabel
+    end
     if (add_remediation) then
         html = html .. "<td>" .. info .. " " .. remediation .. "</td>"
     else
@@ -307,6 +315,7 @@ local function format_historical_issues(flow_details, flow)
     local alert_json = json.decode(flow["ALERT_JSON"] or '') or {}
     local details = ""
     local alert
+    local riskInfo = {}
 
     local alert_store_instance = alert_store_instances[alert_entities["flow"].alert_store_name]
 
@@ -325,6 +334,10 @@ local function format_historical_issues(flow_details, flow)
     local alert_id = tonumber(flow["STATUS"] or 0)
     local main_alert_score = ntop.getFlowAlertScore(tonumber(alert_id))
 
+    if not isEmptyString(alert_json.flow_risk_info) then
+        riskInfo = json.decode(alert_json.flow_risk_info, 1, nil)
+    end
+
     -- Check if there is a custom score
     if alert_scores and alert_scores[tostring(alert_id)] then
         main_alert_score = alert_scores[tostring(alert_id)]
@@ -334,24 +347,24 @@ local function format_historical_issues(flow_details, flow)
 
     flow_details[#flow_details + 1] = {
         name = i18n('total_flow_score'),
-        values = {'<span style="color:' .. severity.color .. '">' .. format_utils.formatValue(tonumber(flow["SCORE"])) ..
-            '</span>', ''}
+        values = { '<span style="color:' ..
+        severity.color .. '">' .. format_utils.formatValue(tonumber(flow["SCORE"])) ..
+        '</span>', '' }
     }
 
     local html = ""
 
     -- No status set
     if (alert_id ~= 0) then
-
         alert_label = alert_consts.alertTypeLabel(alert_id, true)
 
         html = "<table class=\"table table-bordered table-striped\" width=100%>\n"
         html =
             html .. "<tr><th>" .. i18n("description") .. "</th><th>" .. i18n("score") .. "</th><th>" .. i18n("info") ..
-                " / " .. i18n("remediation") .. "</th><th>" .. i18n("mitre_id") .. "</th></tr>\n"
+            " / " .. i18n("remediation") .. "</th><th>" .. i18n("mitre_id") .. "</th></tr>\n"
         html = html ..
-                   format_historical_issue_description(tostring(alert_id), tonumber(main_alert_score),
-                i18n("issues_score"), alert_label, details, alert_scores, true)
+            format_historical_issue_description(tostring(alert_id), tonumber(main_alert_score),
+                i18n("issues_score"), alert_label, details, alert_scores, true, riskInfo)
     end
 
     local alert_utils = require "alert_utils"
@@ -371,14 +384,14 @@ local function format_historical_issues(flow_details, flow)
                 info = ""
             end
             html = html ..
-                       format_historical_issue_description(tostring(issue.alert_id), tonumber(issue.score), '', msg,
-                    info, alert_scores, true)
+                format_historical_issue_description(tostring(issue.alert_id), tonumber(issue.score), '', msg,
+                    info, alert_scores, true, riskInfo)
         end
     end
 
     flow_details[#flow_details + 1] = {
         name = i18n('detected_issues'),
-        values = {html}
+        values = { html }
     }
 
     return flow_details
@@ -387,7 +400,6 @@ end
 -- ###############################################
 
 local function format_tcp_connection_states(info)
-
     local conn_states = {}
     conn_states[#conn_states + 1] = string.format("%s: %s (%s)", i18n("flow_fields_description.major_connection_state"),
         i18n(string.format("flow_fields_description.major_connection_states.%s", info.major_connection_state.value)),
@@ -402,14 +414,14 @@ end
 
 local function format_historical_community_id(flow)
     return {
-        name = "<A class='ntopng-external-link' href=\"https://github.com/corelight/community-id-spec\">" .. 
+        name = "<A class='ntopng-external-link' href=\"https://github.com/corelight/community-id-spec\">" ..
             i18n("db_explorer.community_id") ..
             " <i class=\"fas fa-external-link-alt\"></i></A>",
-        values = {flow["COMMUNITY_ID"] ..
-            "<button style=\"\" class=\"btn btn-sm border ms-1\" data=\"" .. flow["COMMUNITY_ID"] .. 
-            "\" onclick=\"NtopUtils.copyToClipboard(this.getAttribute('data'), '" .. i18n('copied') .. 
-            "', '" .. i18n('request_failed_message') .. "', this)\">" ..
-            "<i class=\"fas fa-copy\"></i></button>"}
+        values = { flow["COMMUNITY_ID"] ..
+        "<button style=\"\" class=\"btn btn-sm border ms-1\" data=\"" .. flow["COMMUNITY_ID"] ..
+        "\" onclick=\"NtopUtils.copyToClipboard(this.getAttribute('data'), '" .. i18n('copied') ..
+        "', '" .. i18n('request_failed_message') .. "', this)\">" ..
+        "<i class=\"fas fa-copy\"></i></button>" }
     }
 end
 
@@ -449,7 +461,7 @@ local function format_historical_info(flow)
 
     return {
         name = i18n("db_explorer.info"),
-        values = {info_field}
+        values = { info_field }
     }
 end
 
@@ -488,12 +500,12 @@ local function format_historical_probe(flow_details, flow, info)
     if table.len(info_field) > 1 then
         flow_details[#flow_details + 1] = {
             name = i18n("details.flow_snmp_localization"),
-            values = {""}
+            values = { "" }
         }
         for field, value in pairs(info_field) do
             flow_details[#flow_details + 1] = {
                 name = "",
-                values = {i18n(field), value}
+                values = { i18n(field), value }
             }
         end
     end
@@ -506,7 +518,7 @@ end
 local function format_historical_latency(flow, value, cli_or_srv)
     return {
         name = i18n("db_explorer." .. cli_or_srv .. "_latency"),
-        values = {(tonumber(flow[value]) / 1000) .. " msec"}
+        values = { (tonumber(flow[value]) / 1000) .. " msec" }
     }
 end
 
@@ -515,7 +527,7 @@ end
 local function format_historical_obs_point(flow)
     return {
         name = i18n("db_explorer.observation_point"),
-        values = {getObsPointAlias(flow["OBSERVATION_POINT_ID"], true, true)}
+        values = { getObsPointAlias(flow["OBSERVATION_POINT_ID"], true, true) }
     }
 end
 
@@ -534,7 +546,7 @@ local function format_historical_custom_fields(flow_details, custom_fields)
         local flow_field_value_maps = require "flow_field_value_maps"
         flow_details[#flow_details + 1] = {
             name = i18n("flow_details.additional_flow_elements"),
-            values = {""}
+            values = { "" }
         }
 
         for key, value in pairs(custom_fields) do
@@ -550,7 +562,7 @@ local function format_historical_custom_fields(flow_details, custom_fields)
             end
             flow_details[#flow_details + 1] = {
                 name = "",
-                values = { nprobe_descr , value }
+                values = { nprobe_descr, value }
             }
         end
     end
@@ -561,37 +573,35 @@ end
 -- ###############################################
 
 local function format_historical_flow_traffic_stats(rowspan, cli2srv_retr, srv2cli_retr, cli2srv_ooo, srv2cli_ooo,
-    cli2srv_lost, srv2cli_lost)
-
+                                                    cli2srv_lost, srv2cli_lost)
     local flow_details = {}
 
     if rowspan > 0 then
         flow_details[#flow_details + 1] = {
             name = i18n("flow_details.tcp_packet_analysis"),
-            values = {"",
-                      i18n("client") .. " <i class=\"fas fa-long-arrow-alt-right\" ></i> " .. i18n("server") .. " / " ..
-                i18n("client") .. " <i class=\"fas fa-long-arrow-alt-left\"></i> " .. i18n("server")}
+            values = { "",
+                i18n("client") .. " <i class=\"fas fa-long-arrow-alt-right\" ></i> " .. i18n("server") .. " / " ..
+                i18n("client") .. " <i class=\"fas fa-long-arrow-alt-left\"></i> " .. i18n("server") }
         }
 
         if ((cli2srv_retr and (tonumber(cli2srv_retr) > 0)) or (srv2cli_retr and (tonumber(srv2cli_retr) > 0))) then
             flow_details[#flow_details + 1] = {
                 name = "",
-                values = {i18n("details.retransmissions"),
-                          formatPackets(cli2srv_retr) .. " / " .. formatPackets(srv2cli_retr)}
-            }
-        end
-        if ((cli2srv_ooo and (tonumber(cli2srv_ooo) > 0)) or (srv2cli_ooo and (tonumber(srv2cli_ooo) > 0))) then
-
-            flow_details[#flow_details + 1] = {
-                name = "",
-                values = {i18n("details.out_of_order"),
-                          formatPackets(cli2srv_ooo) .. " / " .. formatPackets(srv2cli_ooo)}
+                values = { i18n("details.retransmissions"),
+                    formatPackets(cli2srv_retr) .. " / " .. formatPackets(srv2cli_retr) }
             }
         end
         if ((cli2srv_ooo and (tonumber(cli2srv_ooo) > 0)) or (srv2cli_ooo and (tonumber(srv2cli_ooo) > 0))) then
             flow_details[#flow_details + 1] = {
                 name = "",
-                values = {i18n("details.lost"), formatPackets(cli2srv_lost) .. " / " .. formatPackets(srv2cli_lost)}
+                values = { i18n("details.out_of_order"),
+                    formatPackets(cli2srv_ooo) .. " / " .. formatPackets(srv2cli_ooo) }
+            }
+        end
+        if ((cli2srv_ooo and (tonumber(cli2srv_ooo) > 0)) or (srv2cli_ooo and (tonumber(srv2cli_ooo) > 0))) then
+            flow_details[#flow_details + 1] = {
+                name = "",
+                values = { i18n("details.lost"), formatPackets(cli2srv_lost) .. " / " .. formatPackets(srv2cli_lost) }
             }
         end
     end
@@ -605,13 +615,12 @@ local function format_historical_flow_rtt(client_nw_latency, server_nw_latency)
     local srv2cli = round(server_nw_latency, 3)
     local values =
         '<div class="progress"><div class="progress-bar bg-warning" style="width: ' .. (cli2srv * 100 / rtt) .. '%;">' ..
-            cli2srv .. ' ms (client)</div>' .. '<div class="progress-bar bg-success" style="width: ' ..
-            (srv2cli * 100 / rtt) .. '%;">' .. srv2cli .. ' ms (server)</div></div>'
+        cli2srv .. ' ms (client)</div>' .. '<div class="progress-bar bg-success" style="width: ' ..
+        (srv2cli * 100 / rtt) .. '%;">' .. srv2cli .. ' ms (server)</div></div>'
     return {
         name = i18n("flow_details.rtt_breakdown"),
-        values = {values}
+        values = { values }
     }
-
 end
 
 -- ###############################################
@@ -648,12 +657,10 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
                 for _, state in pairs(conn_states or {}) do
                     flow_details[#flow_details + 1] = {
                         name = '', -- Empty label
-                        values = {state}
+                        values = { state }
                     }
                 end
-
             end
-
         end
 
         if (info["cli_host_pool_id"]) and (info["cli_host_pool_id"]["value"] ~= '0') and
@@ -694,12 +701,12 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
             local rowspan = 1;
 
             if (alert_json["traffic_stats"]["cli2srv_retransmissions"] ~= 0 or
-                alert_json["traffic_stats"]["srv2cli_retransmissions"] ~= 0) then
+                    alert_json["traffic_stats"]["srv2cli_retransmissions"] ~= 0) then
                 rowspan = rowspan + 1
             end
 
             if (alert_json["traffic_stats"]["cli2srv_out_of_order"] ~= 0 or
-                alert_json["traffic_stats"]["srv2cli_out_of_order"] ~= 0) then
+                    alert_json["traffic_stats"]["srv2cli_out_of_order"] ~= 0) then
                 rowspan = rowspan + 1
             end
 
@@ -721,7 +728,7 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
         if not isEmptyString(info.wlan_ssid) then
             flow_details[#flow_details + 1] = format_historical_wlan_ssid(flow, info)
         end
-        
+
         if info.apn_mac and not isEmptyString(info.apn_mac.value) then
             flow_details[#flow_details + 1] = format_historical_wtp_mac_address(flow, info)
         end
