@@ -311,17 +311,28 @@ function alert_store:build_sql_cond(cond, is_write)
 
     elseif cond.field == 'alert_id' and tonumber(cond.value) ~= 0 then
 
-        if self._alert_entity == alert_entities.flow and ntop.isClickHouseEnabled() then
+        if self._alert_entity == alert_entities.flow then
             -- filter with the predominant alert_id and also search 
             -- the alert_id in the alerts_map where the other flow alerts are present.
-            local alert_id_bit = "bitShiftLeft(toUInt128('1'), " .. cond.value .. ")"
-            local and_cond = 'neq'
-            sql_cond = string.format(" (%s %s %u %s (bitAnd(%s,reinterpretAsUInt128(reverse(unhex(%s)))) %s %s) ) ",
-                self:get_column_name('alert_id', is_write), sql_op, cond.value,
-                ternary(cond.op == and_cond, 'AND', 'OR'), alert_id_bit, self:get_column_name('alerts_map', is_write),
-                sql_op, alert_id_bit)
+            if ntop.isClickHouseEnabled() then
+                local alert_id_bit = "bitShiftLeft(toUInt128('1'), " .. cond.value .. ")"
+                local and_cond = 'neq'
+                sql_cond = string.format(" (%s %s %u %s (bitAnd(%s,reinterpretAsUInt128(reverse(unhex(%s)))) %s %s) ) ",
+                    self:get_column_name('alert_id', is_write), sql_op, cond.value,
+                    ternary(cond.op == and_cond, 'AND', 'OR'), alert_id_bit, self:get_column_name('alerts_map', is_write),
+                    sql_op, alert_id_bit)
+            else
+                -- using alerts_map_h/alerts_map_l for the lookup
+                local alert_id_bit = cond.value
+                local alerts_map_column = 'alerts_map_' .. ternary(alert_id_bit < 64, 'l', 'h')
+                if alert_id_bit >= 64 then alert_id_bit = alert_id_bit - 64 end
+                local and_cond = 'neq'
+                sql_cond = string.format(" (%s %s %u %s (%s & (1 << %u) %s (1 << %u))) ",
+                    self:get_column_name('alert_id', is_write), sql_op, cond.value,
+                    ternary(cond.op == and_cond, 'AND', 'OR'), alerts_map_column, alert_id_bit, sql_op, alert_id_bit)
+
+            end
         else
-            -- TODO implement alerts_map match with sqlite
             sql_cond = string.format(" (%s %s %u) ", self:get_column_name('alert_id', is_write), sql_op, cond.value)
         end
 

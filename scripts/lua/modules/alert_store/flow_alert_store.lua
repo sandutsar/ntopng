@@ -237,6 +237,12 @@ function flow_alert_store:insert(alert)
       extra_columns = "rowid, "
       extra_values = "generateUUIDv4(), "
    else
+      -- Split 128-bit alerts_map hex into 2x 64-bit integers as SQLite does not natively support hex operations
+      local alerts_map = string.rep("0", 32 - #alert.alerts_map) .. alert.alerts_map
+      local alerts_map_h = tonumber(string.sub(alerts_map,  1, 16), 16)
+      local alerts_map_l = tonumber(string.sub(alerts_map, 17, 32), 16)
+      extra_columns = "alerts_map_h, alerts_map_l, "
+      extra_values = string.format("%u, %u, ", alerts_map_h, alerts_map_l)
       hex_prefix = "X"
    end
 

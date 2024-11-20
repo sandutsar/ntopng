@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS `flow_alerts` (
 `first_seen` DATETIME NOT NULL DEFAULT 0,
 `community_id` TEXT NULL,
 `alerts_map` BLOB DEFAULT 0, -- An HEX bitmap of all flow statuses
+`alerts_map_h` INTEGER NULL DEFAULT 0,
+`alerts_map_l` INTEGER NULL DEFAULT 0,
 `flow_risk_bitmap` INTEGER NOT NULL DEFAULT 0,
 `user_label` TEXT NULL,
 `user_label_tstamp` DATETIME NULL DEFAULT 0,
@@ -98,6 +100,10 @@ CREATE TABLE IF NOT EXISTS `flow_alerts` (
 `alert_category` INTEGER NULL,
 `require_attention` INTEGER NULL DEFAULT 0
 );
+@
+ALTER TABLE `flow_alerts` ADD `alerts_map_h` INTEGER NULL;
+@
+ALTER TABLE `flow_alerts` ADD `alerts_map_l` INTEGER NULL;
 @
 ALTER TABLE `flow_alerts` ADD `require_attention` INTEGER NULL;
 @
