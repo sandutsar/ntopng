@@ -41,6 +41,13 @@ IpAddress::IpAddress(const IpAddress &ipa) {
 
 /* ******************************************* */
 
+IpAddress::IpAddress(const struct ipAddress ipa) {
+  memcpy(&addr, &ipa, sizeof(ipa));
+  compute_key();
+}
+
+/* ******************************************* */
+
 void IpAddress::set(const char *const sym_addr) {
   if (sym_addr == NULL) return;
 

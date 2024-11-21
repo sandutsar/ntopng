@@ -378,6 +378,7 @@ using namespace std;
 #include "PeriodicityHash.h"
 #include "ServiceMap.h"
 #include "PeriodicityMap.h"
+#include "ACLFlow.h"
 #endif
 #include "PortDetails.h"
 #include "HostsPorts.h"

@@ -94,8 +94,7 @@ void Bitmap128::lua(lua_State *vm, const char *label) const {
   for (u_int i = 0; i < numBits(); i++) {
     if (isSetBit(i)) {
       lua_pushboolean(vm, true); /* The boolean indicating this risk is set */
-      lua_pushinteger(
-          vm, i); /* The integer risk id, used as key of this lua table */
+      lua_pushinteger(vm, i); /* The integer risk id, used as key of this lua table */
       lua_insert(vm, -2);
       lua_settable(vm, -3);
     }

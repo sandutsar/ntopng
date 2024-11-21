@@ -49,6 +49,7 @@ class IpAddress {
  public:
   IpAddress();
   IpAddress(const IpAddress& ipa);
+  IpAddress(const struct ipAddress ipa);
 
   void checkIP();
   bool isEmpty() const;
