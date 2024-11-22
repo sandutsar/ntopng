@@ -81,14 +81,13 @@ local prefs = ntop.getPrefs()
 
 local hostkey = hostinfo2hostkey(host_info, nil, true --[[ force show vlan --]] )
 local hostkey_compact = hostinfo2hostkey(host_info) -- do not force vlan
-
+ 
 if not host_ip then
     sendHTTPContentTypeHeader('text/html')
 
     page_utils.print_header()
     dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
-    print(
-        "<div class=\"alert alert alert-danger\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> " ..
+    print("<div class=\"alert alert alert-danger\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> " ..
             i18n("host_details.host_parameter_missing_message") .. "</div>")
     dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")
     return
@@ -374,7 +373,7 @@ else
     if (ntop.isPro()) then
         sites_granularities = host_sites_update.getGranularitySites(host_ip, host_vlan, ifId, false)
     end
-
+    
     local has_snmp_location = snmp_location and snmp_location.host_has_snmp_location(host["mac"])
     local has_icmp = ((table.len(host["ICMPv4"]) + table.len(host["ICMPv6"])) ~= 0)
     local has_assets = ntop.isEnterpriseXL() and (host.asset_key ~= nil) and
@@ -585,6 +584,10 @@ else
         label = "<i class='fas fa-lg fa-cog' title='" .. i18n("settings") .. "'></i></a></li>"
     }})
 
+    if((host["bytes.sent"] == 0) or (host["bytes.rcvd"] == 0) and host["localhost"] and not host["is_multicast"] and not host["is_broadcast"]) then
+      print("<div class=\"alert alert alert-warning\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> " .. i18n("host_details.unidirectional_traffic") .. "</div>")
+    end
+    
     -- tprint(host.bins)
     local macinfo = interface.getMacInfo(host["mac"])
     local has_snmp_location = host['localhost'] and (host["mac"] ~= "") and snmp_location and

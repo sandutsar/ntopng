@@ -4445,7 +4445,8 @@ local lang = {
         ["trace_debug_host_info"] = "Host:%{hostinfo}, VLAN: %{vlan}",
         ["trace_debug_host_ip"] = "Host:%{hostip}, VLAN: %{vlan}",
         ["trace_debug_restored_host_info"] = "Restored Host Info",
-        ["unknown_device_type"] = "Unknown Device Type"
+        ["unknown_device_type"] = "Unknown Device Type",
+	["unidirectional_traffic"] = "Host with unidirectionsl traffic: timeseries might be partial or missing. Please check your network configuration and fix this problem."
     },
     ["host_log_collector"] = {
         ["description"] = "Collect syslog logs from hosts and trigger alerts according to the configured severity level (0 for min verbosity, 7 for max).<br />Supported severity levels:<ul><li><b>1</b>: Alert/Emergency</li><li><b>2</b>: Critical</li><li><b>3</b>: Error</li><li><b>4</b>: Warning</li><li><b>5</b>: Notice</li><li><b>6</b>: Info</li><li><b>7</b>: Debug</li></ul>",
