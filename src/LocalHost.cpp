@@ -173,6 +173,8 @@ void LocalHost::initialize() {
   else
     fingerprints = NULL;
 
+  host_os = os_hint_unknown;
+  
 #ifdef NTOPNG_PRO
   if ((!(isBroadcastHost() || isMulticastHost())) &&
       ntop->getPrefs()->is_enterprise_xl_edition() &&
@@ -428,6 +430,14 @@ void LocalHost::lua(lua_State *vm, AddressTree *ptree, bool host_details,
     lua_push_str_table_entry(
         vm, "router",
         Utils::formatMac(router_mac, router_buf, sizeof(router_buf)));
+  }
+
+  if(host_os != os_hint_unknown) {
+    lua_newtable(vm);
+    lua_push_str_table_entry(vm, "os", ndpi_print_os_hint(host_os));
+    lua_pushstring(vm, "fingerprint");
+    lua_insert(vm, -2);
+    lua_settable(vm, -3);
   }
 
   /* Add new entries before this line! */
@@ -927,4 +937,59 @@ void LocalHost::setResolvedName(const char *resolved_name) {
     if(names.resolved && !previous_resolved)
         ntop->get_am()->setResolvedName(this, label_resolver, names.resolved);
   #endif
+}
+
+/* *************************************** */
+
+void LocalHost::setTCPfingerprint(char *tcp_fingerprint, enum operating_system_hint os) {
+  if(os == os_hint_unknown)
+    ;
+  else if(host_os == os_hint_unknown) {
+    host_os = os;
+
+    switch(host_os) {
+    case os_hint_windows:
+      setOS(os_windows);
+      break;
+      
+    case os_hint_macos:
+      setOS(os_macos);
+      break;
+      
+    case os_hint_ios_ipad_os:
+      setOS(os_ios);
+      break;
+      
+    case os_hint_android:
+      setOS(os_android);
+      break;
+      
+    case os_hint_linux:
+      setOS(os_linux);
+      break;
+      
+    case os_hint_freebsd:
+      setOS(os_freebsd);
+      break;
+
+    case os_hint_unknown:
+    case os_hint_unused2:
+      /* Nothing to do */
+      break;
+    }
+  } else if(host_os != os) {
+    ntop->getTrace()->traceEvent(TRACE_WARNING, "Found OS inconsistency %s vs %s",
+				 ndpi_print_os_hint(host_os),
+				 ndpi_print_os_hint(os));
+  }
+}
+
+/* *************************************** */
+
+void LocalHost::setOS(OSType _os) {
+  Host::setOS(_os);
+#ifdef NTOPNG_PRO
+  if(ntop->get_am() != NULL)
+    ntop->get_am()->setHostOS(this, _os);
+#endif
 }

@@ -7293,6 +7293,8 @@ static const value_string vendors[] = {
    { 0, NULL }
 };
 
+/* ******************************************* */
+
 bool Utils::readEthernetIPDeviceInfo(char *device_ip, u_int8_t timeout_sec, lua_State *vm) {
   struct hostent *server = NULL;
   struct sockaddr_in serv_addr;
@@ -7426,4 +7428,45 @@ bool Utils::readEthernetIPDeviceInfo(char *device_ip, u_int8_t timeout_sec, lua_
   Utils::closeSocket(sockfd);
 
   return(rc);
+}
+
+/* ******************************************* */
+
+const char* Utils::OSType2Str(OSType os) {
+  switch(os) {
+  case os_linux:
+    return("Linux");
+    break;
+    
+  case os_windows:
+    return("Windows");
+    break;
+    
+  case os_macos:
+    return("macOS");
+    break;
+    
+  case os_ios:
+    return("iOS/iPad");
+    break;
+    
+  case os_android:
+    return("Android");
+    break;
+    
+  case os_laserjet:
+    return("LaserJet");
+    break;
+    
+  case os_apple_airport:
+    return("AppleAirport");
+    break;
+    
+  case os_freebsd:
+    return("FreeBSD");
+    break;  
+
+  default:
+    return("");
+  }
 }

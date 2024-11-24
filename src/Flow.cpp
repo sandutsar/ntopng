@@ -5410,12 +5410,19 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
   } else {
     /* Packet Interface */
 
-    if(flags_3wh |TH_SYN) {
-      if(cli_host && ndpiFlow && ndpiFlow->tcp.fingerprint)
+    if (flags_3wh | TH_SYN) {
+      if(cli_host && ndpiFlow && ndpiFlow->tcp.fingerprint) {
+#if 0
+	ntop->getTrace()->traceEvent(TRACE_WARNING, "->> %s [%s]",
+				     ndpiFlow->tcp.fingerprint,
+				     ndpi_print_os_hint(ndpiFlow->tcp.os_hint));
+#endif
+	
 	cli_host->setTCPfingerprint(ndpiFlow->tcp.fingerprint,
 				    (enum operating_system_hint)ndpiFlow->tcp.os_hint);
+      }
     }
-
+    
     /* Update syn alerts counters. In case of cumulative flags, the AND is used as
      * possibly other flags can be present  */
     if (flags_3wh == TH_SYN) {
@@ -6306,6 +6313,8 @@ void Flow::dissectHTTP(bool src2dst_direction, char *payload,
 		  operating_system = os_macos;
 		else if (strstr(ua, "Windows"))
 		  operating_system = os_windows;
+		else if (strstr(ua, "FreeBSD"))
+		  operating_system = os_freebsd;
 		else if (strcasestr(ua, "Linux") || strstr(ua, "Debian") ||
 			 strstr(ua, "Ubuntu"))
 		  operating_system = os_linux;

@@ -349,15 +349,15 @@ function getDeviceName(device_mac, skip_manufacturer)
         end
     end
 
-    if isEmptyString(name) then
-        if (not skip_manufacturer) then
-            name = get_symbolic_mac(device_mac, true)
-        else
-            -- last resort
-            name = device_mac
-        end
+    if(isEmptyString(name) and (device_mac ~= nil)) then
+       if (not skip_manufacturer) then
+	  name = get_symbolic_mac(device_mac, true)
+       else
+	  -- last resort
+	  name = device_mac
+       end
     end
-
+    
     if isEmptyString(name) or name == device_mac then
         return ''
     end
@@ -617,50 +617,50 @@ local magic_short_macs = {
 
 -- get_symbolic_mac
 function get_symbolic_mac(mac_address, no_href, add_extra_info)
-    if (magic_macs[mac_address] ~= nil) then
-        return (magic_macs[mac_address])
-    else
-        local m = string.sub(mac_address, 1, 8)
-        local t = string.sub(mac_address, 10, 17)
+   if (magic_macs[mac_address] ~= nil) then
+      return (magic_macs[mac_address])
+   else
+      local m = string.sub(mac_address, 1, 8)
+      local t = string.sub(mac_address, 10, 17)
 
-        if (magic_short_macs[m] ~= nil) then
-            if (add_extra_info == true) then
-                return (magic_short_macs[m] .. "_" .. t .. " (" .. macInfo(mac_address) .. ")")
-            else
-                if no_href then
-                    return (magic_short_macs[m] .. "_" .. t)
-                else
-                    return (macInfoWithSymbName(mac_address, magic_short_macs[m] .. "_" .. t))
-                end
-            end
-        else
-            local s = get_mac_classification(m)
+      if (magic_short_macs[m] ~= nil) then
+	 if (add_extra_info == true) then
+	    return (magic_short_macs[m] .. "_" .. t .. " (" .. macInfo(mac_address) .. ")")
+	 else
+	    if no_href then
+	       return (magic_short_macs[m] .. "_" .. t)
+	    else
+	       return (macInfoWithSymbName(mac_address, magic_short_macs[m] .. "_" .. t))
+	    end
+	 end
+      else
+	 local s = get_mac_classification(m)
 
-            if (m == s) then
-                if no_href then
-                    return get_mac_classification(m) .. ":" .. t
-                else
-                    return '<a href="' .. ntop.getHttpPrefix() .. '/lua/mac_details.lua?host=' .. mac_address .. '">' ..
-                               get_mac_classification(m) .. ":" .. t .. '</a>'
-                end
-            else
-                local href = ""
-                local href_end = ""
+	 if (m == s) then
+	    if no_href then
+	       return get_mac_classification(m) .. ":" .. t
+	    else
+	       return '<a href="' .. ntop.getHttpPrefix() .. '/lua/mac_details.lua?host=' .. mac_address .. '">' ..
+		  get_mac_classification(m) .. ":" .. t .. '</a>'
+	    end
+	 else
+	    local href = ""
+	    local href_end = ""
 
-                if not no_href then
-                    href = '<a href="' .. ntop.getHttpPrefix() .. '/lua/mac_details.lua?host=' .. mac_address .. '">'
-                    href_end = "</a>"
-                end
+	    if not no_href then
+	       href = '<a href="' .. ntop.getHttpPrefix() .. '/lua/mac_details.lua?host=' .. mac_address .. '">'
+	       href_end = "</a>"
+	    end
 
-                if (add_extra_info == true) then
-                    return (href .. get_mac_classification(m) .. "_" .. t .. " (" .. macInfo(mac_address) .. ")" ..
-                               href_end)
-                else
-                    return (href .. get_mac_classification(m) .. "_" .. t .. href_end)
-                end
-            end
-        end
-    end
+	    if (add_extra_info == true) then
+	       return (href .. get_mac_classification(m) .. "_" .. t .. " (" .. macInfo(mac_address) .. ")" ..
+		       href_end)
+	    else
+	       return (href .. get_mac_classification(m) .. "_" .. t .. href_end)
+	    end
+	 end
+      end
+   end
 end
 
 -- ##############################################

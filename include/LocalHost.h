@@ -32,7 +32,8 @@ class LocalHost : public Host {
   /* contacted_server_ports it's a buffer used by the "Server Port Detected" check */
   SPSCQueue<std::pair<u_int16_t, u_int16_t>> contacted_server_ports;
   UsedPorts usedPorts;
-  HostFingerprints *fingerprints;
+  enum operating_system_hint host_os;
+  HostFingerprints *fingerprints; /* Application fingerprints */
   std::unordered_map<u_int32_t, DoHDoTStats *> doh_dot_map;
   u_int8_t router_mac[6]; /* MAC address pf the first router used (no Mac* to
                              avoid purging race conditions) */
@@ -224,6 +225,8 @@ class LocalHost : public Host {
   void setServerName(const char *n);
   void setResolvedName(const char *resolved_name);
 
+  virtual void setOS(OSType _os);
+  void setTCPfingerprint(char *tcp_fingerprint, enum operating_system_hint os);
 };
 
 #endif /* _LOCAL_HOST_H_ */

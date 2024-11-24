@@ -941,6 +941,7 @@ typedef enum {
   os_android,
   os_laserjet,
   os_apple_airport,
+  os_freebsd,
   os_max_os, /* Keep as last element */
   os_any
 } OSType;

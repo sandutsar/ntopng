@@ -68,4 +68,4 @@ class OperatingSystem : public GenericHashEntry, public GenericTrafficElement {
   }
 };
 
-#endif /* _AUTONOMOUS_SYSTEM_H_ */
+#endif /* _OPERATING_SYSTEM_H_ */

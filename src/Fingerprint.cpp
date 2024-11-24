@@ -40,8 +40,8 @@ void Fingerprint::update(const char *_fprint, const char *app_name,
     fp[fprint] = s;
   } else {
     it->second.num_uses++,
-        it->second.app_name = std::string(
-            app_name ? app_name : "", it->second.is_malicious = is_malicious);
+      it->second.app_name = std::string(app_name ? app_name : "",
+					it->second.is_malicious = is_malicious);
   }
 
   m.unlock(__FILE__, __LINE__);

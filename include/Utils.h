@@ -330,6 +330,7 @@ class Utils {
   static bool nwInterfaceExists(char *if_name);
   static bool readModbusDeviceInfo(char *ip_address, u_int8_t timeout_sec, lua_State *vm);
   static bool readEthernetIPDeviceInfo(char *ip_address, u_int8_t timeout_sec, lua_State *vm);
+  static const char* OSType2Str(OSType os);
 };
 
 #endif /* _UTILS_H_ */

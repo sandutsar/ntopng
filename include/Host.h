@@ -34,10 +34,6 @@ class Host : public GenericHashEntry,
   IpAddress ip;
   Mac *mac;
   char *asname, *blacklist_name;
-  struct {
-    char *tcp_fingerprint;
-    enum operating_system_hint os;
-  } fingerprint;
   int32_t iface_index; /* Interface index on which this host has been first observed */
   u_int16_t host_services_bitmap;
   u_int16_t vlan_id;
@@ -110,7 +106,7 @@ class Host : public GenericHashEntry,
   ndpi_bitmap *tcp_udp_contacted_ports_no_tx; /* Ports of this host that have
                                                  been contacted by peers */
   OperatingSystem *os; /* Pointer to an instance of operating system, used
-                          internally to handle operating system statistics    */
+                          internally to handle operating system statistics */
   OSType os_type; /* Operating system type, equivalent to os->get_os_type(),
                      used by operating system setters and getters */
 
@@ -796,7 +792,7 @@ class Host : public GenericHashEntry,
   bool isHostAlertDisabled(HostAlertType alert_type);
   bool isFlowAlertDisabled(FlowAlertType alert_type);
 
-  void setOS(OSType _os);
+  virtual void setOS(OSType _os);
   OSType getOS() const;
   void incOSStats(time_t when, u_int16_t proto_id, u_int64_t sent_packets,
                   u_int64_t sent_bytes, u_int64_t rcvd_packets,
@@ -983,8 +979,7 @@ class Host : public GenericHashEntry,
 
   virtual SPSCQueue<std::pair<u_int16_t, u_int16_t>> *getContactedServerPorts() { return (NULL);};
   virtual char *getSerializationKey(char *buf, u_int bufsize, bool short_format = false) { return (NULL); };
-
-  void setTCPfingerprint(char *tcp_fingerprint, enum operating_system_hint os);
+  virtual void setTCPfingerprint(char *tcp_fingerprint, enum operating_system_hint os) { ; }
 };
 
 #endif /* _HOST_H_ */

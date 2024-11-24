@@ -122,9 +122,6 @@ Host::~Host() {
   iface->decPoolNumHosts(get_host_pool(), false /* Host is deleted offline */);
   if (customHostAlert.msg) free(customHostAlert.msg);
 
-  if(fingerprint.tcp_fingerprint != NULL)
-    free(fingerprint.tcp_fingerprint);
-
   if (!ntop->getPrefs()->limitResourcesUsage()) {
     if (tcp_udp_contacted_ports_no_tx)
       ndpi_bitmap_free(tcp_udp_contacted_ports_no_tx);
@@ -372,7 +369,6 @@ void Host::initialize(Mac *_mac, int32_t _iface_idx, u_int16_t _vlanId,
       obs_point->incUses();
   }
 
-  fingerprint.tcp_fingerprint = NULL, fingerprint.os = os_hint_unknown;
   /* Increase the number of active hosts */
   reloadHostBlacklist();
 }
@@ -957,17 +953,6 @@ void Host::lua(lua_State *vm, AddressTree *ptree, bool host_details,
   luaICMP(vm, get_ip()->isIPv4(), false);
 
   lua_unidirectional_tcp_udp_flows(vm, true);
-
-  if(fingerprint.tcp_fingerprint != NULL) {
-    lua_newtable(vm);
-
-    lua_push_str_table_entry(vm, "tcp", fingerprint.tcp_fingerprint);
-    lua_push_str_table_entry(vm, "os", ndpi_print_os_hint(fingerprint.os));
-
-    lua_pushstring(vm, "fingerprint");
-    lua_insert(vm, -2);
-    lua_settable(vm, -3);
-  }
 
   if (host_details) {
     lua_get_score_breakdown(vm);
@@ -2088,7 +2073,9 @@ void Host::inlineSetOS(OSType _os) {
 void Host::setOS(OSType _os) {
   Mac *mac = getMac();
 
-  if (!mac || (mac->getDeviceType() != device_networking)) os_type = _os;
+  if ((mac == NULL) || (mac->getDeviceType() != device_networking)) {
+    os_type = _os;
+  }
 }
 
 /* *************************************** */
@@ -2825,13 +2812,4 @@ void Host::toggleRxOnlyHost(bool rx_only) {
 #endif
 
   is_rx_only = rx_only;
-}
-
-/* *************************************** */
-
-void Host::setTCPfingerprint(char *tcp_fingerprint, enum operating_system_hint os) {
-  if(fingerprint.tcp_fingerprint == NULL) {
-    fingerprint.tcp_fingerprint = strdup(tcp_fingerprint);
-    fingerprint.os = os;
-  }
 }
