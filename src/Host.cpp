@@ -2055,10 +2055,19 @@ char *Host::get_mac_based_tskey(Mac *mac, char *buf, size_t bufsize,
   Public method to set the operating system
  */
 void Host::setOS(OSType _os) {
-  Mac *mac = getMac();
+  if((os_type != os_unknown) && ( os_type != _os)) {
+    char buf[64];
+    
+    ntop->getTrace()->traceEvent(TRACE_WARNING, "Found OS inconsistency: current=%s vs new=%s [%s]",
+				 Utils::OSType2Str(os_type), Utils::OSType2Str(_os),
+				 print(buf, sizeof(buf)));
 
-  if ((mac == NULL) || (mac->getDeviceType() != device_networking)) {
-    os_type = _os;
+  } else {
+    Mac *mac = getMac();
+    
+    if ((mac == NULL) || (mac->getDeviceType() != device_networking)) {
+      os_type = _os;
+    }
   }
 }
 

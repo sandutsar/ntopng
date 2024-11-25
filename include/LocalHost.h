@@ -39,7 +39,7 @@ class LocalHost : public Host {
                              avoid purging race conditions) */
   u_int8_t router_mac_set : 1, drop_all_host_traffic : 1, systemHost : 1, _notused : 5;
   /* LocalHost data: update LocalHost::deleteHostData when adding new fields */
-  char *os_detail;
+  char *os_detail, *tcp_fingerprint;
   /* END Host data: */
 
   void initialize();

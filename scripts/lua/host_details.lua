@@ -707,12 +707,20 @@ else
             print("<tr>")
             if (host["os"] ~= "") then
                 local os_detail = ""
-                if not isEmptyString(host["os_detail"]) then
-                    os_detail = os_detail .. " [ " .. host["os_detail"] .. " ]"
+
+		if not isEmptyString(host["os_detail"]) then
+		   os_detail = os_detail .. " [ " .. host["os_detail"] .. " ]"
                 end
+		
                 print("<th>" .. i18n("os") .. "</th><td> <A HREF='" .. ntop.getHttpPrefix() ..
                           "/lua/hosts_stats.lua?os=" .. host["os"] .. "'>" .. discover.getOsAndIcon(host["os"]) ..
-                          "</A>" .. os_detail .. "</td><td></td>\n")
+                          "</A>" .. os_detail)
+
+		if(host["tcp_fingerprint"] ~= nil) then
+		   print(" <span class=\"badge bg-success\">TCP Fingerprint: "..host["tcp_fingerprint"].. "</span>")
+		end
+
+		print("</td><td></td>\n")
             else
                 print("<th></th><td></td>\n")
             end

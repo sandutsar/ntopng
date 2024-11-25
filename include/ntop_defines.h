@@ -325,6 +325,7 @@
 #define CONST_STR_USER_EXPIRE NTOPNG_USER_PREFIX ".%s.expire"
 #define CONST_STR_USER_CAPABILITIES NTOPNG_USER_PREFIX ".%s.capabilities"
 #define CONST_STR_USER_API_TOKEN NTOPNG_USER_PREFIX ".%s.api_token"
+#define CONST_STR_UNKNOWN_TCP_FINGERPRINTS NTOPNG_CACHE_PREFIX ".unknown_tcp_fingerprints"
 #define CONST_ALLOWED_NETS "allowed_nets"
 #define CONST_ALLOWED_IFNAME "allowed_ifname"
 #define CONST_USER_LANGUAGE "language"

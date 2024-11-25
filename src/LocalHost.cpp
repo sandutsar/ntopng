@@ -29,7 +29,7 @@ LocalHost::LocalHost(NetworkInterface *_iface, int32_t _iface_idx, Mac *_mac,
     : Host(_iface, _iface_idx, _mac, _vlanId, _observation_point_id, _ip),
       contacted_server_ports(CONST_MAX_NUM_QUEUED_PORTS, "localhost-serverportsproto"),
       usedPorts(this) {
-  os = NULL;
+  os = NULL, tcp_fingerprint = NULL;
   
   if (trace_new_delete)
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "[new] %s", __FILE__);
@@ -62,9 +62,12 @@ LocalHost::LocalHost(NetworkInterface *_iface, int32_t _iface_idx,
 LocalHost::~LocalHost() {
   if (trace_new_delete)
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "[delete] %s", __FILE__);
+
   addInactiveData();
+
   if (initial_ts_point) delete (initial_ts_point);
   freeLocalHostData();
+
   /* Decrease number of active hosts */
   if (isUnicastHost()) iface->decNumHosts(this, is_rx_only);
 #ifdef NTOPNG_PRO
@@ -558,11 +561,13 @@ void LocalHost::freeLocalHostData() {
     os_detail = NULL;
   }
 
-  for (std::unordered_map<u_int32_t, DoHDoTStats *>::iterator it =
-           doh_dot_map.begin();
+  if(tcp_fingerprint)
+    free(tcp_fingerprint);
+  
+  for (std::unordered_map<u_int32_t, DoHDoTStats *>::iterator it = doh_dot_map.begin();
        it != doh_dot_map.end(); ++it)
     delete it->second;
-
+  
   if (fingerprints) delete fingerprints;
 }
 
@@ -734,6 +739,9 @@ void LocalHost::lua_get_fingerprints(lua_State *vm) {
     fingerprints->ja4.lua("ja4_fingerprint", vm);
     fingerprints->hassh.lua("hassh_fingerprint", vm);
   }
+
+  if(tcp_fingerprint != NULL)
+    lua_push_str_table_entry(vm, "tcp_fingerprint", tcp_fingerprint);
 }
 
 /* *************************************** */
@@ -942,7 +950,7 @@ void LocalHost::setResolvedName(const char *resolved_name) {
 
 /* *************************************** */
 
-void LocalHost::setTCPfingerprint(char *tcp_fingerprint, enum operating_system_hint os) {
+void LocalHost::setTCPfingerprint(char *_tcp_fingerprint, enum operating_system_hint os) {
   if(os == os_hint_unknown)
     ;
   else if(host_os == os_hint_unknown) {
@@ -978,6 +986,22 @@ void LocalHost::setTCPfingerprint(char *tcp_fingerprint, enum operating_system_h
       /* Nothing to do */
       break;
     }
+
+    if(tcp_fingerprint == NULL) {
+      char buf[64], log[128];
+
+      snprintf(log, sizeof(log), "%s,%s",
+	       get_ip()->print(buf, sizeof(buf)),
+	       Utils::OSType2Str(getOS()));
+      
+      ntop->getTrace()->traceEvent(TRACE_INFO, "** Unknown TCP fingerprint %s [%s]",
+				   _tcp_fingerprint,log);
+
+      ntop->getRedis()->hashSet(CONST_STR_UNKNOWN_TCP_FINGERPRINTS, _tcp_fingerprint, log);
+			    
+      tcp_fingerprint = strdup(_tcp_fingerprint);	  
+    }
+
   } else if(host_os != os) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Found OS inconsistency %s vs %s",
 				 ndpi_print_os_hint(host_os),
