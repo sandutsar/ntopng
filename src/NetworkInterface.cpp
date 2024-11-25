@@ -407,7 +407,7 @@ u_int16_t NetworkInterface::getnDPIProtoByName(const char *name) {
 /* ********************** */
 
 struct ndpi_keys_struct {
-  const char *proto, *key;
+  const char *proto, *key, *value;
 };
   
 struct ndpi_detection_module_struct *NetworkInterface::initnDPIStruct() {
@@ -422,10 +422,12 @@ struct ndpi_detection_module_struct *NetworkInterface::initnDPIStruct() {
     NULL
   };
   const struct ndpi_keys_struct ndpi_keys[] = {
-    { NULL, "flow.track_payload" },
-    { "tls", "metadata.ja4r_fingerprint" },
-    { NULL, NULL }
-
+    { NULL,   "flow.track_payload",           "1"  },
+    { "tls",  "metadata.ja4r_fingerprint",    "1"  },
+    { NULL,   "packets_limit_per_flow",       "64" },
+    { "stun", "monitoring",                   "1"  },
+    { "stun", "max_packets_extra_dissection", "32" },
+    { NULL, NULL, NULL }
   };
 
   if (ndpi_s == NULL) {
@@ -438,10 +440,13 @@ struct ndpi_detection_module_struct *NetworkInterface::initnDPIStruct() {
   ndpi_set_protocol_detection_bitmask2(ndpi_s, &all);
 
   for(int i=0; ndpi_keys[i].key != NULL; i++) {
-    rc = ndpi_set_config(ndpi_s, ndpi_keys[i].proto, ndpi_keys[i].key, "1");
+    rc = ndpi_set_config(ndpi_s, ndpi_keys[i].proto, ndpi_keys[i].key, ndpi_keys[i].value);
     
     if (rc != NDPI_CFG_OK)
-      ntop->getTrace()->traceEvent(TRACE_ERROR, "Error ndpi_set_config(%s): %d", ndpi_keys[i], rc);
+      ntop->getTrace()->traceEvent(TRACE_ERROR, "Error ndpi_set_config(%s/%s/%s): %d",
+				   ndpi_keys[i].proto ? ndpi_keys[i].proto : "NULL",
+				   ndpi_keys[i].key   ? ndpi_keys[i].key   : "NULL",
+				   ndpi_keys[i].value, rc);
   }
 
   if(ntop->getPrefs() && ntop->getPrefs()->is_dns_cache_enabled()) {

@@ -956,8 +956,7 @@ void Flow::processExtraDissectedInformation() {
   }
 
   /* Read this data before freeing nDPI */
-  if(get_ndpi_flow()
-     && (ndpi_get_upper_proto(get_detected_protocol()) == NDPI_PROTOCOL_SKYPE_TEAMS_CALL)) {
+  if(get_ndpi_flow() != NULL) {
     u_int8_t flow_types = get_ndpi_flow()->flow_multimedia_types;
     
     if(flow_types != ndpi_multimedia_unknown_flow) {
@@ -3091,8 +3090,7 @@ void Flow::lua(lua_State *vm, AddressTree *ptree, DetailsLevel details_level,
     }
 
     if (flow_payload != NULL)
-      lua_push_str_len_table_entry(vm, "flow_payload",
-				   flow_payload, flow_payload_len);
+      lua_push_str_len_table_entry(vm, "flow_payload", flow_payload, flow_payload_len);
 
     if (get_json_info()) {
       lua_push_str_table_entry(vm, "moreinfo.json",
@@ -5596,24 +5594,13 @@ std::string Flow::getFlowInfo(bool isLuaRequest) {
     } else if (isSIP()) {
       if(protos.sip.call_id)
 	info_field = std::string(protos.sip.call_id);
-    } else if(isProto(NDPI_PROTOCOL_SKYPE_TEAMS_CALL)
-	      || isProto(NDPI_PROTOCOL_ZOOM)) {
-      switch(rtp_stream_type) {
-      case ndpi_multimedia_unknown_flow:
-	break;
-
-      case ndpi_multimedia_audio_flow:
+    } else if(rtp_stream_type != ndpi_multimedia_unknown_flow) {
+      if(rtp_stream_type & ndpi_multimedia_audio_flow)
 	info_field = std::string("Audio");
-	break;
-
-      case ndpi_multimedia_video_flow:
+      else if(rtp_stream_type & ndpi_multimedia_video_flow)
 	info_field = std::string("Video");
-	break;
-
-      case ndpi_multimedia_screen_sharing_flow:
+      else if(rtp_stream_type & ndpi_multimedia_screen_sharing_flow)
 	info_field = std::string("Desktop Sharing");
-	break;
-      }
     }
   }
 
