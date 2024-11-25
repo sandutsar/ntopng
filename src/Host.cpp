@@ -2056,12 +2056,13 @@ char *Host::get_mac_based_tskey(Mac *mac, char *buf, size_t bufsize,
  */
 void Host::setOS(OSType _os) {
   if((os_type != os_unknown) && ( os_type != _os)) {
+#if 0
     char buf[64];
     
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Found OS inconsistency: current=%s vs new=%s [%s]",
 				 Utils::OSType2Str(os_type), Utils::OSType2Str(_os),
 				 print(buf, sizeof(buf)));
-
+#endif
   } else {
     Mac *mac = getMac();
     
