@@ -958,22 +958,15 @@ void Flow::processExtraDissectedInformation() {
   /* Read this data before freeing nDPI */
   if(get_ndpi_flow()
      && (ndpi_get_upper_proto(get_detected_protocol()) == NDPI_PROTOCOL_SKYPE_TEAMS_CALL)) {
-    switch(get_ndpi_flow()->flow_multimedia_type) {
-    case ndpi_multimedia_audio_flow:
-      setRTPStreamType(ndpi_multimedia_audio_flow);
-      break;
-
-    case ndpi_multimedia_video_flow:
-      setRTPStreamType(ndpi_multimedia_video_flow);
-      break;
-
-    case ndpi_multimedia_screen_sharing_flow:
-      setRTPStreamType(ndpi_multimedia_screen_sharing_flow);
-      break;
-
-    default:
-      /* Nothing to do */
-      break;
+    u_int8_t flow_types = get_ndpi_flow()->flow_multimedia_types;
+    
+    if(flow_types != ndpi_multimedia_unknown_flow) {
+      if(flow_types & ndpi_multimedia_audio_flow)
+	setRTPStreamType(ndpi_multimedia_audio_flow);
+      else if(flow_types & ndpi_multimedia_video_flow)
+	setRTPStreamType(ndpi_multimedia_video_flow);
+      else if(flow_types & ndpi_multimedia_screen_sharing_flow)
+	setRTPStreamType(ndpi_multimedia_screen_sharing_flow);
     }
   }
 
@@ -3089,23 +3082,12 @@ void Flow::lua(lua_State *vm, AddressTree *ptree, DetailsLevel details_level,
     }
 
     if (rtp_stream_type != ndpi_multimedia_unknown_flow) {
-      switch (rtp_stream_type) {
-      case ndpi_multimedia_audio_flow:
+      if(rtp_stream_type & ndpi_multimedia_audio_flow)
 	lua_push_str_table_entry(vm, "rtp_stream_type", "audio");
-	break;
-
-      case ndpi_multimedia_video_flow:
+      else if(rtp_stream_type & ndpi_multimedia_video_flow)
 	lua_push_str_table_entry(vm, "rtp_stream_type", "video");
-	break;
-
-      case ndpi_multimedia_screen_sharing_flow:
-	lua_push_str_table_entry(vm, "rtp_stream_type", "screen_share");
-	break;
-
-      default:
-	/* Nothing to do */
-	break;
-      }
+      else if(rtp_stream_type & ndpi_multimedia_screen_sharing_flow)
+	lua_push_str_table_entry(vm, "rtp_stream_type", "screen_share");   
     }
 
     if (flow_payload != NULL)

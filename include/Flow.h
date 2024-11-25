@@ -98,7 +98,7 @@ class Flow : public GenericHashEntry {
     is_periodic_flow : 1, ____notused:1;  
   u_int8_t iface_flow_accounted:1, _notused:7;
 
-  ndpi_multimedia_flow_type rtp_stream_type;
+  u_int8_t rtp_stream_type;
 #ifdef ALERTED_FLOWS_DEBUG
   bool iface_alert_inc, iface_alert_dec;
 #endif
@@ -1387,12 +1387,8 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   inline u_int8_t getCustomFlowAlertScore() { return (customFlowAlert.score); }
   inline char *getCustomFlowAlertMessage() { return (customFlowAlert.msg); }
   void triggerCustomFlowAlert(u_int8_t score, char *msg);
-  inline void setRTPStreamType(ndpi_multimedia_flow_type s) {
-    rtp_stream_type = s;
-  }
-  inline ndpi_multimedia_flow_type getRTPStreamType() {
-    return (rtp_stream_type);
-  }
+  inline void setRTPStreamType(u_int8_t s) { rtp_stream_type = s;      }
+  inline u_int8_t getRTPStreamType()       { return (rtp_stream_type); }
   inline void setPeriodicFlow(u_int32_t _periodicity) { is_periodic_flow = 1, periodicity = _periodicity; }
   inline bool isPeriodicFlow() { return (is_periodic_flow ? true : false); }
   void swap();

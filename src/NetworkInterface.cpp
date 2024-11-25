@@ -2332,7 +2332,7 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
 	}
       } else if (flow->getRTPStreamType() == ndpi_multimedia_unknown_flow) {
 	if (flow->get_ndpi_flow() != NULL) {
-	  flow->setRTPStreamType(flow->get_ndpi_flow()->flow_multimedia_type);
+	  flow->setRTPStreamType(flow->get_ndpi_flow()->flow_multimedia_types);
 	}
       }
       break;
