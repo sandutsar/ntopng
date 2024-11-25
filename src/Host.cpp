@@ -75,7 +75,6 @@ Host::~Host() {
 
   if (mac) mac->decUses();
   if (as) as->decUses();
-  if (os) os->decUses();
   if (country) country->decUses();
   if (obs_point) obs_point->decUses();
   if (vlan) vlan->decUses();
@@ -1319,16 +1318,15 @@ void Host::periodic_stats_update(const struct timeval *tv) {
 
   /* Update the pointer to the operating system according to what is specified
    * in cur_os_type, if necessary */
-  if (!os || os->get_os_type() != cur_os_type) inlineSetOS(cur_os_type);
+  inlineSetOS(cur_os_type);
 
   /*
     Update  the operating system, according to what comes from the fingerprint,
     if necessary. The actual pointer will be update above during the next call
    */
   if (cur_os_type == os_unknown && cur_mac && cur_mac->getFingerprint() &&
-      (cur_os_from_fingerprint = Utils::getOSFromFingerprint(
-           cur_mac->getFingerprint(), cur_mac->get_manufacturer(),
-           cur_mac->getDeviceType())) != cur_os_type)
+      (cur_os_from_fingerprint = Utils::getOSFromFingerprint(cur_mac->getFingerprint(), cur_mac->get_manufacturer(),
+							     cur_mac->getDeviceType())) != cur_os_type)
     setOS(cur_os_from_fingerprint);
 
   if (stats) stats->updateStats(tv);

@@ -65,6 +65,8 @@ LocalHost::~LocalHost() {
 
   addInactiveData();
 
+  if (os) os->decUses();
+  
   if (initial_ts_point) delete (initial_ts_point);
   freeLocalHostData();
 

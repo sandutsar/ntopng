@@ -105,8 +105,6 @@ class Host : public GenericHashEntry,
   ObservationPoint *obs_point;
   ndpi_bitmap *tcp_udp_contacted_ports_no_tx; /* Ports of this host that have
                                                  been contacted by peers */
-  OperatingSystem *os; /* Pointer to an instance of operating system, used
-                          internally to handle operating system statistics */
   OSType os_type; /* Operating system type, equivalent to os->get_os_type(),
                      used by operating system setters and getters */
 
