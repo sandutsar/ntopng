@@ -291,7 +291,7 @@ void Host::initialize(Mac *_mac, int32_t _iface_idx, u_int16_t _vlanId,
 
   last_stats_reset = ntop->getLastStatsReset(); /* assume fresh stats, may be
                                                    changed by deserialize */
-  as = NULL, asn = 0, asname = NULL, obs_point = NULL, os = NULL,
+  as = NULL, asn = 0, asname = NULL, obs_point = NULL;
   os_type = os_unknown;
   ssdpLocation = NULL, blacklist_name = NULL, country = NULL;
 
@@ -2052,22 +2052,6 @@ char *Host::get_mac_based_tskey(Mac *mac, char *buf, size_t bufsize,
 /* *************************************** */
 
 /*
-  Private method, called periodically to update the OperatingSystem os pointer
-  to what is set in os_type by setters using setOS
- */
-void Host::inlineSetOS(OSType _os) {
-  if (!os || os->get_os_type() != _os) {
-    if (os) os->decUses();
-
-    if ((os = iface->getOS(_os, true /* Create if missing */,
-                           true /* Inline call */)) != NULL)
-      os->incUses();
-  }
-}
-
-/* *************************************** */
-
-/*
   Public method to set the operating system
  */
 void Host::setOS(OSType _os) {
@@ -2076,23 +2060,6 @@ void Host::setOS(OSType _os) {
   if ((mac == NULL) || (mac->getDeviceType() != device_networking)) {
     os_type = _os;
   }
-}
-
-/* *************************************** */
-
-OSType Host::getOS() const { return os_type; }
-
-/* *************************************** */
-
-void Host::incOSStats(time_t when, u_int16_t proto_id, u_int64_t sent_packets,
-                      u_int64_t sent_bytes, u_int64_t rcvd_packets,
-                      u_int64_t rcvd_bytes) {
-  OperatingSystem *cur_os = os; /* Cache the pointer as it can change (similar
-                                   to what is done for MAC addresses) */
-
-  if (cur_os)
-    cur_os->incStats(when, proto_id, sent_packets, sent_bytes, rcvd_packets,
-                     rcvd_bytes);
 }
 
 /* *************************************** */

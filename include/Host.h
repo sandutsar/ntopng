@@ -122,7 +122,7 @@ class Host : public GenericHashEntry,
 
   struct {
     u_int8_t alertTriggered : 1, hostAlreadyEvaluated : 1,
-        checkAlreadyExecutedOnce : 1, _not_used : 7;
+      checkAlreadyExecutedOnce : 1, _not_used : 7;
     u_int8_t score;
     u_int32_t skip_until_epoch;
     char *msg;
@@ -157,7 +157,7 @@ class Host : public GenericHashEntry,
   void initialize(Mac *_mac, int32_t _iface_idx,
 		  u_int16_t _vlan_id,
                   u_int16_t observation_point_id);
-  void inlineSetOS(OSType _os);
+  virtual void inlineSetOS(OSType _os) { ; } 
   bool statsResetRequested();
   void checkStatsReset();
 #ifdef HAVE_NEDGE
@@ -793,10 +793,10 @@ class Host : public GenericHashEntry,
   bool isFlowAlertDisabled(FlowAlertType alert_type);
 
   virtual void setOS(OSType _os);
-  OSType getOS() const;
-  void incOSStats(time_t when, u_int16_t proto_id, u_int64_t sent_packets,
-                  u_int64_t sent_bytes, u_int64_t rcvd_packets,
-                  u_int64_t rcvd_bytes);
+  OSType getOS() const { return os_type; }
+  virtual void incOSStats(time_t when, u_int16_t proto_id, u_int64_t sent_packets,
+			  u_int64_t sent_bytes, u_int64_t rcvd_packets,
+			  u_int64_t rcvd_bytes) { ; }
 
   void incCliContactedHosts(IpAddress *peer) {
     stats->incCliContactedHosts(peer);

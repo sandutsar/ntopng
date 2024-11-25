@@ -885,8 +885,7 @@ void Flow::processExtraDissectedInformation() {
 	  char *doublecol, delimiter = ':';
 
 	  /* If <host>:<port> we need to remove ':' */
-	  if ((doublecol = (char *)strchr(
-					  (const char *)ndpiFlow->host_server_name, delimiter)) !=
+	  if ((doublecol = (char *)strchr((const char *)ndpiFlow->host_server_name, delimiter)) !=
 	      NULL)
 	    doublecol[0] = '\0';
 

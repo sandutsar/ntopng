@@ -55,7 +55,8 @@ class LocalHost : public Host {
 #ifdef NTOPNG_PRO
   void dumpAssetInfo();
 #endif
-
+  virtual void inlineSetOS(OSType _os);
+  
  public:
   LocalHost(NetworkInterface *_iface, int32_t _iface_idx,
 	    Mac *_mac, u_int16_t _u_int16_t,
@@ -227,6 +228,11 @@ class LocalHost : public Host {
 
   virtual void setOS(OSType _os);
   void setTCPfingerprint(char *tcp_fingerprint, enum operating_system_hint os);
+
+  void incOSStats(time_t when, u_int16_t proto_id, u_int64_t sent_packets,
+		  u_int64_t sent_bytes, u_int64_t rcvd_packets,
+		  u_int64_t rcvd_bytes);
+
 };
 
 #endif /* _LOCAL_HOST_H_ */

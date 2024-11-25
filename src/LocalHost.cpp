@@ -27,9 +27,10 @@ LocalHost::LocalHost(NetworkInterface *_iface, int32_t _iface_idx, Mac *_mac,
                      u_int16_t _vlanId, u_int16_t _observation_point_id,
                      IpAddress *_ip)
     : Host(_iface, _iface_idx, _mac, _vlanId, _observation_point_id, _ip),
-      contacted_server_ports(CONST_MAX_NUM_QUEUED_PORTS,
-                             "localhost-serverportsproto"),
+      contacted_server_ports(CONST_MAX_NUM_QUEUED_PORTS, "localhost-serverportsproto"),
       usedPorts(this) {
+  os = NULL;
+  
   if (trace_new_delete)
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "[new] %s", __FILE__);
 
@@ -993,3 +994,33 @@ void LocalHost::setOS(OSType _os) {
     ntop->get_am()->setHostOS(this, _os);
 #endif
 }
+
+/* *************************************** */
+
+void LocalHost::incOSStats(time_t when, u_int16_t proto_id, u_int64_t sent_packets,
+                      u_int64_t sent_bytes, u_int64_t rcvd_packets,
+                      u_int64_t rcvd_bytes) {
+  OperatingSystem *cur_os = os; /* Cache the pointer as it can change (similar
+                                   to what is done for MAC addresses) */
+
+  if (cur_os)
+    cur_os->incStats(when, proto_id, sent_packets, sent_bytes, rcvd_packets,
+                     rcvd_bytes);
+}
+
+/* *************************************** */
+
+/*
+  Private method, called periodically to update the OperatingSystem os pointer
+  to what is set in os_type by setters using setOS
+ */
+void LocalHost::inlineSetOS(OSType _os) {
+  if (!os || os->get_os_type() != _os) {
+    if (os) os->decUses();
+
+    if ((os = iface->getOS(_os, true /* Create if missing */,
+                           true /* Inline call */)) != NULL)
+      os->incUses();
+  }
+}
+
