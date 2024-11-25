@@ -1,4 +1,4 @@
---
+
 -- (C) 2013-24 - ntop.org
 --
 
@@ -713,8 +713,8 @@ else
                 end
 		
                 print("<th>" .. i18n("os") .. "</th><td> <A HREF='" .. ntop.getHttpPrefix() ..
-                          "/lua/hosts_stats.lua?os=" .. host["os"] .. "'>" .. discover.getOsAndIcon(host["os"]) ..
-                          "</A>" .. os_detail)
+		      "/lua/hosts_stats.lua?os=" .. host["os"] .. "'>" .. discover.getOsAndIcon(host["os"]) ..
+		      "</A>" .. os_detail)
 
 		if(host["tcp_fingerprint"] ~= nil) then
 		   print(" <span class=\"badge bg-success\">TCP Fingerprint: "..host["tcp_fingerprint"].. "</span>")

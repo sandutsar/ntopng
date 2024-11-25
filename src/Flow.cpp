@@ -73,7 +73,7 @@ Flow::Flow(NetworkInterface *_iface,
   src2dst_tcp_zero_window = dst2src_tcp_zero_window = 0;
   swap_done = swap_requested = 0;
   current_c_state = MINOR_NO_STATE;
-
+  tcp_fingerprint = NULL;
 #ifdef HAVE_NEDGE
   last_conntrack_update = 0;
   marker = MARKER_NO_ACTION;
@@ -461,14 +461,16 @@ Flow::~Flow() {
     Finish deleting other flow data structures
   */
 
-  if (riskInfo) free(riskInfo);
-  if (end_reason) free(end_reason);
-  if (wlan_ssid) free(wlan_ssid);
-  if (viewFlowStats) delete (viewFlowStats);
-  if (periodic_stats_update_partial) delete (periodic_stats_update_partial);
-  if (last_db_dump.partial) delete (last_db_dump.partial);
-  if (json_info) json_object_put(json_info);
-  if (tlv_info) {
+  if(tcp_fingerprint) free(tcp_fingerprint);
+  if(riskInfo) free(riskInfo);
+  if(end_reason) free(end_reason);
+  if(wlan_ssid) free(wlan_ssid);
+  if(viewFlowStats) delete (viewFlowStats);
+  if(periodic_stats_update_partial) delete (periodic_stats_update_partial);
+  if(last_db_dump.partial) delete (last_db_dump.partial);
+  if(json_info) json_object_put(json_info);
+
+  if(tlv_info) {
     ndpi_term_serializer(tlv_info);
     free(tlv_info);
   }
@@ -885,16 +887,15 @@ void Flow::processExtraDissectedInformation() {
 	  char *doublecol, delimiter = ':';
 
 	  /* If <host>:<port> we need to remove ':' */
-	  if ((doublecol = (char *)strchr((const char *)ndpiFlow->host_server_name, delimiter)) !=
-	      NULL)
+	  if ((doublecol = (char *)strchr((const char *)ndpiFlow->host_server_name, delimiter)) != NULL)
 	    doublecol[0] = '\0';
 
 	  if (cli_host) {
 	    cli_host->incContactedService((char *)ndpiFlow->host_server_name);
 
 	    if (ndpiFlow->http.detected_os)
-	      cli_host->inlineSetOSDetail((char *)ndpiFlow->http.detected_os);
-
+	      cli_host->inlineSetOSDetail((char *)ndpiFlow->http.detected_os); /* Learnt from User-Agent */	    
+	    
 	    if (cli_host->isLocalHost())
 	      cli_host->incrVisitedWebSite((char *)ndpiFlow->host_server_name);
 	  }
@@ -1002,6 +1003,24 @@ void Flow::processPacket(const struct pcap_pkthdr *h, const u_char *ip_packet,
    * guess the protocol. */
 
   proto_id = ndpi_detection_process_packet(iface->get_ndpi_struct(), ndpiFlow, ip_packet, ip_len, packet_time, NULL);
+
+  if((tcp_fingerprint == NULL) && ndpiFlow->tcp.fingerprint) {
+#if 0
+    char buf[64];
+    
+    ntop->getTrace()->traceEvent(TRACE_WARNING, "->> %s [%s][%s@%d]",
+				 ndpiFlow->tcp.fingerprint,
+				 ndpi_print_os_hint(ndpiFlow->tcp.os_hint),
+				 cli_host->get_ip()->print(buf, sizeof(buf)),
+				 vlanId);
+#endif
+    
+    if(ndpiFlow->tcp.os_hint != os_hint_unknown)
+      cli_host->setTCPfingerprint(ndpiFlow->tcp.fingerprint,
+				  (enum operating_system_hint)ndpiFlow->tcp.os_hint);	
+    
+    tcp_fingerprint = strdup(ndpiFlow->tcp.fingerprint);
+  }
 
   if ((ndpi_flow_risk_bitmap != 0) && (ndpiFlow->risk == 0)) {
     /*
@@ -2839,8 +2858,8 @@ void Flow::luaScore(lua_State *vm) {
 
 /* *************************************** */
 
-void Flow::lua(lua_State *vm, AddressTree *ptree, DetailsLevel details_level,
-               bool skipNewTable) {
+void Flow::lua(lua_State *vm, AddressTree *ptree,
+	       DetailsLevel details_level, bool skipNewTable) {
   const IpAddress *src_ip = get_cli_ip_addr(), *dst_ip = get_srv_ip_addr();
   bool src_match = true, dst_match = true;
   bool mask_flow;
@@ -2868,6 +2887,9 @@ void Flow::lua(lua_State *vm, AddressTree *ptree, DetailsLevel details_level,
   lua_get_bytes(vm);
 
   if (details_level >= details_high) {
+    if(tcp_fingerprint)
+      lua_push_str_table_entry(vm, "tcp_fingerprint", tcp_fingerprint);
+    
     if(swap_done) lua_push_bool_table_entry(vm, "flow_swapped", true);
     lua_push_uint32_table_entry(vm, "flow_source", flow_source);
     lua_push_bool_table_entry(vm, "cli.allowed_host", src_match);
@@ -5389,21 +5411,6 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
   } else {
     /* Packet Interface */
 
-    if (flags_3wh | TH_SYN) {
-      if(cli_host && ndpiFlow && ndpiFlow->tcp.fingerprint) {
-#if 0
-	ntop->getTrace()->traceEvent(TRACE_WARNING, "->> %s [%s]",
-				     ndpiFlow->tcp.fingerprint,
-				     ndpi_print_os_hint(ndpiFlow->tcp.os_hint));
-#endif
-
-	if(ndpiFlow->tcp.os_hint != os_hint_unknown) {
-	  cli_host->setTCPfingerprint(ndpiFlow->tcp.fingerprint,
-				      (enum operating_system_hint)ndpiFlow->tcp.os_hint);
-	}
-      }
-    }
-    
     /* Update syn alerts counters. In case of cumulative flags, the AND is used as
      * possibly other flags can be present  */
     if (flags_3wh == TH_SYN) {
@@ -6268,26 +6275,15 @@ void Flow::dissectHTTP(bool src2dst_direction, char *payload,
 	      char *end = strchr(buf, ')');
 
 	      if (end) {
-		/* TODO: move into nDPI */
+		enum operating_system_hint hint;
+		
 		end[0] = '\0';
 		ua++;
 
-		if (strstr(ua, "iPad") || strstr(ua, "iPod") ||
-		    strstr(ua, "iPhone"))
-		  operating_system = os_ios;
-		else if (strstr(ua, "Android"))
-		  operating_system = os_android;
-		else if (strstr(ua, "Airport"))
-		  operating_system = os_apple_airport;
-		else if (strstr(ua, "Macintosh") || strstr(ua, "OS X"))
-		  operating_system = os_macos;
-		else if (strstr(ua, "Windows"))
-		  operating_system = os_windows;
-		else if (strstr(ua, "FreeBSD"))
-		  operating_system = os_freebsd;
-		else if (strcasestr(ua, "Linux") || strstr(ua, "Debian") ||
-			 strstr(ua, "Ubuntu"))
-		  operating_system = os_linux;
+		Utils::getDeviceTypeFromOsDetail(ua, &hint);
+
+		if(hint != os_hint_unknown)
+		  operating_system = Utils::OShint2OSType(hint);		
 	      }
 	    }
 	  }

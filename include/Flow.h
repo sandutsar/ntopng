@@ -72,6 +72,7 @@ class Flow : public GenericHashEntry {
   FlowAlertType predominant_alert;   /* This is the predominant alert */
   u_int16_t predominant_alert_score; /* The score associated to the predominant alert */
   FlowSource flow_source;
+  char *tcp_fingerprint;
   
   struct {
     u_int8_t is_cli_attacker : 1, is_cli_victim : 1, is_srv_attacker : 1,

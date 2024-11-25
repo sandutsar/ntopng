@@ -627,6 +627,10 @@ else
             print(" [" .. i18n("ndpi_confidence") .. ": " .. format_confidence_badge(flow.confidence) .. "]")
         end
 
+	if(flow.tcp_fingerprint) then
+	   print(' <span class="badge bg-secondary">TCP Fingerprint: '.. flow.tcp_fingerprint ..'</span>')
+	end
+	
 	-- See FlowSource in ntop_typedefs.h
 	if(flow.flow_source == 0) then
 	   -- packet to flow
@@ -682,6 +686,7 @@ else
         print("<td><b> <A HREF=https://en.wikipedia.org/wiki/Virtual_routing_and_forwarding>VRF</A> Id</b> " ..
                   flow.vrfId .. "</td>")
     end
+
     print("</tr>\n")
 
     if (ntop.isPro() and ifstats.inline and (flow["shaper.cli2srv_ingress"] ~= nil)) then

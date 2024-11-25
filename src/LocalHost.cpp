@@ -471,12 +471,14 @@ void LocalHost::inlineSetOSDetail(const char *_os_detail) {
       || (mac->getDeviceType() == device_networking))
     return;
 
-  if (os_detail || !_os_detail) return; /* Already set */
+  if (os_detail || !_os_detail)
+    return; /* Already set */
 
   if ((os_detail = strdup(_os_detail))) {
+    enum operating_system_hint hint;
+    
     // TODO set mac device type
-    ;
-    DeviceType devtype = Utils::getDeviceTypeFromOsDetail(os_detail);
+    DeviceType devtype = Utils::getDeviceTypeFromOsDetail(os_detail, &hint);
 
     if (devtype != device_unknown) mac->setDeviceType(devtype);
   }
@@ -952,42 +954,17 @@ void LocalHost::setResolvedName(const char *resolved_name) {
 
 /* *************************************** */
 
-void LocalHost::setTCPfingerprint(char *_tcp_fingerprint, enum operating_system_hint os) {
+void LocalHost::setTCPfingerprint(char *_tcp_fingerprint,
+				  enum operating_system_hint os) {
   if(os == os_hint_unknown)
     ;
   else if(host_os == os_hint_unknown) {
+    OSType os_type = Utils::OShint2OSType(os);
+    
     host_os = os;
 
-    switch(host_os) {
-    case os_hint_windows:
-      setOS(os_windows);
-      break;
-      
-    case os_hint_macos:
-      setOS(os_macos);
-      break;
-      
-    case os_hint_ios_ipad_os:
-      setOS(os_ios);
-      break;
-      
-    case os_hint_android:
-      setOS(os_android);
-      break;
-      
-    case os_hint_linux:
-      setOS(os_linux);
-      break;
-      
-    case os_hint_freebsd:
-      setOS(os_freebsd);
-      break;
-
-    case os_hint_unknown:
-    case os_hint_unused2:
-      /* Nothing to do */
-      break;
-    }
+    if(os_type != os_unknown)
+      setOS(os_type);
 
     if(tcp_fingerprint == NULL) {
       char buf[64], log[128];

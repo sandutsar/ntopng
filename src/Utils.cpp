@@ -4953,19 +4953,80 @@ OSType Utils::getOSFromFingerprint(const char *fingerprint, const char *manuf,
 
 /* ****************************************************** */
 
-/* TODO move into nDPI? */
-DeviceType Utils::getDeviceTypeFromOsDetail(const char *os) {
-  if (strcasestr(os, "iPhone") || strcasestr(os, "Android") ||
-      strcasestr(os, "mobile"))
-    return (device_phone);
-  else if (strcasestr(os, "Mac OS") || strcasestr(os, "Windows") ||
-           strcasestr(os, "Linux"))
-    return (device_workstation);
-  else if (strcasestr(os, "iPad") || strcasestr(os, "tablet"))
-    return (device_tablet);
+OSType Utils::OShint2OSType(enum operating_system_hint os) {
 
-  return (device_unknown);
+  switch(os) {
+  case os_hint_windows:
+    return(os_windows);
+    break;
+    
+  case os_hint_macos:
+    return(os_macos);
+    break;
+    
+  case os_hint_ios_ipad_os:
+    return(os_ios);
+    break;
+    
+  case os_hint_android:
+    return(os_android);
+    break;
+    
+  case os_hint_linux:
+    return(os_linux);
+    break;
+    
+  case os_hint_freebsd:
+    return(os_freebsd);
+    break;
+    
+  default:
+    return(os_unknown);
+  }
 }
+
+/* ****************************************************** */
+
+DeviceType Utils::getDeviceTypeFromOsDetail(const char *os,
+					    enum operating_system_hint *hint) {
+  *hint = os_hint_unknown;
+  
+  if (strcasestr(os, "iPhone")) {
+    *hint = os_hint_ios_ipad_os;
+    return (device_phone);
+  } else if (strcasestr(os, "Android")) {
+    *hint = os_hint_android;
+    return (device_phone);
+  } else if(strcasestr(os, "mobile"))    
+    return (device_phone);
+  else if (strcasestr(os, "Mac OS")
+	   || strstr(os, "Macintosh")
+	   || strstr(os, "OS X")) {
+    *hint = os_hint_macos;
+    return (device_workstation);
+  } else if (strcasestr(os, "Windows")) {
+    *hint = os_hint_windows;
+    return (device_workstation);
+  } else if (strcasestr(os, "Linux")
+	     || strcasestr(os, "Debian")
+	     || strcasestr(os, "Ubuntu")) {
+    *hint = os_hint_linux;
+    return (device_workstation);
+  } else if (strcasestr(os, "FreeBSD")) {
+    *hint = os_hint_freebsd;
+    return (device_workstation);
+  } else if (strcasestr(os, "iPad")) {
+    *hint = os_hint_ios_ipad_os;
+    return (device_tablet);
+  } else if (strcasestr(os, "Airport")) {
+    return (device_tablet);
+  } else if (strcasestr(os, "tablet"))
+    return (device_tablet);
+  else
+    return (device_unknown);
+}
+
+/* ****************************************************** */
 
 /* Bitmap functions */
 bool Utils::bitmapIsSet(u_int64_t bitmap, u_int8_t v) {
@@ -4979,6 +5040,8 @@ bool Utils::bitmapIsSet(u_int64_t bitmap, u_int8_t v) {
   return (((bitmap >> v) & 1) ? true : false);
 }
 
+/* ****************************************************** */
+
 u_int64_t Utils::bitmapSet(u_int64_t bitmap, u_int8_t v) {
   if (v > 64)
     ntop->getTrace()->traceEvent(
@@ -4989,6 +5052,8 @@ u_int64_t Utils::bitmapSet(u_int64_t bitmap, u_int8_t v) {
 
   return (bitmap);
 }
+
+/* ****************************************************** */
 
 u_int64_t Utils::bitmapClear(u_int64_t bitmap, u_int8_t v) {
   if (v > 64)

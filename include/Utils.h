@@ -283,7 +283,9 @@ class Utils {
 
   static OSType getOSFromFingerprint(const char *fingerprint, const char *manuf,
                                      DeviceType devtype);
-  static DeviceType getDeviceTypeFromOsDetail(const char *os_detail);
+  static DeviceType getDeviceTypeFromOsDetail(const char *os_detail,
+					      enum operating_system_hint *hint);
+  static OSType OShint2OSType(enum operating_system_hint os);
   static u_int32_t pow2(u_int32_t v);
   static int exec(const char *command);
 #ifdef __linux__
