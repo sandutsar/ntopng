@@ -179,7 +179,7 @@ void LocalHost::initialize() {
   else
     fingerprints = NULL;
 
-  host_os = os_hint_unknown;
+  tcp_fingerprint_host_os = os_hint_unknown;
   
 #ifdef NTOPNG_PRO
   if ((!(isBroadcastHost() || isMulticastHost())) &&
@@ -438,9 +438,9 @@ void LocalHost::lua(lua_State *vm, AddressTree *ptree, bool host_details,
         Utils::formatMac(router_mac, router_buf, sizeof(router_buf)));
   }
 
-  if(host_os != os_hint_unknown) {
+  if(tcp_fingerprint_host_os != os_hint_unknown) {
     lua_newtable(vm);
-    lua_push_str_table_entry(vm, "os", ndpi_print_os_hint(host_os));
+    lua_push_str_table_entry(vm, "os", ndpi_print_os_hint(tcp_fingerprint_host_os));
     lua_pushstring(vm, "fingerprint");
     lua_insert(vm, -2);
     lua_settable(vm, -3);
@@ -957,33 +957,36 @@ void LocalHost::setResolvedName(const char *resolved_name) {
 void LocalHost::setTCPfingerprint(char *_tcp_fingerprint,
 				  enum operating_system_hint os) {
   if(os == os_hint_unknown)
-    ;
-  else if(host_os == os_hint_unknown) {
+    return;
+  
+  if(tcp_fingerprint_host_os == os_hint_unknown) {
     OSType os_type = Utils::OShint2OSType(os);
-    
-    host_os = os;
 
     if(os_type != os_unknown)
-      setOS(os_type);
+      setOS(os_type);      
+
+    tcp_fingerprint_host_os = os;
 
     if(tcp_fingerprint == NULL) {
-      char buf[64], log[128];
-
-      snprintf(log, sizeof(log), "%s,%s",
-	       get_ip()->print(buf, sizeof(buf)),
-	       Utils::OSType2Str(getOS()));
+      if(os_type == os_unknown) {
+	char buf[64], log[128];
+	
+	snprintf(log, sizeof(log), "%s,%s",
+		 get_ip()->print(buf, sizeof(buf)),
+		 Utils::OSType2Str(getOS()));
+	
+	ntop->getTrace()->traceEvent(TRACE_INFO, "** Unknown TCP fingerprint %s [%s]",
+				     _tcp_fingerprint, log);
+	
+	ntop->getRedis()->hashSet(CONST_STR_UNKNOWN_TCP_FINGERPRINTS, _tcp_fingerprint, log);
+      }
       
-      ntop->getTrace()->traceEvent(TRACE_INFO, "** Unknown TCP fingerprint %s [%s]",
-				   _tcp_fingerprint,log);
-
-      ntop->getRedis()->hashSet(CONST_STR_UNKNOWN_TCP_FINGERPRINTS, _tcp_fingerprint, log);
-			    
       tcp_fingerprint = strdup(_tcp_fingerprint);	  
     }
 
-  } else if(host_os != os) {
+  } else if(tcp_fingerprint_host_os != os) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Found OS inconsistency %s vs %s",
-				 ndpi_print_os_hint(host_os),
+				 ndpi_print_os_hint(tcp_fingerprint_host_os),
 				 ndpi_print_os_hint(os));
   }
 }
@@ -991,11 +994,14 @@ void LocalHost::setTCPfingerprint(char *_tcp_fingerprint,
 /* *************************************** */
 
 void LocalHost::setOS(OSType _os) {
-  Host::setOS(_os);
+  if(_os != os_unknown) {
+    Host::setOS(_os);
+    
 #ifdef NTOPNG_PRO
-  if(ntop->get_am() != NULL)
-    ntop->get_am()->setHostOS(this, _os);
+    if(ntop->get_am() != NULL)
+      ntop->get_am()->setHostOS(this, _os);
 #endif
+  }
 }
 
 /* *************************************** */
@@ -1018,9 +1024,11 @@ void LocalHost::incOSStats(time_t when, u_int16_t proto_id, u_int64_t sent_packe
   to what is set in os_type by setters using setOS
  */
 void LocalHost::inlineSetOS(OSType _os) {
-  if (!os || os->get_os_type() != _os) {
+  if(_os == os_unknown) return;
+			  
+  if((os != NULL) && (os->get_os_type() != _os)) {
     if (os) os->decUses();
-
+    
     if ((os = iface->getOS(_os, true /* Create if missing */,
                            true /* Inline call */)) != NULL)
       os->incUses();

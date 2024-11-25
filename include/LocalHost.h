@@ -34,7 +34,7 @@ class LocalHost : public Host {
   UsedPorts usedPorts;
   OperatingSystem *os; /* Pointer to an instance of operating system, used
                           internally to handle operating system statistics */
-  enum operating_system_hint host_os; /* TCP Fingerprinting */
+  enum operating_system_hint tcp_fingerprint_host_os; /* Learnt from TCP Fingerprinting */
   HostFingerprints *fingerprints; /* Application fingerprints */
   std::unordered_map<u_int32_t, DoHDoTStats *> doh_dot_map;
   u_int8_t router_mac[6]; /* MAC address pf the first router used (no Mac* to

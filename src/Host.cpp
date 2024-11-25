@@ -2049,11 +2049,11 @@ char *Host::get_mac_based_tskey(Mac *mac, char *buf, size_t bufsize,
 
 /* *************************************** */
 
-/*
-  Public method to set the operating system
- */
 void Host::setOS(OSType _os) {
-  if((os_type != os_unknown) && ( os_type != _os)) {
+  if(_os == os_unknown)
+    return;
+  
+  if((os_type != os_unknown) && (os_type != _os)) {
 #if 0
     char buf[64];
     
@@ -2062,11 +2062,7 @@ void Host::setOS(OSType _os) {
 				 print(buf, sizeof(buf)));
 #endif
   } else {
-    Mac *mac = getMac();
-    
-    if ((mac == NULL) || (mac->getDeviceType() != device_networking)) {
-      os_type = _os;
-    }
+    os_type = _os;
   }
 }
 
