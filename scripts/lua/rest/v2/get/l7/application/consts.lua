@@ -21,7 +21,7 @@ local res = {}
 
 local applications = interface.getnDPIProtocols()
 
-for application, appl_id in pairs(applications) do
+for application, appl_id in pairsByKeys(applications, asc) do
    appl_id = tonumber(appl_id)
    local cat = ntop.getnDPIProtoCategory(appl_id)
 

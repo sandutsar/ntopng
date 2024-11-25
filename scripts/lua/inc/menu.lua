@@ -720,6 +720,10 @@ page_utils.add_menubar_section({
             hidden = not is_admin,
             url = '/lua/admin/blacklists.lua?enabled_status=all'
         },  {entry = page_utils.menu_entries.divider}, {
+            entry = page_utils.menu_entries.access_control_list,
+            hidden = true, --not is_admin or not ntop.isEnterpriseL(),
+            url = '/lua/pro/admin/access_control_list.lua'
+        }, {
             entry = page_utils.menu_entries.manage_configurations,
             hidden = not is_admin or not ntop.hasDumpCache(),
             url = '/lua/admin/manage_configurations.lua'

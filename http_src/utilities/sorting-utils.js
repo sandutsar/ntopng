@@ -42,8 +42,13 @@ const normalize_number_value = function(lower_value, val, sort) {
 /* Sort by Name */
 const sortByName = function(val_1, val_2, sort) {
   if (sort == 1) {
+    if (!val_1) return -1;
+    if (!val_2) return 1;
     return val_1?.localeCompare(val_2);
   }
+  
+  if (!val_1) return 1;
+  if (!val_2) return -1;
   return val_2?.localeCompare(val_1);
 }
 

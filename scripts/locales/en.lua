@@ -1,5 +1,6 @@
 local lang = {
     ["abort"] = "Abort",
+    ["access_control_list"] = "Access Control List",
     ["acknowledge"] = "Acknowledge",
     ["acknowledge_alerts"] = "Acknowledge Alerts",
     ["acknowledged_all"] = "All",
@@ -938,6 +939,34 @@ local lang = {
     },
     ["activities_page"] = {
         ["host_activity"] = "Host Activity"
+    },
+    ["acl_page"] = {
+        ["add_acl_rule"] = "Add Rule",
+        ["edit_acl_rule"] = "Edit Rule",
+        ["use_port"] = "Port",
+        ["use_application"] = "App.",
+        ["advanced_settings"] = "Advanced Settings",
+        ["created_rule_time"] = "Creation Date",
+        ["delete_acl_rule"] = "Delete Rule",
+        ["delete_all_rules"] = "Delete All Rules",
+        ["delete_confirmation"] = "Are you sure you want to delete the selected rule",
+        ["delete_all_confirmation"] = "Are you sure you want to delete all the rules configured?",
+        ["each_host_separate_line"] = "Each rule must be put on a separate line",
+        ["error_detected"] = "Error Detected:",
+        ["notes"] = "Notes",
+        ["rule_format"] = "Formatted of the rules (values between squares are non-mandatory):<br>&nbsp;&nbsp;&nbsp;PROTOCOL;CLIENT;SERVER[;L7_PROTO|PORT]",
+        ["non_mandatory_parameters"] = "L7_PROTO|PORT field can be omitted, is non-mandatory",
+        ["select_one_parameter"] = "Only one field, between L7_PROTO and PORT can be used, <b>not</b> both",
+        ["parameters_separator"] = "Each parameter <b>needs</b> to be separated by a <b>;</b> symbol",
+        ["errors"] = {
+            ["incorrect_port_or_l7_proto"] = "Incorrect Port/L7 Proto provided, please provide a valid Port/L7 Proto [rule: %{rule}]",
+            ["incorrect_mac"] = "Requested rule for ARP, MAC Address is needed for %{host_type} [rule: %{rule}]",
+            ["missing_client_or_server"] = "No %{host_type} provided, please provide a valid %{host_type} [rule: %{rule}]",
+            ["ip_not_recognized"] = "Incorrect IP address provided. Unable to validate as [IP address: %{host}][rule: %{rule}]",
+            ["empty_proto"] = "No Protocol provided, please provide a protocol [rule: %{rule}]",
+            ["incorrect_proto"] = "Incorrect Protocol requested, please check the existence/spelling of the requested protocol %{proto}, no protocol found with that name [rule: %{rule}]",
+            ["missing_rules"] = "Missing rules, please check the Rules",
+        }
     },
     ["activity_descriptions"] = {
         ["5min"] = "Executes 5 minutes tasks. When using RRD, also writes hosts timeseries data.",

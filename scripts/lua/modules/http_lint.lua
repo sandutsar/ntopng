@@ -13,6 +13,7 @@ local json = require "dkjson"
 local tracker = require "tracker"
 local locales_utils = require "locales_utils"
 require "ntop_utils"
+require "label_utils"
 
 -- #################################################################
 
@@ -1791,7 +1792,9 @@ local known_parameters = {
    ["ndpi_category"] = validateBool,                                                               -- True if nDPI category should be shown
    ["ndpistats_mode"] = validateNdpiStatsMode,                                                     -- A mode for rest/v2/get/interface/l7/stats.lua
    ["l4_proto_id"] = validateProtocolIdOrName,                                                     -- get_historical_data.lua
-   ["l7_proto_id"] = validateProtocolIdOrName,                                                     -- get_historical_data.lua
+   ["l7_proto_id"] = validateProtocolIdOrName,        
+   ["proto"] = validateSingleWord,                                                        -- An nDPI application protocol ID or name
+   -- get_historical_data.lua
    ["l4proto"] = validateListOfTypeInline(validateFilters(validateProtocolIdOrName)),              -- An nDPI application protocol ID, layer 4
    ["l7proto"] = validateListOfTypeInline(validateFilters(validateDoubleProtocolIdOrName)),        -- An nDPI application protocol ID, layer 7
    ["l7proto_master"] = validateListOfTypeInline(validateFilters(validateDoubleProtocolIdOrName)), -- An nDPI application protocol ID, layer 7
@@ -2706,6 +2709,7 @@ local known_parameters = {
    ["probe_uuid"] = validateNumber,
    ["telemetry"] = validateBool,
    ["preset"] = validateSingleWord,
+   ["rules"] = validateUnquoted,
 
    -- nEdge policy
    ["default_policy"] = validatePolicy, -- users, nedge policies

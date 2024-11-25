@@ -1,0 +1,111 @@
+{
+	"id": "access_control_list",
+	"data_url": "lua/pro/rest/v2/get/system/access_control_list.lua",
+	"use_current_page": false,
+	"enable_search": false,
+	"paging": false,
+	"display_empty_rows": true,
+	"default_sort": {
+		"column_id": "ip_address",
+		"sort": 0
+	},
+	"columns": [
+		{
+			"id": "actions",
+			"title_i18n": "actions",
+			"sortable": false,
+			"sticky": true,
+			"class": [
+				"text-nowrap",
+				"text-center"
+			],
+			"render_v_node_type": "button_list",
+			"button_def_array": [
+				{
+					"id": "edit_rule",
+					"icon": "fas fa-edit",
+					"title_i18n": "edit",
+					"class": [
+						"link-button",
+						"btn-info"
+					],
+					"event_id": "click_button_edit_rule"
+				},
+				{
+					"id": "delete_rule",
+					"icon": "fas fa fa-trash",
+					"title_i18n": "delete",
+					"class": [
+						"link-button",
+						"btn-info"
+					],
+					"event_id": "click_button_delete_rule"
+				}
+			]
+		},
+		{
+			"title_i18n": "proto",
+			"data_field": "proto",
+			"sortable": true,
+			"min-width" : "120px",
+			"class": [
+				"text-nowrap"
+			]
+		},
+		{
+			"title_i18n": "l7_proto",
+			"data_field": "l7_proto",
+			"sortable": true,
+			"min-width" : "120px",
+			"class": [
+				"text-nowrap"
+			]
+		},
+		{
+			"title_i18n": "client",
+			"data_field": "client",
+			"min-width" : "180px",
+			"sortable": true,
+			"class": [
+				"text-nowrap"
+			]
+		},
+		{
+			"title_i18n": "server",
+			"data_field": "server",
+			"sortable": true,
+			"min-width" : "180px",
+			"class": [
+				"text-nowrap"
+			]
+		},
+		{
+			"title_i18n": "port",
+			"data_field": "port",
+			"sortable": true,
+			"min-width" : "120px",
+			"class": [
+				"text-nowrap"
+			]
+		},
+		{
+			"title_i18n": "acl_page.created_rule_time",
+			"data_field": "creation_timestamp",
+			"sortable": true,
+			"min-width" : "120px",
+			"class": [
+				"text-nowrap",
+				"text-center"
+			]
+		},
+		{
+			"title_i18n": "acl_page.notes",
+			"data_field": "note",
+			"sortable": true,
+			"min-width" : "180px",
+			"class": [
+				"text-nowrap"
+			]
+		}
+	]
+}

@@ -169,7 +169,8 @@ page_utils.menu_entries = {
    conf_restore           = {key = "conf_restore", i18n_title = "conf_backup.conf_restore", section = "admin"},
    manage_data            = {key = "manage_data", i18n_title = "manage_data.manage_data", section = "admin", help_link = "https://www.ntop.org/guides/ntopng/web_gui/settings.html#manage-data"},
    manage_configurations  = {key = "manage_configurations", i18n_title = "manage_configurations.manage_configurations", section = "admin"},
-
+   access_control_list    = {key = "access_control_list", i18n_title = "access_control_list", section = "admin"},
+   
    -- Notifications
    endpoint_notifications = {key = "endpoint_notifications", i18n_title = "endpoint_notifications.endpoint_list", section="notifications", help_link = "https://www.ntop.org/guides/ntopng/scripts/alert_endpoints.html"},
    endpoint_recipients    = {key = "endpoint_recipients", i18n_title = "endpoint_notifications.enpoint_recipients_list", section="notifications", help_link = "https://www.ntop.org/guides/ntopng/scripts/alert_endpoints.html"},
