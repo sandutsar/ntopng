@@ -60,6 +60,7 @@ Flow::Flow(NetworkInterface *_iface,
     predominant_alert_info.is_srv_attacker =
     predominant_alert_info.is_srv_victim = 0;
   predominant_alert_info.auto_acknowledge = 0;
+  category_list_name_shared_pointer = NULL;
   ndpiAddressFamilyProtocol = NULL;
   ndpi_confidence = NDPI_CONFIDENCE_UNKNOWN;
   clearRisks();
@@ -1340,8 +1341,17 @@ void Flow::setExtraDissectionCompleted() {
 					 (struct in6_addr *)get_srv_ip_addr()->get_ipv6(),
 					 &ndpiDetectedProtocol);
 
-      ndpiDetectedProtocol.category = (ndpi_protocol_category_t)(ndpiDetectedProtocol.category & 0xFF); /* See Ntop::nDPILoadHostnameCategory */
+      /*
+	See Ntop::nDPILoadHostnameCategory
+	ndpiDetectedProtocol.category is divided in two bytes
+	- upper byte is the listId (see Ntop::getPersistentCustomListNameById)
+	- lower byte is the original category
+      */
+      category_list_name_shared_pointer =
+	(char*)ntop->getPersistentCustomListNameById((ndpiDetectedProtocol.category >> 8) & 0xFF);
+      ndpiDetectedProtocol.category = (ndpi_protocol_category_t)(ndpiDetectedProtocol.category & 0xFF);
 
+      
       /* We have used the trick to save in the protocolId both the list name and the protocol */
       if(ndpiDetectedProtocol.custom_category_userdata == NULL) {
 	u_int8_t list_id = (ndpiDetectedProtocol.category & 0xFF00) >> 8; /* See Ntop::nDPILoadHostnameCategory */

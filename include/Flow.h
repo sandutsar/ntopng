@@ -45,6 +45,9 @@ class Flow : public GenericHashEntry {
   u_int32_t src_ip_addr_pre_nat, dst_ip_addr_pre_nat,
             src_ip_addr_post_nat, dst_ip_addr_post_nat;
   ICMPinfo *icmp_info;
+  char *category_list_name_shared_pointer; /* NOTE: this is a pointer handled by
+					      Ntop::getPersistentCustomListNameById()
+					      and it MUST NOT BE FREED */
   ndpi_confidence_t ndpi_confidence;
   u_int32_t privateFlowId; /* Used to store specific flow info such as DNS TransactionId or SIP CallId */
   u_int8_t cli2srv_tos, srv2cli_tos; /* RFC 2474, 3168 */
@@ -1339,7 +1342,10 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
 
   inline FlowTrafficStats *getTrafficStats() { return (&stats); };
   inline char *get_custom_category_file() const {
-    return ((char *)ndpiDetectedProtocol.custom_category_userdata);
+    if(category_list_name_shared_pointer)
+      return(category_list_name_shared_pointer);
+    else
+      return ((char *)ndpiDetectedProtocol.custom_category_userdata);
   }
 
   inline u_int8_t *getViewCliMac() { return (view_cli_mac); };
