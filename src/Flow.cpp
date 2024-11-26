@@ -397,9 +397,22 @@ void Flow::freeDPIMemory() {
 				   vlanId);
 #endif
 
-      if(ndpiFlow->tcp.os_hint != os_hint_unknown)
-	h->setTCPfingerprint(ndpiFlow->tcp.fingerprint,
-			     (enum operating_system_hint)ndpiFlow->tcp.os_hint);
+      h->setTCPfingerprint(ndpiFlow->tcp.fingerprint,
+			   (enum operating_system_hint)ndpiFlow->tcp.os_hint);
+
+      if(ndpiFlow->tcp.os_hint == os_hint_unknown) {
+	char buf[64], log[128];
+
+	snprintf(log, sizeof(log), "%s,%s",
+		 h->get_ip()->print(buf, sizeof(buf)),
+		 Utils::OSType2Str(h->getOS()));
+
+	ntop->getTrace()->traceEvent(TRACE_INFO, "** Unknown TCP fingerprint %s [%s]",
+				     ndpiFlow->tcp.fingerprint, log);
+
+	ntop->getRedis()->hashSet(CONST_STR_UNKNOWN_TCP_FINGERPRINTS,
+				  ndpiFlow->tcp.fingerprint, log);
+      }
 
       tcp_fingerprint = strdup(ndpiFlow->tcp.fingerprint);
     }
@@ -1351,7 +1364,7 @@ void Flow::setExtraDissectionCompleted() {
 	(char*)ntop->getPersistentCustomListNameById((ndpiDetectedProtocol.category >> 8) & 0xFF);
       ndpiDetectedProtocol.category = (ndpi_protocol_category_t)(ndpiDetectedProtocol.category & 0xFF);
 
-      
+
       /* We have used the trick to save in the protocolId both the list name and the protocol */
       if(ndpiDetectedProtocol.custom_category_userdata == NULL) {
 	u_int8_t list_id = (ndpiDetectedProtocol.category & 0xFF00) >> 8; /* See Ntop::nDPILoadHostnameCategory */

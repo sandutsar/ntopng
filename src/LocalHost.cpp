@@ -30,7 +30,7 @@ LocalHost::LocalHost(NetworkInterface *_iface, int32_t _iface_idx, Mac *_mac,
     contacted_server_ports(CONST_MAX_NUM_QUEUED_PORTS, "localhost-serverportsproto"),
     usedPorts(this) {
   tcp_fingerprint = NULL;
-  
+
   if (trace_new_delete)
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "[new] %s", __FILE__);
 
@@ -124,7 +124,7 @@ void LocalHost::initialize() {
   os_detail = NULL;
 
   ip.isLocalHost(&local_network_id);
-
+  inconsistent_host_os = false;
   systemHost = ip.isLocalInterfaceAddress();
 
   /* Clone the initial point. It will be written to the timeseries DB to
@@ -157,8 +157,8 @@ void LocalHost::initialize() {
     if (NetworkStats *ns = iface->getNetworkStats(local_network_id))
       ns->incNumHosts();
   }
-  
-  iface->incNumHosts(this, true /* Initialization: bytes are 0, considered RX only */);  
+
+  iface->incNumHosts(this, true /* Initialization: bytes are 0, considered RX only */);
 
 #ifdef LOCALHOST_DEBUG
   ntop->getTrace()->traceEvent(TRACE_NORMAL, "%s is %s [%p]",
@@ -178,7 +178,7 @@ void LocalHost::initialize() {
     fingerprints = NULL;
 
   tcp_fingerprint_host_os = os_hint_unknown;
-  
+
 #ifdef NTOPNG_PRO
   if ((!(isBroadcastHost() || isMulticastHost())) &&
       ntop->getPrefs()->is_enterprise_xl_edition() &&
@@ -186,7 +186,7 @@ void LocalHost::initialize() {
        ntop->getPrefs()->isNetBoxEnabled()))
     dumpAssetInfo();
 
-  if(!(isBroadcastHost() || isMulticastHost()))    
+  if(!(isBroadcastHost() || isMulticastHost()))
     ntop->get_am()->createHost(this);
 #endif
 }
@@ -433,11 +433,13 @@ void LocalHost::lua(lua_State *vm, AddressTree *ptree, bool host_details,
   if (router_mac_set) {
     char router_buf[24];
 
-    lua_push_str_table_entry(
-			     vm, "router",
+    lua_push_str_table_entry(vm, "router",
 			     Utils::formatMac(router_mac, router_buf, sizeof(router_buf)));
   }
 
+  if(inconsistent_host_os)
+    lua_push_bool_table_entry(vm, "inconsistent_host_os", true);
+  
   if(tcp_fingerprint_host_os != os_hint_unknown) {
     lua_newtable(vm);
     lua_push_str_table_entry(vm, "os", ndpi_print_os_hint(tcp_fingerprint_host_os));
@@ -446,20 +448,20 @@ void LocalHost::lua(lua_State *vm, AddressTree *ptree, bool host_details,
     lua_settable(vm, -3);
   }
 
-  if(os_learning.size() > 0) {    
+  if(os_learning.size() > 0) {
     lua_newtable(vm);
 
     /* Theoretically we should lock here */
     for(std::map<OSLearningMode, OSType>::iterator it = os_learning.begin(); it != os_learning.end(); it++) {
       lua_push_str_table_entry(vm, Utils::learningMode2str(it->first), Utils::OSType2Str(it->second));
     }
-    
+
     lua_pushstring(vm, "os_learning");
     lua_insert(vm, -2);
     lua_settable(vm, -3);
 
   }
-  
+
   /* Add new entries before this line! */
 
   if (asListElement) {
@@ -490,7 +492,7 @@ void LocalHost::inlineSetOSDetail(const char *_os_detail) {
 
   if ((os_detail = strdup(_os_detail))) {
     enum operating_system_hint hint;
-    
+
     // TODO set mac device type
     DeviceType devtype = Utils::getDeviceTypeFromOsDetail(os_detail, &hint);
 
@@ -581,11 +583,11 @@ void LocalHost::freeLocalHostData() {
 
   if(tcp_fingerprint)
     free(tcp_fingerprint);
-  
+
   for (std::unordered_map<u_int32_t, DoHDoTStats *>::iterator it = doh_dot_map.begin();
        it != doh_dot_map.end(); ++it)
     delete it->second;
-  
+
   if (fingerprints) delete fingerprints;
 }
 
@@ -963,7 +965,7 @@ void LocalHost::setResolvedName(const char *resolved_name) {
   if(strcmp(get_ip()->print(buf, sizeof(buf)), resolved_name)) {
     bool previous_resolved = names.resolved ? true : false;
     Host::setResolvedName(resolved_name);
-    
+
 #ifdef NTOPNG_PRO
     if(names.resolved && !previous_resolved)
       ntop->get_am()->setResolvedName(this, label_resolver, names.resolved);
@@ -975,42 +977,29 @@ void LocalHost::setResolvedName(const char *resolved_name) {
 
 void LocalHost::setTCPfingerprint(char *_tcp_fingerprint,
 				  enum operating_system_hint os) {
-  if(os == os_hint_unknown)
-    return;
-  
+
   if(tcp_fingerprint_host_os == os_hint_unknown) {
+    /* Not yet set the host fingerprint */
     OSType os_type = Utils::OShint2OSType(os);
 
     if(os_type != os_unknown)
-      setOS(os_type, os_learning_tcp_fingerprint);      
+      setOS(os_type, os_learning_tcp_fingerprint);
 
     tcp_fingerprint_host_os = os;
 
-    if(tcp_fingerprint == NULL) {
-      if(os_type == os_unknown) {
-	char buf[64], log[128];
-	
-	snprintf(log, sizeof(log), "%s,%s",
-		 get_ip()->print(buf, sizeof(buf)),
-		 Utils::OSType2Str(getOS()));
-	
-	ntop->getTrace()->traceEvent(TRACE_INFO, "** Unknown TCP fingerprint %s [%s]",
-				     _tcp_fingerprint, log);
-	
-	ntop->getRedis()->hashSet(CONST_STR_UNKNOWN_TCP_FINGERPRINTS, _tcp_fingerprint, log);
-      }
-      
-      tcp_fingerprint = strdup(_tcp_fingerprint);	  
-    }
+    if(tcp_fingerprint == NULL)
+      tcp_fingerprint = strdup(_tcp_fingerprint);
 
-  } else if(tcp_fingerprint_host_os != os) {
+  } else if((os != os_hint_unknown) && (tcp_fingerprint_host_os != os)) {    
     char buf[64];
-    
-    ntop->getTrace()->traceEvent(TRACE_WARNING, "Found OS inconsistency %s vs %s [%s][%s]",
+
+    ntop->getTrace()->traceEvent(TRACE_INFO, "Found OS inconsistency %s vs %s [%s][%s]",
 				 ndpi_print_os_hint(tcp_fingerprint_host_os),
 				 ndpi_print_os_hint(os),
 				 _tcp_fingerprint ? _tcp_fingerprint : "",
 				 get_ip()->print(buf, sizeof(buf)));
+
+    inconsistent_host_os = true;
   }
 }
 
@@ -1019,9 +1008,9 @@ void LocalHost::setTCPfingerprint(char *_tcp_fingerprint,
 void LocalHost::setOS(OSType _os, OSLearningMode mode) {
   if((_os != os_unknown) && (getOS() != _os)) {
     os_learning[mode] = _os;
-    
+
     Host::setOS(_os, mode);
-    
+
 #ifdef NTOPNG_PRO
     if(ntop->get_am() != NULL)
       ntop->get_am()->setHostOS(this, _os, mode);

@@ -587,6 +587,10 @@ else
     if((host["bytes.sent"] == 0) or (host["bytes.rcvd"] == 0) and host["localhost"] and not host["is_multicast"] and not host["is_broadcast"]) then
       print("<div class=\"alert alert alert-warning\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> " .. i18n("host_details.unidirectional_traffic") .. "</div>")
     end
+
+    if(host.inconsistent_host_os) then
+       print("<div class=\"alert alert alert-warning\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> " .. i18n("host_details.inconsistent_host_os") .. "</div>")
+    end
     
     -- tprint(host.bins)
     local macinfo = interface.getMacInfo(host["mac"])
@@ -819,6 +823,13 @@ else
                 print(' <A class="ntopng-external-link" href="https://www.abuseipdb.com/check/' .. host["ip"] ..
                           '" target=_blank><small>AbuseIP DB</small> <i class=\"fas fa-external-link-alt\"></i></A>')
             end
+	    
+	    if (host["os"] == 0) then
+	       -- Print the TCP Fingerprint when the OS is Unknown
+	       if(host["tcp_fingerprint"] ~= nil) then
+		  print(" <span class=\"badge bg-secondary\">TCP Fingerprint: "..host["tcp_fingerprint"].. "</span>")
+	       end
+	    end
 
 	    if(false) then
 	       if(host.fingerprint ~= nil) then

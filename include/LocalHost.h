@@ -28,6 +28,7 @@ class LocalHost : public Host {
  protected:
   int32_t local_network_id;
   time_t initialization_time;
+  bool inconsistent_host_os;
   LocalHostStats *initial_ts_point;
   /* contacted_server_ports it's a buffer used by the "Server Port Detected" check */
   SPSCQueue<std::pair<u_int16_t, u_int16_t>> contacted_server_ports;
