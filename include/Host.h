@@ -789,7 +789,7 @@ class Host : public GenericHashEntry,
   bool isHostAlertDisabled(HostAlertType alert_type);
   bool isFlowAlertDisabled(FlowAlertType alert_type);
 
-  virtual void setOS(OSType _os);
+  virtual void setOS(OSType _os, OSLearningMode mode);
   OSType getOS() const { return os_type; }
 
   void incCliContactedHosts(IpAddress *peer) {

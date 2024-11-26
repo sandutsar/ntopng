@@ -2146,7 +2146,7 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
     if (operating_system != os_unknown) {
       if (cli_host && !(get_cli_ip_addr()->isBroadcastAddress() ||
 			get_cli_ip_addr()->isMulticastAddress()))
-	cli_host->setOS(operating_system);
+	cli_host->setOS(operating_system, os_learning_http_user_agent);
     }
 
     /* Don't break, let's process also HTTP_PROXY */

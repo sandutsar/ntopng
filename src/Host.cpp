@@ -1323,7 +1323,7 @@ void Host::periodic_stats_update(const struct timeval *tv) {
       (cur_os_from_fingerprint = Utils::getOSFromFingerprint(cur_mac->getFingerprint(),
 							     cur_mac->get_manufacturer(),
 							     cur_mac->getDeviceType())) != cur_os_type)
-    setOS(cur_os_from_fingerprint);
+    setOS(cur_os_from_fingerprint, os_learning_tcp_fingerprint);
 
   if (stats) stats->updateStats(tv);
 
@@ -2045,7 +2045,7 @@ char *Host::get_mac_based_tskey(Mac *mac, char *buf, size_t bufsize,
 
 /* *************************************** */
 
-void Host::setOS(OSType _os) {
+void Host::setOS(OSType _os, OSLearningMode mode) {
   if(_os == os_unknown)
     return;
   

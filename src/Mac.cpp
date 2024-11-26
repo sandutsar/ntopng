@@ -75,7 +75,10 @@ Mac::Mac(NetworkInterface *_iface, u_int8_t _mac[6])
       (ntop->getPrefs()->isAssetInventoryEnabled() ||
        ntop->getPrefs()->isNetBoxEnabled()))
     dumpAssetInfo();
-  ntop->get_am()->createMac(this);
+
+
+  if((!special_mac) && (!broadcast_mac))
+    ntop->get_am()->createMac(this);
 #endif
 
   updateHostPool(true /* inline with packet processing */,

@@ -185,7 +185,9 @@ void LocalHost::initialize() {
       (ntop->getPrefs()->isAssetInventoryEnabled() ||
        ntop->getPrefs()->isNetBoxEnabled()))
     dumpAssetInfo();
-  ntop->get_am()->createHost(this);
+
+  if(!(isBroadcastHost() || isMulticastHost()))    
+    ntop->get_am()->createHost(this);
 #endif
 }
 
@@ -961,7 +963,7 @@ void LocalHost::setTCPfingerprint(char *_tcp_fingerprint,
     OSType os_type = Utils::OShint2OSType(os);
 
     if(os_type != os_unknown)
-      setOS(os_type);      
+      setOS(os_type, os_learning_tcp_fingerprint);      
 
     tcp_fingerprint_host_os = os;
 
@@ -995,13 +997,13 @@ void LocalHost::setTCPfingerprint(char *_tcp_fingerprint,
 
 /* *************************************** */
 
-void LocalHost::setOS(OSType _os) {
-  if(_os != os_unknown) {
-    Host::setOS(_os);
+void LocalHost::setOS(OSType _os, OSLearningMode mode) {
+  if((_os != os_unknown) && (getOS() != _os)) {
+    Host::setOS(_os, mode);
     
 #ifdef NTOPNG_PRO
     if(ntop->get_am() != NULL)
-      ntop->get_am()->setHostOS(this, _os);
+      ntop->get_am()->setHostOS(this, _os, mode);
 #endif
   }
 }

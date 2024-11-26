@@ -333,6 +333,7 @@ class Utils {
   static bool readModbusDeviceInfo(char *ip_address, u_int8_t timeout_sec, lua_State *vm);
   static bool readEthernetIPDeviceInfo(char *ip_address, u_int8_t timeout_sec, lua_State *vm);
   static const char* OSType2Str(OSType os);
+  static const char* learningMode2str(OSLearningMode mode);
 };
 
 #endif /* _UTILS_H_ */

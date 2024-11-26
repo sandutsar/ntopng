@@ -7535,3 +7535,23 @@ const char* Utils::OSType2Str(OSType os) {
     return("");
   }
 }
+
+/* ******************************************* */
+
+const char* Utils::learningMode2str(OSLearningMode mode) {
+  switch(mode) {
+  case os_learning_unknown:
+    break;
+  case os_learning_tcp_fingerprint:
+    return("TCP Fingerprint");
+    break;
+  case os_learning_http_user_agent:
+    return("HTTP UserAgent");
+    break;
+  case os_learning_user_set_via_lua:
+    return("Set by User via Lua");
+    break;
+  }
+
+  return("Unknown");
+}
