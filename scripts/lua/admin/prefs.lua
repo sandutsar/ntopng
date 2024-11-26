@@ -1752,12 +1752,6 @@ if auth.has_capability(auth.capabilities.preferences) then
             pref = "country_rrd_creation"
         })
 
-        prefsToggleButton(subpage_active, {
-            field = "toggle_os_rrds",
-            default = "0",
-            pref = "os_rrd_creation"
-        })
-
         if ntop.isPro() then
             prefsToggleButton(subpage_active, {
                 field = "toggle_ndpi_flows_rrds",

@@ -2323,31 +2323,6 @@ static int ntop_get_interface_score(lua_State *vm) {
 
 /* ****************************************** */
 
-static int ntop_get_interface_oses_info(lua_State *vm) {
-  NetworkInterface *curr_iface = getCurrentInterface(vm);
-
-  Paginator *p = NULL;
-
-  if (!curr_iface)
-    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
-
-  if ((p = new (std::nothrow) Paginator()) == NULL)
-    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
-
-  if (lua_type(vm, 1) == LUA_TTABLE) p->readOptions(vm, 1);
-
-  if (curr_iface->getActiveOSList(vm, p) < 0) {
-    if (p) delete (p);
-    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
-  }
-
-  if (p) delete (p);
-
-  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
-}
-
-/* ****************************************** */
-
 static int ntop_get_interface_countries_info(lua_State *vm) {
   NetworkInterface *curr_iface = getCurrentInterface(vm);
 
@@ -2496,22 +2471,6 @@ static int ntop_get_interface_obs_point_info(lua_State *vm) {
   obs_point = (u_int16_t)lua_tonumber(vm, 1);
 
   if ((!curr_iface) || (!curr_iface->getObsPointInfo(vm, obs_point)))
-    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
-
-  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
-}
-
-/* ****************************************** */
-
-static int ntop_get_interface_os_info(lua_State *vm) {
-  NetworkInterface *curr_iface = getCurrentInterface(vm);
-  OSType os_type;
-
-  if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
-    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
-  os_type = (OSType)lua_tonumber(vm, 1);
-
-  if ((!curr_iface) || (!curr_iface->getOSInfo(vm, os_type)))
     return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
 
   return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
@@ -5527,10 +5486,6 @@ static luaL_Reg _ntop_interface_reg[] = {
     {"getObsPointInfo", ntop_get_interface_obs_point_info},
     {"prepareDeleteObsPoint", ntop_prepare_delete_interface_observation_point},
     {"deleteObsPoint", ntop_delete_interface_observation_point},
-
-    /* Operating Systems */
-    {"getOSesInfo", ntop_get_interface_oses_info},
-    {"getOSInfo", ntop_get_interface_os_info},
 
     /* Countries */
     {"getCountriesInfo", ntop_get_interface_countries_info},

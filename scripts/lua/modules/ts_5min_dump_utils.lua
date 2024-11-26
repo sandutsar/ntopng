@@ -270,23 +270,6 @@ end
 
 -- ########################################################
 
-function ts_dump.os_update_rrds(when, ifstats, verbose)
-    local os_info = interface.getOSesInfo()
-
-    for _, os_stats in pairs(os_info["os"] or {}) do
-        local OS = os_stats.os
-
-        ts_utils.append("os:traffic", {
-            ifid = ifstats.id,
-            os = OS,
-            bytes_ingress = os_stats["bytes.rcvd"],
-            bytes_egress = os_stats["bytes.sent"]
-        }, when)
-    end
-end
-
--- ########################################################
-
 function ts_dump.vlan_update_rrds(when, ifstats, verbose)
     local vlan_info = interface.getVLANsInfo()
 
@@ -884,11 +867,6 @@ function ts_dump.run_5min_dump(_ifname, ifstats, when, verbose)
     -- create RRD for Countries
     if config.country_rrd_creation == "1" then
         ts_dump.country_update_rrds(when, ifstats, verbose)
-    end
-
-    -- create RRD for OSes
-    if config.os_rrd_creation == "1" then
-        ts_dump.os_update_rrds(when, ifstats, verbose)
     end
 
     -- Create RRD for vlans

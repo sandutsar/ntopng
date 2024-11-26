@@ -155,7 +155,6 @@ class Host : public GenericHashEntry,
   void initialize(Mac *_mac, int32_t _iface_idx,
 		  u_int16_t _vlan_id,
                   u_int16_t observation_point_id);
-  virtual void inlineSetOS(OSType _os) { ; } 
   bool statsResetRequested();
   void checkStatsReset();
 #ifdef HAVE_NEDGE
@@ -792,9 +791,6 @@ class Host : public GenericHashEntry,
 
   virtual void setOS(OSType _os);
   OSType getOS() const { return os_type; }
-  virtual void incOSStats(time_t when, u_int16_t proto_id, u_int64_t sent_packets,
-			  u_int64_t sent_bytes, u_int64_t rcvd_packets,
-			  u_int64_t rcvd_bytes) { ; }
 
   void incCliContactedHosts(IpAddress *peer) {
     stats->incCliContactedHosts(peer);

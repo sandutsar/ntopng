@@ -759,7 +759,6 @@ typedef enum {
   walker_ases,
   walker_countries,
   walker_vlans,
-  walker_oses,
   walker_obs
 } WalkerType;
 

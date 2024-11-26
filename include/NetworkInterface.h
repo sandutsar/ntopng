@@ -40,7 +40,6 @@ class AutonomousSystem;
 class AutonomousSystemHash;
 class ObservationPoint;
 class ObservationPointHash;
-class OperatingSystem;
 class OperatingSystemHash;
 class Country;
 class CountriesHash;
@@ -296,9 +295,6 @@ protected:
   u_int16_t last_obs_point_id;
   ObservationPointHash *obs_hash; /**< Hash used to store Observation Point information. */
 
-  /* Operating Systems */
-  OperatingSystemHash *oses_hash; /**< Hash used to store Operating Systems information. */
-
   /* Countries */
   CountriesHash *countries_hash;
 
@@ -351,7 +347,6 @@ protected:
                 char *sortColumn);
   int sortASes(struct flowHostRetriever *retriever, char *sortColumn);
   int sortObsPoints(struct flowHostRetriever *retriever, char *sortColumn);
-  int sortOSes(struct flowHostRetriever *retriever, char *sortColumn);
   int sortCountries(struct flowHostRetriever *retriever, char *sortColumn);
   int sortVLANs(struct flowHostRetriever *retriever, char *sortColumn);
   int sortMacs(u_int32_t *begin_slot, bool walk_all,
@@ -433,7 +428,6 @@ public:
   bool initFlowDump(u_int8_t num_dump_interfaces);
   u_int32_t getASesHashSize();
   u_int32_t getObsHashSize();
-  u_int32_t getOSesHashSize();
   u_int32_t getCountriesHashSize();
   u_int32_t getVLANsHashSize();
   u_int32_t getMacsHashSize();
@@ -779,7 +773,6 @@ public:
 			 char *sortColumn, u_int32_t maxHits, u_int32_t toSkip, bool a2zSortOrder, bool useArrayFormat);
   int getActiveASList(lua_State *vm, const Paginator *p, bool diff = false);
   int getActiveObsPointsList(lua_State *vm, const Paginator *p);
-  int getActiveOSList(lua_State *vm, const Paginator *p);
   int getActiveCountriesList(lua_State *vm, const Paginator *p);
   int getActiveVLANList(lua_State *vm, char *sortColumn, u_int32_t maxHits,
                         u_int32_t toSkip, bool a2zSortOrder,
@@ -860,8 +853,6 @@ public:
                                 bool is_inline_call);
   bool deleteObsPoint(u_int16_t obs_point);
   bool prepareDeleteObsPoint(u_int16_t obs_point);
-  OperatingSystem *getOS(OSType os, bool create_if_not_present,
-                         bool is_inline_call);
   Country *getCountry(const char *country_name, bool create_if_not_present,
                       bool is_inline_call);
   virtual Mac *getMac(u_int8_t _mac[6], bool create_if_not_present,
@@ -1066,7 +1057,6 @@ public:
   bool setMacDeviceType(char *strmac, DeviceType dtype, bool alwaysOverwrite);
   bool getASInfo(lua_State *vm, u_int32_t asn);
   bool getObsPointInfo(lua_State *vm, u_int16_t obs_point);
-  bool getOSInfo(lua_State *vm, OSType os_type);
   bool getCountryInfo(lua_State *vm, const char *country);
   bool getVLANInfo(lua_State *vm, u_int16_t vlan_id);
   void incNumHosts(Host *host, bool rxOnlyHost);

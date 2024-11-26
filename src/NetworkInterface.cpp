@@ -275,8 +275,7 @@ void NetworkInterface::init(const char *interface_name) {
   last_obs_point_id = 0;
 
   flows_hash = NULL, hosts_hash = NULL;
-  macs_hash = NULL, ases_hash = NULL, oses_hash = NULL, vlans_hash = NULL,
-    obs_hash = NULL;
+  macs_hash = NULL, ases_hash = NULL, vlans_hash = NULL, obs_hash = NULL;
   countries_hash = NULL;
   gw_macs = NULL;
 
@@ -926,10 +925,6 @@ void NetworkInterface::deleteDataStructures() {
     delete (obs_hash);
     obs_hash = NULL;
   }
-  if (oses_hash) {
-    delete (oses_hash);
-    oses_hash = NULL;
-  }
   if (countries_hash) {
     delete (countries_hash);
     countries_hash = NULL;
@@ -1226,12 +1221,6 @@ u_int32_t NetworkInterface::getObsHashSize() {
 
 /* **************************************************** */
 
-u_int32_t NetworkInterface::getOSesHashSize() {
-  return (oses_hash ? oses_hash->getNumEntries() : 0);
-}
-
-/* **************************************************** */
-
 u_int32_t NetworkInterface::getCountriesHashSize() {
   return (countries_hash ? countries_hash->getNumEntries() : 0);
 }
@@ -1290,11 +1279,6 @@ bool NetworkInterface::walker(u_int32_t *begin_slot, bool walk_all,
 
   case walker_obs:
     ret = obs_hash ? obs_hash->walk(begin_slot, walk_all, walker, user_data)
-      : false;
-    break;
-
-  case walker_oses:
-    ret = oses_hash ? oses_hash->walk(begin_slot, walk_all, walker, user_data)
       : false;
     break;
 
@@ -3877,7 +3861,6 @@ void NetworkInterface::cleanup() {
   if (hosts_hash) hosts_hash->cleanup();
   if (ases_hash) ases_hash->cleanup();
   if (obs_hash) obs_hash->cleanup();
-  if (oses_hash) oses_hash->cleanup();
   if (countries_hash) countries_hash->cleanup();
   if (vlans_hash) vlans_hash->cleanup();
   if (macs_hash) macs_hash->cleanup();
@@ -4126,7 +4109,7 @@ u_int64_t NetworkInterface::purgeQueuedIdleEntries() {
 #if 0
   ntop->getTrace()->traceEvent(TRACE_NORMAL, "Updating hash tables [%s]", get_name());
 #endif
-  GenericHash *ghs[] = {hosts_hash,     flows_hash, ases_hash, oses_hash,
+  GenericHash *ghs[] = {hosts_hash,     flows_hash, ases_hash,
                         countries_hash, vlans_hash, macs_hash, obs_hash};
 
   /* Delete all idle entries */
@@ -4434,13 +4417,6 @@ struct obs_point_find_info {
 
 /* **************************************************** */
 
-struct os_find_info {
-  OSType os_id;
-  OperatingSystem *os;
-};
-
-/* **************************************************** */
-
 struct vlan_find_info {
   u_int16_t vlan_id;
   VLAN *vl;
@@ -4536,21 +4512,6 @@ static bool find_obs_point_by_id(GenericHashEntry *he, void *user_data,
   if ((info->obs_point == NULL) &&
       info->obs_point_id == _obs_point->getObsPoint()) {
     info->obs_point = _obs_point;
-    *matched = true;
-    return (true); /* found */
-  }
-
-  return (false); /* false = keep on walking */
-}
-
-/* **************************************************** */
-
-static bool find_os(GenericHashEntry *he, void *user_data, bool *matched) {
-  struct os_find_info *info = (struct os_find_info *)user_data;
-  OperatingSystem *os = (OperatingSystem *)he;
-
-  if ((info->os == NULL) && info->os_id == os->get_os_type()) {
-    info->os = os;
     *matched = true;
     return (true); /* found */
   }
@@ -4790,7 +4751,6 @@ struct flowHostRetrieveList {
   VLAN *vlanValue;
   AutonomousSystem *asValue;
   ObservationPoint *obsPointValue;
-  OperatingSystem *osValue;
   Country *countryVal;
   u_int64_t numericValue;
   const char *stringValue;
@@ -5804,46 +5764,6 @@ static bool obs_point_search_walker(GenericHashEntry *he, void *user_data,
 
 /* **************************************************** */
 
-static bool os_search_walker(GenericHashEntry *he, void *user_data,
-                             bool *matched) {
-  struct flowHostRetriever *r = (struct flowHostRetriever *)user_data;
-  OperatingSystem *os = (OperatingSystem *)he;
-
-  if (r->actNumEntries >= r->maxNumEntries) return (true); /* Limit reached */
-
-  if (!os || os->idle()) return (false); /* false = keep on walking */
-
-  r->elems[r->actNumEntries].osValue = os;
-
-  switch (r->sorter) {
-  case column_since:
-    r->elems[r->actNumEntries++].numericValue = os->get_first_seen();
-    break;
-
-  case column_thpt:
-    r->elems[r->actNumEntries++].numericValue = os->getBytesThpt();
-    break;
-
-  case column_traffic:
-    r->elems[r->actNumEntries++].numericValue = os->getNumBytes();
-    break;
-
-  case column_num_hosts:
-    r->elems[r->actNumEntries++].numericValue = os->getNumHosts();
-    break;
-
-  default:
-    ntop->getTrace()->traceEvent(
-				 TRACE_WARNING, "Internal error: column %d not handled", r->sorter);
-    break;
-  }
-
-  *matched = true;
-  return (false); /* false = keep on walking */
-}
-
-/* **************************************************** */
-
 static bool country_search_walker(GenericHashEntry *he, void *user_data,
                                   bool *matched) {
   struct flowHostRetriever *r = (struct flowHostRetriever *)user_data;
@@ -6670,49 +6590,6 @@ int NetworkInterface::sortObsPoints(struct flowHostRetriever *retriever,
 
 /* **************************************************** */
 
-int NetworkInterface::sortOSes(struct flowHostRetriever *retriever,
-                               char *sortColumn) {
-  int (*sorter)(const void *_a, const void *_b);
-  u_int32_t begin_slot = 0;
-  bool walk_all = true;
-
-  if (retriever == NULL) return (-1);
-
-  retriever->actNumEntries = 0, retriever->maxNumEntries = getOSesHashSize();
-  retriever->elems = (struct flowHostRetrieveList *)calloc(
-							   sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
-
-  if (retriever->elems == NULL) {
-    ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory :-(");
-    return (-1);
-  }
-
-  if ((!strcmp(sortColumn, "column_traffic")) ||
-      (!strcmp(sortColumn, "column_")))
-    retriever->sorter = column_traffic, sorter = numericSorter;
-  else if (!strcmp(sortColumn, "column_since"))
-    retriever->sorter = column_since, sorter = numericSorter;
-  else if (!strcmp(sortColumn, "column_thpt"))
-    retriever->sorter = column_thpt, sorter = numericSorter;
-  else if (!strcmp(sortColumn, "column_hosts"))
-    retriever->sorter = column_num_hosts, sorter = numericSorter;
-  else
-    ntop->getTrace()->traceEvent(TRACE_WARNING, "Unknown sort column %s",
-                                 sortColumn),
-      sorter = numericSorter;
-
-  // make sure the caller has disabled the purge!!
-  walker(&begin_slot, walk_all, walker_oses, os_search_walker,
-         (void *)retriever);
-
-  qsort(retriever->elems, retriever->actNumEntries,
-        sizeof(struct flowHostRetrieveList), sorter);
-
-  return (retriever->actNumEntries);
-}
-
-/* **************************************************** */
-
 int NetworkInterface::sortCountries(struct flowHostRetriever *retriever,
                                     char *sortColumn) {
   int (*sorter)(const void *_a, const void *_b);
@@ -7240,7 +7117,6 @@ u_int NetworkInterface::purgeIdleMacsASesCountriesVLANs(bool force_idle,
 
     n = (macs_hash ? macs_hash->purgeIdle(&tv, force_idle, full_scan) : 0) +
       (ases_hash ? ases_hash->purgeIdle(&tv, force_idle, full_scan) : 0) +
-      (oses_hash ? oses_hash->purgeIdle(&tv, force_idle, full_scan) : 0) +
       (countries_hash ? countries_hash->purgeIdle(&tv, force_idle, full_scan)
        : 0) +
       (vlans_hash ? vlans_hash->purgeIdle(&tv, force_idle, full_scan) : 0) +
@@ -7635,7 +7511,7 @@ void NetworkInterface::luaServiceMapStatus(lua_State *vm) {
 void NetworkInterface::lua_hash_tables_stats(lua_State *vm) {
   /* Hash tables stats */
   GenericHash *gh[] = {flows_hash, hosts_hash, macs_hash,      vlans_hash,
-                       ases_hash,  oses_hash,  countries_hash, obs_hash};
+                       ases_hash,  countries_hash, obs_hash};
 
   lua_newtable(vm);
 
@@ -7868,44 +7744,6 @@ bool NetworkInterface::prepareDeleteObsPoint(u_int16_t obs_point) {
   if (ret != NULL) ret->setDeleteRequested(true);
 
   return (true);
-}
-
-/* **************************************************** */
-
-OperatingSystem *NetworkInterface::getOS(OSType os_type,
-                                         bool create_if_not_present,
-                                         bool is_inline_call) {
-  OperatingSystem *ret = NULL;
-
-  if (!oses_hash) return (NULL);
-
-  ret = oses_hash->get(os_type, is_inline_call);
-
-  if ((ret == NULL) && create_if_not_present) {
-    if (!oses_hash->hasEmptyRoom()) return (NULL);
-
-    try {
-      if ((ret = new OperatingSystem(this, os_type)) != NULL) {
-        if(!oses_hash->add(ret,
-			   !is_inline_call /* Lock only if not inline, if inline there is no need to lock as we are sequential with the purgeIdle */)) {
-          /* Note: this should never happen as we are checking hasEmptyRoom() */
-          delete ret;
-          return (NULL);
-        }
-      }
-    } catch (std::bad_alloc &ba) {
-      static bool oom_warning_sent = false;
-
-      if (!oom_warning_sent) {
-        ntop->getTrace()->traceEvent(TRACE_WARNING, "Not enough memory");
-        oom_warning_sent = true;
-      }
-
-      return (NULL);
-    }
-  }
-
-  return (ret);
 }
 
 /* **************************************************** */
@@ -8483,7 +8321,6 @@ void NetworkInterface::allocateStructures(bool disable_dump) {
 	  ases_hash = new AutonomousSystemHash(this, ndpi_min(num_hashes, 4096), 32768);
 	  if (!isPacketInterface())
 	    obs_hash = new ObservationPointHash(this, ndpi_min(num_hashes, 4096), 32768);
-	  oses_hash =  new OperatingSystemHash(this, ndpi_min(num_hashes, 1024), 32768);
 	  countries_hash = new CountriesHash(this, ndpi_min(num_hashes, 1024), 32768);
 	  vlans_hash = new VLANHash(this, 1024, 2048);
 	  macs_hash = new MacHash(this, ndpi_min(num_hashes, 8192), 32768);
@@ -8877,55 +8714,6 @@ int NetworkInterface::getActiveObsPointsList(lua_State *vm,
 
 /* **************************************** */
 
-int NetworkInterface::getActiveOSList(lua_State *vm, const Paginator *p) {
-  struct flowHostRetriever retriever;
-  DetailsLevel details_level;
-
-  if (!p) return (-1);
-
-  if (sortOSes(&retriever, p->sortColumn()) < 0) {
-    return (-1);
-  }
-
-  if (!p->getDetailsLevel(&details_level)) details_level = details_normal;
-
-  lua_newtable(vm);
-  lua_push_uint64_table_entry(vm, "numOSes", retriever.actNumEntries);
-
-  lua_newtable(vm);
-
-  if (p->a2zSortOrder()) {
-    for (int i = p->toSkip(), num = 0;
-         i < (int)retriever.actNumEntries && num < (int)p->maxHits();
-         i++, num++) {
-      OperatingSystem *os = retriever.elems[i].osValue;
-
-      os->lua(vm, details_level, false);
-      lua_rawseti(vm, -2, num + 1); /* Must use integer keys to preserve and
-                                       iterate inorder with ipairs */
-    }
-  } else {
-    for (int i = (retriever.actNumEntries - 1 - p->toSkip()), num = 0;
-         i >= 0 && num < (int)p->maxHits(); i--, num++) {
-      OperatingSystem *os = retriever.elems[i].osValue;
-
-      os->lua(vm, details_level, false);
-      lua_rawseti(vm, -2, num + 1);
-    }
-  }
-
-  lua_pushstring(vm, "OSes");
-  lua_insert(vm, -2);
-  lua_settable(vm, -3);
-
-  // finally free the elements regardless of the sorted kind
-  if (retriever.elems) free(retriever.elems);
-
-  return (retriever.actNumEntries);
-}
-
-/* **************************************** */
-
 int NetworkInterface::getActiveCountriesList(lua_State *vm,
                                              const Paginator *p) {
   struct flowHostRetriever retriever;
@@ -9275,28 +9063,6 @@ bool NetworkInterface::getObsPointInfo(lua_State *vm, u_int16_t obs_point) {
 
   if (info.obs_point) {
     info.obs_point->lua(vm, details_higher, false);
-    ret = true;
-  } else
-    ret = false;
-
-  return ret;
-}
-
-/* **************************************** */
-
-bool NetworkInterface::getOSInfo(lua_State *vm, OSType os_type) {
-  struct os_find_info info;
-  bool ret;
-  u_int32_t begin_slot = 0;
-  bool walk_all = true;
-
-  memset(&info, 0, sizeof(info));
-  info.os_id = os_type;
-
-  walker(&begin_slot, walk_all, walker_oses, find_os, (void *)&info);
-
-  if (info.os) {
-    info.os->lua(vm, details_higher, false);
     ret = true;
   } else
     ret = false;

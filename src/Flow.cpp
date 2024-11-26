@@ -2025,16 +2025,6 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
 				partial->get_cli2srv_bytes());
     }
 
-    if (cli_host->getOS() != srv_host->getOS()) {
-      cli_host->incOSStats(
-			   tv->tv_sec, stats_protocol, partial->get_cli2srv_packets(),
-			   partial->get_cli2srv_bytes(), partial->get_srv2cli_packets(),
-			   partial->get_srv2cli_bytes());
-      srv_host->incOSStats(
-			   tv->tv_sec, stats_protocol, partial->get_srv2cli_packets(),
-			   partial->get_srv2cli_bytes(), partial->get_cli2srv_packets(),
-			   partial->get_cli2srv_bytes());
-    }
     // Update client DSCP stats
     cli_host->incDSCPStats(getCli2SrvDSCP(), partial->get_cli2srv_packets(),
                            partial->get_cli2srv_bytes(),

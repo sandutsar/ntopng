@@ -377,10 +377,6 @@ else
                 entry = page_utils.menu_entries.countries,
                 hidden = not ntop.hasGeoIP(),
                 url = '/lua/country_stats.lua'
-            },
-            {
-                entry = page_utils.menu_entries.operating_systems,
-                url = '/lua/os_stats.lua'
             }, {
                 entry = page_utils.menu_entries.vlans,
                 hidden = not interface.hasVLANs(),
