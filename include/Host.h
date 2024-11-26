@@ -58,10 +58,8 @@ class Host : public GenericHashEntry,
   /* Host data: update Host::deleteHostData when adding new fields */
   struct {
     char *mdns /* name from a MDNS reply of any type */,
-        *mdns_txt /* name from a TXT MDNS reply after "nm=" field (most
-                     accurate) */
-        ,
-        *mdns_info /* name from a TXT MDNS reply */;
+      *mdns_txt, /* name from a TXT MDNS reply after "nm=" field (most accurate) */
+      *mdns_info /* name from a TXT MDNS reply */;
     char *resolved;    /* The name as resolved by ntopng DNS requests */
     char *netbios;     /* The NetBIOS name */
     char *tls;         /* The TLS SNI or the name as dissected from other

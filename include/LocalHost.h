@@ -40,6 +40,7 @@ class LocalHost : public Host {
   u_int8_t router_mac_set : 1, drop_all_host_traffic : 1, systemHost : 1, _notused : 5;
   /* LocalHost data: update LocalHost::deleteHostData when adding new fields */
   char *os_detail, *tcp_fingerprint;
+  std::map<OSLearningMode, OSType> os_learning; /* How OS info has been learnt */
   /* END Host data: */
 
   void initialize();

@@ -26,9 +26,9 @@
 LocalHost::LocalHost(NetworkInterface *_iface, int32_t _iface_idx, Mac *_mac,
                      u_int16_t _vlanId, u_int16_t _observation_point_id,
                      IpAddress *_ip)
-    : Host(_iface, _iface_idx, _mac, _vlanId, _observation_point_id, _ip),
-      contacted_server_ports(CONST_MAX_NUM_QUEUED_PORTS, "localhost-serverportsproto"),
-      usedPorts(this) {
+  : Host(_iface, _iface_idx, _mac, _vlanId, _observation_point_id, _ip),
+    contacted_server_ports(CONST_MAX_NUM_QUEUED_PORTS, "localhost-serverportsproto"),
+    usedPorts(this) {
   tcp_fingerprint = NULL;
   
   if (trace_new_delete)
@@ -48,10 +48,10 @@ LocalHost::LocalHost(NetworkInterface *_iface, int32_t _iface_idx, Mac *_mac,
 LocalHost::LocalHost(NetworkInterface *_iface, int32_t _iface_idx,
                      char *ipAddress, u_int16_t _vlanId,
                      u_int16_t _observation_point_id)
-    : Host(_iface, _iface_idx, ipAddress, _vlanId, _observation_point_id),
-      contacted_server_ports(CONST_MAX_NUM_QUEUED_PORTS,
-                             "localhost-serverportsproto"),
-      usedPorts(this) {
+  : Host(_iface, _iface_idx, ipAddress, _vlanId, _observation_point_id),
+    contacted_server_ports(CONST_MAX_NUM_QUEUED_PORTS,
+			   "localhost-serverportsproto"),
+    usedPorts(this) {
   if (trace_new_delete)
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "[new] %s", __FILE__);
   initialize();
@@ -221,10 +221,10 @@ void LocalHost::addInactiveData() {
 
 #if 0
   ntop->getTrace()->traceEvent(TRACE_NORMAL,
-    "Adding Host %s to inactive hosts Interace %d, with MAC: %s",
-    ip.print(buf, sizeof(buf)),
-    iface->get_id(),
-    cur_mac->print(buf, sizeof(buf)));
+			       "Adding Host %s to inactive hosts Interace %d, with MAC: %s",
+			       ip.print(buf, sizeof(buf)),
+			       iface->get_id(),
+			       cur_mac->print(buf, sizeof(buf)));
 #endif
 
   ndpi_init_serializer(&host_json, ndpi_serialization_format_json);
@@ -288,7 +288,7 @@ void LocalHost::periodic_stats_update(const struct timeval *tv) {
 
 void LocalHost::checkGatewayInfo() {
   if (mac) {
-//#define DEBUG_GATEWAY 1
+    //#define DEBUG_GATEWAY 1
     bool is_gateway = mac->getDeviceType() == device_networking;
 #ifdef DEBUG_GATEWAY
     char buf[64];
@@ -434,8 +434,8 @@ void LocalHost::lua(lua_State *vm, AddressTree *ptree, bool host_details,
     char router_buf[24];
 
     lua_push_str_table_entry(
-        vm, "router",
-        Utils::formatMac(router_mac, router_buf, sizeof(router_buf)));
+			     vm, "router",
+			     Utils::formatMac(router_mac, router_buf, sizeof(router_buf)));
   }
 
   if(tcp_fingerprint_host_os != os_hint_unknown) {
@@ -446,6 +446,20 @@ void LocalHost::lua(lua_State *vm, AddressTree *ptree, bool host_details,
     lua_settable(vm, -3);
   }
 
+  if(os_learning.size() > 0) {    
+    lua_newtable(vm);
+
+    /* Theoretically we should lock here */
+    for(std::map<OSLearningMode, OSType>::iterator it = os_learning.begin(); it != os_learning.end(); it++) {
+      lua_push_str_table_entry(vm, Utils::learningMode2str(it->first), Utils::OSType2Str(it->second));
+    }
+    
+    lua_pushstring(vm, "os_learning");
+    lua_insert(vm, -2);
+    lua_settable(vm, -3);
+
+  }
+  
   /* Add new entries before this line! */
 
   if (asListElement) {
@@ -630,7 +644,7 @@ void LocalHost::incDohDoTUses(Host *host) {
   if (it == doh_dot_map.end()) {
     if (doh_dot_map.size() < 8 /* Max # entries */) {
       DoHDoTStats *doh_dot =
-          new (nothrow) DoHDoTStats(*(host->get_ip()), host->get_vlan_id());
+	new (nothrow) DoHDoTStats(*(host->get_ip()), host->get_vlan_id());
 
       if (doh_dot) {
         doh_dot->incUses();
@@ -655,7 +669,7 @@ void LocalHost::luaDoHDot(lua_State *vm) {
   m.lock(__FILE__, __LINE__);
 
   for (std::unordered_map<u_int32_t, DoHDoTStats *>::iterator it =
-           doh_dot_map.begin();
+	 doh_dot_map.begin();
        it != doh_dot_map.end(); ++it) {
     lua_newtable(vm);
 
@@ -728,9 +742,9 @@ void LocalHost::setServerPort(bool isTCP, u_int16_t port, ndpi_protocol *proto,
         char ip_buf[64];
 
         ntop->getTrace()->traceEvent(
-            TRACE_INFO,
-            "Server port %s:%d contacted but not reported: exceeded max number",
-            printMask(ip_buf, sizeof(ip_buf)), port);
+				     TRACE_INFO,
+				     "Server port %s:%d contacted but not reported: exceeded max number",
+				     printMask(ip_buf, sizeof(ip_buf)), port);
       }
     }
   }
@@ -803,10 +817,10 @@ void LocalHost::dumpAssetInfo() {
 void LocalHost::setDhcpServer(char *name) {
   bool previousDhcpServer = isDhcpServer();
   Host::setDhcpServer(name);
-  #ifdef NTOPNG_PRO
-    if (!previousDhcpServer && isDhcpServer())
-      ntop->get_am()->setServerInfo(this, dhcp_server, name);
-  #endif
+#ifdef NTOPNG_PRO
+  if (!previousDhcpServer && isDhcpServer())
+    ntop->get_am()->setServerInfo(this, dhcp_server, name);
+#endif
 }
 
 /* *************************************** */
@@ -814,10 +828,10 @@ void LocalHost::setDhcpServer(char *name) {
 void LocalHost::setDnsServer(char *name) {
   bool previous_DnsServer = isDnsServer();
   Host::setDnsServer(name);
-  #ifdef NTOPNG_PRO
-    if (!previous_DnsServer && isDnsServer())
-      ntop->get_am()->setServerInfo(this, dns_server, name);
-  #endif
+#ifdef NTOPNG_PRO
+  if (!previous_DnsServer && isDnsServer())
+    ntop->get_am()->setServerInfo(this, dns_server, name);
+#endif
 }
 
 /* *************************************** */
@@ -825,10 +839,10 @@ void LocalHost::setDnsServer(char *name) {
 void LocalHost::setSmtpServer(char *name) {
   bool previous_SmtpServer = isSmtpServer();
   Host::setSmtpServer(name);
-  #ifdef NTOPNG_PRO
-    if (!previous_SmtpServer && isSmtpServer())
-      ntop->get_am()->setServerInfo(this, smtp_server, name);
-  #endif
+#ifdef NTOPNG_PRO
+  if (!previous_SmtpServer && isSmtpServer())
+    ntop->get_am()->setServerInfo(this, smtp_server, name);
+#endif
 }
 
 /* *************************************** */
@@ -836,10 +850,10 @@ void LocalHost::setSmtpServer(char *name) {
 void LocalHost::setNtpServer(char *name) {
   bool previous_NtpServer = isNtpServer();
   Host::setNtpServer(name);
-  #ifdef NTOPNG_PRO
-    if (!previous_NtpServer && isNtpServer())
-      ntop->get_am()->setServerInfo(this, ntp_server, name);
-  #endif
+#ifdef NTOPNG_PRO
+  if (!previous_NtpServer && isNtpServer())
+    ntop->get_am()->setServerInfo(this, ntp_server, name);
+#endif
 }
 
 /* *************************************** */
@@ -847,10 +861,10 @@ void LocalHost::setNtpServer(char *name) {
 void LocalHost::setImapServer(char *name) {
   bool previous_ImapServer = isImapServer();
   Host::setImapServer(name);
-  #ifdef NTOPNG_PRO
-    if (!previous_ImapServer && isImapServer())
-      ntop->get_am()->setServerInfo(this, imap_server, name);
-  #endif
+#ifdef NTOPNG_PRO
+  if (!previous_ImapServer && isImapServer())
+    ntop->get_am()->setServerInfo(this, imap_server, name);
+#endif
 }
 
 /* *************************************** */
@@ -858,32 +872,32 @@ void LocalHost::setImapServer(char *name) {
 void LocalHost::setPopServer(char *name) {
   bool previous_popServer = isPopServer();
   Host::setPopServer(name);
-  #ifdef NTOPNG_PRO
-    if (!previous_popServer && isPopServer())
-      ntop->get_am()->setServerInfo(this, pop_server, name);
-  #endif
+#ifdef NTOPNG_PRO
+  if (!previous_popServer && isPopServer())
+    ntop->get_am()->setServerInfo(this, pop_server, name);
+#endif
 }
 
 /* *************************************** */
 
 void LocalHost::offlineSetMDNSInfo(char *const str) {
-    bool previous_mdns_info = names.mdns_info ? true : false;
-    Host::offlineSetMDNSInfo(str);
-    #ifdef NTOPNG_PRO
-      if (names.mdns_info && !previous_mdns_info)
-        ntop->get_am()->setResolvedName(this, label_mdns_info, names.mdns_info);
-    #endif
+  bool previous_mdns_info = names.mdns_info ? true : false;
+  Host::offlineSetMDNSInfo(str);
+#ifdef NTOPNG_PRO
+  if (names.mdns_info && !previous_mdns_info)
+    ntop->get_am()->setResolvedName(this, label_mdns_info, names.mdns_info);
+#endif
 }
 
 /* *************************************** */
 
 void LocalHost::offlineSetMDNSName(const char *mdns_n) {
-    bool previous_mdns = names.mdns ? true : false;
-    Host::offlineSetMDNSName(mdns_n);
-    #ifdef NTOPNG_PRO
-      if (names.mdns && !previous_mdns)
-          ntop->get_am()->setResolvedName(this, label_mdns, names.mdns);
-    #endif
+  bool previous_mdns = names.mdns ? true : false;
+  Host::offlineSetMDNSName(mdns_n);
+#ifdef NTOPNG_PRO
+  if (names.mdns && !previous_mdns)
+    ntop->get_am()->setResolvedName(this, label_mdns, names.mdns);
+#endif
 }
 
 /* *************************************** */
@@ -891,10 +905,10 @@ void LocalHost::offlineSetMDNSName(const char *mdns_n) {
 void LocalHost::offlineSetDHCPName(const char *dhcp_n) {
   bool previous_dhcp = names.dhcp ? true : false;
   Host::offlineSetDHCPName(dhcp_n);
-  #ifdef NTOPNG_PRO
-    if (names.dhcp && !previous_dhcp)
-      ntop->get_am()->setResolvedName(this, label_dhcp, names.dhcp);
-  #endif
+#ifdef NTOPNG_PRO
+  if (names.dhcp && !previous_dhcp)
+    ntop->get_am()->setResolvedName(this, label_dhcp, names.dhcp);
+#endif
 }
 
 /* *************************************** */
@@ -902,10 +916,10 @@ void LocalHost::offlineSetDHCPName(const char *dhcp_n) {
 void LocalHost::offlineSetMDNSTXTName(const char *mdns_n_txt) {
   bool previous_mdns_txt = names.mdns_txt ? true : false;
   Host::offlineSetMDNSTXTName(mdns_n_txt);
-  #ifdef NTOPNG_PRO
-    if (names.mdns_txt && !previous_mdns_txt)
-      ntop->get_am()->setResolvedName(this, label_mdns_txt, names.mdns_txt);
-  #endif
+#ifdef NTOPNG_PRO
+  if (names.mdns_txt && !previous_mdns_txt)
+    ntop->get_am()->setResolvedName(this, label_mdns_txt, names.mdns_txt);
+#endif
 }
 
 /* *************************************** */
@@ -913,10 +927,10 @@ void LocalHost::offlineSetMDNSTXTName(const char *mdns_n_txt) {
 void LocalHost::offlineSetNetbiosName(const char *netbios_n) {
   bool previous_netbios = names.netbios ? true : false;
   Host::offlineSetNetbiosName(netbios_n);
-  #ifdef NTOPNG_PRO
-    if (names.netbios && !previous_netbios)
-      ntop->get_am()->setResolvedName(this, label_netbios, names.netbios);
-  #endif
+#ifdef NTOPNG_PRO
+  if (names.netbios && !previous_netbios)
+    ntop->get_am()->setResolvedName(this, label_netbios, names.netbios);
+#endif
 }
 
 /* *************************************** */
@@ -924,10 +938,10 @@ void LocalHost::offlineSetNetbiosName(const char *netbios_n) {
 void LocalHost::offlineSetHTTPName(const char *http_n) {
   bool previous_http = names.http ? true : false;
   Host::offlineSetHTTPName(http_n);
-  #ifdef NTOPNG_PRO
-    if(names.http && !previous_http)
-      ntop->get_am()->setResolvedName(this, label_http, names.http);
-  #endif
+#ifdef NTOPNG_PRO
+  if(names.http && !previous_http)
+    ntop->get_am()->setResolvedName(this, label_http, names.http);
+#endif
 }
 
 /* *************************************** */
@@ -935,21 +949,26 @@ void LocalHost::offlineSetHTTPName(const char *http_n) {
 void LocalHost::setServerName(const char *server_n) {
   bool previous_server_name = names.server_name ? true : false;
   Host::setServerName(server_n);
-  #ifdef NTOPNG_PRO
-    if(names.server_name && !previous_server_name)
-      ntop->get_am()->setResolvedName(this, label_server_name, names.server_name);
-  #endif
+#ifdef NTOPNG_PRO
+  if(names.server_name && !previous_server_name)
+    ntop->get_am()->setResolvedName(this, label_server_name, names.server_name);
+#endif
 }
 
 /* *************************************** */
 
 void LocalHost::setResolvedName(const char *resolved_name) {
-  bool previous_resolved = names.resolved ? true : false;
-  Host::setResolvedName(resolved_name);
-  #ifdef NTOPNG_PRO
+  char buf[64];
+
+  if(strcmp(get_ip()->print(buf, sizeof(buf)), resolved_name)) {
+    bool previous_resolved = names.resolved ? true : false;
+    Host::setResolvedName(resolved_name);
+    
+#ifdef NTOPNG_PRO
     if(names.resolved && !previous_resolved)
-        ntop->get_am()->setResolvedName(this, label_resolver, names.resolved);
-  #endif
+      ntop->get_am()->setResolvedName(this, label_resolver, names.resolved);
+#endif
+  }
 }
 
 /* *************************************** */
@@ -999,6 +1018,8 @@ void LocalHost::setTCPfingerprint(char *_tcp_fingerprint,
 
 void LocalHost::setOS(OSType _os, OSLearningMode mode) {
   if((_os != os_unknown) && (getOS() != _os)) {
+    os_learning[mode] = _os;
+    
     Host::setOS(_os, mode);
     
 #ifdef NTOPNG_PRO
@@ -1007,5 +1028,3 @@ void LocalHost::setOS(OSType _os, OSLearningMode mode) {
 #endif
   }
 }
-
-

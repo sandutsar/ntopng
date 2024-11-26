@@ -716,10 +716,12 @@ else
 		      "/lua/hosts_stats.lua?os=" .. host["os"] .. "'>" .. discover.getOsAndIcon(host["os"]) ..
 		      "</A>" .. os_detail)
 
-		if(host["tcp_fingerprint"] ~= nil) then
-		   print(" <span class=\"badge bg-success\">TCP Fingerprint: "..host["tcp_fingerprint"].. "</span>")
+		if(false) then
+		   if(host["tcp_fingerprint"] ~= nil) then
+		      print(" <span class=\"badge bg-success\">TCP Fingerprint: "..host["tcp_fingerprint"].. "</span>")
+		   end
 		end
-
+		
 		print("</td><td></td>\n")
             else
                 print("<th></th><td></td>\n")
@@ -818,14 +820,16 @@ else
                           '" target=_blank><small>AbuseIP DB</small> <i class=\"fas fa-external-link-alt\"></i></A>')
             end
 
-	    if(host.fingerprint ~= nil) then
-	       if(host.fingerprint.os ~= "Unknown") then
-		  print(' <span class="badge bg-success">OS: '.. host.fingerprint.os .. '</span>')
-	       else
-		  print(' <span class="badge bg-warning">TCP Fingerprint: '.. host.fingerprint.tcp .. '</span>')
+	    if(false) then
+	       if(host.fingerprint ~= nil) then
+		  if(host.fingerprint.os ~= "Unknown") then
+		     print(' <span class="badge bg-success">OS: '.. host.fingerprint.os .. '</span>')
+		  else
+		     print(' <span class="badge bg-warning">TCP Fingerprint: '.. host.fingerprint.tcp .. '</span>')
+		  end
 	       end
 	    end
-
+	    
             print("</td>\n")
         end
 	
@@ -1299,6 +1303,15 @@ else
             end
         end
 
+	if(table.len(host.os_learning) > 0) then
+	   print('<tr><td width=35% rowspan=' .. (table.len(host.os_learning) + 1) .. '><b>' ..
+		 i18n("details.os_learning") .. ' </a></b></td>')
+	   print("<th>" .. i18n("details.source") .. "</th><th>" .. i18n("advertised_os") .. "</th></tr>\n")
+	   for source, osname in pairsByValues(host.os_learning, asc) do
+	      print("<tr><td>" .. source .. "</td><td>" .. osname .. "</td></tr>\n")
+            end
+	end
+	
         if host["device_ip"] then
             print('<tr><td width=35% rowspan=' .. (table.len(host["devices_ip"]) + 1) .. '><b>' ..
                       i18n("details.probes_ipv4_address") .. ' </a></b></td>')
