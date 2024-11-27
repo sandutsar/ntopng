@@ -584,7 +584,7 @@ else
         label = "<i class='fas fa-lg fa-cog' title='" .. i18n("settings") .. "'></i></a></li>"
     }})
 
-    if((host["bytes.sent"] == 0) or (host["bytes.rcvd"] == 0) and host["localhost"] and not host["is_multicast"] and not host["is_broadcast"]) then
+    if(((host["bytes.sent"] == 0) or (host["bytes.rcvd"] == 0)) and host["localhost"] and not host["is_multicast"] and not host["is_broadcast"]) then
       print("<div class=\"alert alert alert-warning\"><i class='fas fa-exclamation-triangle fa-lg fa-ntopng-warning'></i> " .. i18n("host_details.unidirectional_traffic") .. "</div>")
     end
 
