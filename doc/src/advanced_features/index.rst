@@ -8,23 +8,25 @@ section.
     :maxdepth: 2
     :numbered:
 
-    authentication
+    access_control_list
     asset_inventory
-    sflow_collection
-    view_interfaces
-    dynamic_interfaces_disaggregation
-    traffic_profiles
-    host_rules
-    multitenancy
-    device_protocols
-    category_lists
-    devices_exclusion
+    authentication
     behavior_analysis
     bridging_and_policing
+    category_lists
+    device_protocols
+    devices_exclusion
+    dynamic_interfaces_disaggregation
     flows_dump
-    live_pcap_download
-    syslog
+    host_rules
     ids_acceleration
-    additional_features
+    live_pcap_download
+    multitenancy
     oem
+    sflow_collection
     snapshots
+    syslog
+    traffic_profiles
+    view_interfaces
+    additional_features
+
