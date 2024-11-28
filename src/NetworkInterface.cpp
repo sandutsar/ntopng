@@ -160,6 +160,7 @@ NetworkInterface::NetworkInterface(const char *name,
 
 #if defined(NTOPNG_PRO)
   pMap = NULL, sMap = NULL;
+  acl_flow = NULL;
 #endif
 
   if (id >= 0) {
@@ -1019,6 +1020,7 @@ NetworkInterface::~NetworkInterface() {
 #if defined(NTOPNG_PRO)
   if (pMap) delete pMap;
   if (sMap) delete sMap;
+  if (acl_flow) delete acl_flow;
 
   if (score_behavior) delete (score_behavior);
   if (traffic_tx_behavior) delete (traffic_tx_behavior);
@@ -8401,6 +8403,8 @@ void NetworkInterface::allocateStructures(bool disable_dump) {
     sMap = new (std::nothrow) ServiceMap(this, ntop->getPrefs()->get_max_num_flows() / 8, 86400 /* 1d idleness */);
   } else
     pMap = NULL, sMap = NULL;
+
+  acl_flow = new (std::nothrow) ACLFlow();
 
 #ifndef HAVE_NEDGE
   updateFlowProfiles();

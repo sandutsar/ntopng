@@ -2019,6 +2019,133 @@ static int ntop_get_interface_obs_points_info(lua_State *vm) {
 
 /* ****************************************** */
 
+static int ntop_interface_insert_ip_acl(lua_State *vm) {
+  NetworkInterface *curr_iface = getCurrentInterface(vm);
+  u_int8_t protocol = 0;
+  u_int16_t port = 0, l7_proto = 0;
+  bool is_allowed = true;
+  char *src, *dst;
+
+  if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  protocol = (u_int8_t) lua_tointeger(vm, 1);
+
+  if (ntop_lua_check(vm, __FUNCTION__, 2, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  src = (char *)lua_tostring(vm, 2);
+
+  if (ntop_lua_check(vm, __FUNCTION__, 3, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  dst = (char *)lua_tostring(vm, 3);
+
+  if (lua_type(vm, 4) == LUA_TNUMBER)
+    port = (u_int16_t) lua_tointeger(vm, 4);
+
+  if (lua_type(vm, 5) == LUA_TNUMBER)
+    l7_proto = (u_int16_t) lua_tointeger(vm, 5);
+
+  if (ntop_lua_check(vm, __FUNCTION__, 6, LUA_TBOOLEAN) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  is_allowed = (bool) lua_toboolean(vm, 6);
+
+  if (curr_iface)
+    curr_iface->insertIPACL(protocol, src, dst, port, l7_proto, is_allowed);
+  
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+}
+
+/* ****************************************** */
+
+static int ntop_interface_remove_ip_acl(lua_State *vm) {
+  NetworkInterface *curr_iface = getCurrentInterface(vm);
+  u_int8_t protocol = 0;
+  u_int16_t port = 0, l7_proto = 0;
+  char *src, *dst;
+
+  if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  protocol = (u_int8_t) lua_tointeger(vm, 1);
+
+  if (ntop_lua_check(vm, __FUNCTION__, 2, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  src = (char *)lua_tostring(vm, 2);
+
+  if (ntop_lua_check(vm, __FUNCTION__, 3, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  dst = (char *)lua_tostring(vm, 3);
+
+  if (lua_type(vm, 4) == LUA_TNUMBER)
+    port = (u_int16_t) lua_tointeger(vm, 4);
+
+  if (lua_type(vm, 5) == LUA_TNUMBER)
+    l7_proto = (u_int16_t) lua_tointeger(vm, 5);
+
+  if (curr_iface)
+    curr_iface->removeIPACL(protocol, src, dst, port, l7_proto);
+  
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+}
+
+/* ****************************************** */
+
+static int ntop_interface_insert_mac_acl(lua_State *vm) {
+  NetworkInterface *curr_iface = getCurrentInterface(vm);
+  char *mac_string;
+  u_int32_t _mac[6];
+  bool is_allowed = true;
+
+  if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  mac_string = (char *) lua_tostring(vm, 1);
+
+  if (lua_type(vm, 2) == LUA_TBOOLEAN)
+    is_allowed = (bool) lua_toboolean(vm, 2);
+
+  if (sscanf(mac_string, "%02X:%02X:%02X:%02X:%02X:%02X", &_mac[0], &_mac[1],
+              &_mac[2], &_mac[3], &_mac[4], &_mac[5])) {
+    u_int8_t mac[6];
+    for (int i = 0; i < 6; i++) mac[i] = (u_int8_t)_mac[i];
+    if (curr_iface) curr_iface->insertMacACL(mac, is_allowed);
+  }
+  
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+}
+
+/* ****************************************** */
+
+static int ntop_interface_remove_mac_acl(lua_State *vm) {
+  NetworkInterface *curr_iface = getCurrentInterface(vm);
+  char *mac_string;
+  u_int32_t _mac[6];
+
+  if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  mac_string = (char *) lua_tostring(vm, 1);
+
+  if (sscanf(mac_string, "%02X:%02X:%02X:%02X:%02X:%02X", &_mac[0], &_mac[1],
+              &_mac[2], &_mac[3], &_mac[4], &_mac[5])) {
+    u_int8_t mac[6];
+    for (int i = 0; i < 6; i++) mac[i] = (u_int8_t)_mac[i];
+    if (curr_iface) curr_iface->removeMacACL(mac);
+  }
+  
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+}
+
+/* ****************************************** */
+
+static int ntop_interface_get_acl_info(lua_State *vm) {
+  NetworkInterface *curr_iface = getCurrentInterface(vm);
+  if (curr_iface) {
+    lua_newtable(vm);
+    curr_iface->getACLInfo(vm);
+  }
+  
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+}
+
+/* ****************************************** */
+
 static int ntop_interface_get_throughput(lua_State *vm) {
   NetworkInterface *curr_iface = getCurrentInterface(vm);
 
@@ -5448,6 +5575,11 @@ static luaL_Reg _ntop_interface_reg[] = {
     {"serviceMapSetStatus", ntop_interface_service_map_set_status},
     {"serviceMapSetMultipleStatus",
      ntop_interface_service_map_set_multiple_status},
+    {"insertIPACL", ntop_interface_insert_ip_acl},
+    {"removeIPACL", ntop_interface_remove_ip_acl},
+    {"insertMacACL", ntop_interface_insert_mac_acl},
+    {"removeMacACL", ntop_interface_remove_mac_acl},
+    {"getACLInfo", ntop_interface_get_acl_info},
     {"getThroughput", ntop_interface_get_throughput},
     {"getProtocolFlowsStats", ntop_get_protocol_flows_stats},
     {"getVLANFlowsStats", ntop_get_vlan_flows_stats},

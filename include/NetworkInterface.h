@@ -109,6 +109,7 @@ protected:
 #if defined(NTOPNG_PRO)
   PeriodicityMap *pMap;
   ServiceMap *sMap;
+  ACLFlow *acl_flow;
 #endif
 
   UsedPorts usedPorts;
@@ -754,6 +755,31 @@ public:
   };
   void updateFlowPeriodicity(Flow *f);
   void updateServiceMap(Flow *f);
+
+  /* Access Control List */
+  inline void insertIPACL(u_int8_t protocol, char *src, char *dst, u_int16_t port, u_int16_t l7_proto, bool is_allowed) {
+    if (acl_flow) acl_flow->insertIPACL(protocol, src, dst, port, l7_proto, is_allowed);
+  }
+  inline void removeIPACL(u_int8_t protocol, char *src, char *dst, u_int16_t port, u_int16_t l7_proto) {
+    if (acl_flow) acl_flow->removeIPACL(protocol, src, dst, port, l7_proto);
+  }
+  inline void insertMacACL(u_int8_t *mac, bool is_allowed) {
+    if (acl_flow) acl_flow->insertMacACL(mac, is_allowed);
+  }
+  inline void removeMacACL(u_int8_t *mac) {
+    if (acl_flow) acl_flow->removeMacACL(mac);
+  }
+  inline bool findFlowACL(Flow *f, bool *is_allowed) {
+    if (acl_flow) return acl_flow->findFlowACL(f, is_allowed);
+    return false;
+  }
+  inline bool findMacACL(u_int8_t* mac, bool *is_allowed) {
+    if (acl_flow) return acl_flow->findMacACL(mac, is_allowed);
+    return false;
+  }
+  inline void getACLInfo(lua_State *vm) {
+    if (acl_flow) acl_flow->lua(vm);
+  }
 #endif
   void lua_hash_tables_stats(lua_State *vm);
   void lua_periodic_activities_stats(lua_State *vm);

@@ -35,8 +35,10 @@
         </button>
       </div>
     </div>
+    <NoteList :note_list="notes"> </NoteList>
   </div>
-  <ModalAddACLRule ref="modal_add" :context="context" :url_request="url_add_request" @add="refresh_table">
+  <ModalAddACLRule ref="modal_add" :context="context" :url_request="url_add_request" :l4_proto_list="l4_proto"
+    :l7_proto_list="l7_proto" @add="refresh_table">
   </ModalAddACLRule>
   <ModalEditACLRule ref="modal_edit" :context="context" :url_request="url_edit_request" :l4_proto_list="l4_proto"
     :l7_proto_list="l7_proto" @edit="refresh_table">
@@ -63,6 +65,7 @@ import { default as ModalEditACLRule } from "./modal-edit-acl-rule.vue";
 import { default as ModalDeleteACLRule } from "./modal-delete-acl-rule.vue";
 import { default as ModalDeleteAllACLRules } from "./modal-delete-all-acl-rules.vue";
 import { default as sortingFunctions } from "../utilities/sorting-utils.js";
+import { default as NoteList } from "./note-list.vue";
 
 const _i18n = (t) => i18n(t);
 const table_access_control_list = ref(null);
@@ -77,6 +80,11 @@ const url_edit_request = '/lua/pro/rest/v2/add/system/edit_access_control_list_r
 const date_format = ref(null)
 const l4_proto = ref([])
 const l7_proto = ref([])
+const notes = [
+  _i18n("acl_page.acl_use"),
+  _i18n("acl_page.non_blocking_rules"),
+  _i18n("acl_page.add_new_rule")
+]
 
 /* ************************************** */
 
@@ -306,6 +314,15 @@ async function load_protocols() {
       label: t.name,
       title: t.name,
     };
+  })
+  /* *** Special case *** */
+  l4_proto.value.unshift({
+    id: 'arp',
+    label: 'ARP',
+    title: 'ARP',
+  })
+  l4_proto.value.sort((a, b) => {
+    return a.label.localeCompare(b.label)
   })
   url = `${http_prefix}/lua/rest/v2/get/l7/application/consts.lua`;
   rsp = await ntopng_utility.http_request(url);

@@ -47,7 +47,7 @@
 			"title_i18n": "proto",
 			"data_field": "proto",
 			"sortable": true,
-			"min-width" : "120px",
+			"min-width" : "90px",
 			"class": [
 				"text-nowrap"
 			]
@@ -56,7 +56,7 @@
 			"title_i18n": "l7_proto",
 			"data_field": "l7_proto",
 			"sortable": true,
-			"min-width" : "120px",
+			"min-width" : "90px",
 			"class": [
 				"text-nowrap"
 			]
@@ -83,9 +83,10 @@
 			"title_i18n": "port",
 			"data_field": "port",
 			"sortable": true,
-			"min-width" : "120px",
+			"min-width" : "90px",
 			"class": [
-				"text-nowrap"
+				"text-nowrap",
+				"text-center"
 			]
 		},
 		{
@@ -101,7 +102,7 @@
 		{
 			"title_i18n": "acl_page.notes",
 			"data_field": "note",
-			"sortable": true,
+			"sortable": false,
 			"min-width" : "180px",
 			"class": [
 				"text-nowrap"
