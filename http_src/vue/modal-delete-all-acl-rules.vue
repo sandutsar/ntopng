@@ -8,6 +8,10 @@
       {{ message }}
     </template><!-- modal-body -->
     <template v-slot:footer>
+      <div v-if="show_feedback" class="me-auto w-100 text-danger">{{ error }}</div>
+      <div v-if="show_feedback" class="mt-1 notes bg-danger me-auto w-100 bg-opacity-25">
+        {{ feedback }}
+      </div>
       <button type="button" @click="delete_host" class="btn btn-danger">{{ _i18n("delete") }}</button>
     </template>
   </modal>
@@ -22,6 +26,8 @@ const _i18n = (t) => i18n(t);
 const modal_id = ref(null);
 const message = ref(i18n('acl_page.delete_all_confirmation'))
 const emit = defineEmits(["delete_rules"]);
+const show_feedback = ref(null)
+const feedback = ref(null)
 const props = defineProps({
   context: Object,
 });
@@ -37,9 +43,15 @@ async function delete_host() {
   let headers = {
     'Content-Type': 'application/json'
   };
-  await ntopng_utility.http_request(url, { method: 'post', headers, body: JSON.stringify(params) });
-  emit('delete_rules', params);
-  close();
+  const rsp = await ntopng_utility.http_request(url, { method: 'post', headers, body: JSON.stringify(params) });
+  if (rsp.result == 'ok') {
+    show_feedback.value = false;
+    emit('delete_rules', params);
+    close();
+  } else {
+    show_feedback.value = true;
+    feedback.value = rsp.result;
+  }
 }
 
 const show = () => {

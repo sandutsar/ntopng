@@ -8,7 +8,11 @@
       {{ message }}
     </template><!-- modal-body -->
     <template v-slot:footer>
-      <button type="button" @click="delete_host" class="btn btn-danger">{{ _i18n("delete") }}</button>
+      <div v-if="show_feedback" class="me-auto w-100 text-danger">{{ error }}</div>
+      <div v-if="show_feedback" class="mt-1 notes bg-danger me-auto w-100 bg-opacity-25">
+        {{ feedback }}
+      </div>
+      <button type="button" @click="delete_rule" class="btn btn-danger">{{ _i18n("delete") }}</button>
     </template>
   </modal>
 </template>
@@ -23,13 +27,15 @@ const modal_id = ref(null);
 const message = ref(i18n('acl_page.delete_confirmation'))
 const emit = defineEmits(["delete_rule"]);
 const row_key = ref({});
+const show_feedback = ref(null)
+const feedback = ref(null)
 const props = defineProps({
   context: Object,
 });
 
 onMounted(() => { });
 
-async function delete_host() {
+async function delete_rule() {
   const url = `${http_prefix}/lua/pro/rest/v2/delete/system/access_control_list.lua`;
   const params = {
     csrf: props.context.csrf,
@@ -39,9 +45,15 @@ async function delete_host() {
   let headers = {
     'Content-Type': 'application/json'
   };
-  await ntopng_utility.http_request(url, { method: 'post', headers, body: JSON.stringify(params) });
-  emit('delete_rule', params);
-  close();
+  const rsp = await ntopng_utility.http_request(url, { method: 'post', headers, body: JSON.stringify(params) });
+  if (rsp.result == 'ok') {
+    show_feedback.value = false;
+    emit('delete_rule', params);
+    close();
+  } else {
+    show_feedback.value = true;
+    feedback.value = rsp.result;
+  }
 }
 
 const show = (row) => {

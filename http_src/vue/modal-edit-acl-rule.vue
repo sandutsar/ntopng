@@ -9,12 +9,12 @@
             <SelectSearch v-model:selected_option="selected_l4_proto" :options="props.l4_proto_list">
             </SelectSearch>
           </div>
-          <div ref="client_ref" class="col-sm-2 p-0 me-1">
-            <input v-model="client" class="form-control" type="text" :placeholder="client_place_holder" required />
-          </div>
           <template v-if="!is_arp_proto">
+            <div ref="client_ref" class="col-sm-2 p-0 me-1">
+              <input v-model="client" class="form-control" type="text" :placeholder="client_ip_place_holder" required />
+            </div>
             <div class="col-sm-2 p-0">
-              <input v-model="server" class="form-control" type="text" :placeholder="server_place_holder" required />
+              <input v-model="server" class="form-control" type="text" :placeholder="server_ip_place_holder" required />
             </div>
             <template v-if="selected_l4_proto.id == 6 || selected_l4_proto.id == 17">
               <div v-if="rule_application_type" class="col-sm-2 p-0 ms-1">
@@ -34,14 +34,19 @@
               </div>
             </template>
           </template>
+          <template v-else>
+            <div class="col-sm-4 p-0 me-1">
+              <input v-model="client" class="form-control" type="text" :placeholder="client_mac_place_holder"
+                required />
+            </div>
+          </template>
           <div class="col-sm-8 mt-2">
             <input v-model="notes" class="form-control" type="text" :placeholder="notes_placeholder" />
           </div>
         </div>
       </form>
       <div class="form-group">
-        <NoteList v-if=!is_arp_proto :note_list="note_list"></NoteList>
-        <NoteList v-else :note_list="note_list_arp"></NoteList>
+        <NoteList :note_list="note_list"></NoteList>
       </div>
     </template>
     <template v-slot:footer>
@@ -59,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onBeforeMount, onMounted } from "vue";
+import { ref, watch, onBeforeMount } from "vue";
 import { default as modal } from "./modal.vue";
 import { default as SelectSearch } from "./select-search.vue";
 import { default as NoteList } from "./note-list.vue";
@@ -74,8 +79,9 @@ const rules_to_add = ref('')
 const client = ref(null)
 const server = ref(null)
 const port = ref(null)
-const client_place_holder = ref(_i18n('client'))
-const server_place_holder = ref(_i18n('server'))
+const client_ip_place_holder = ref(_i18n('db_search.tags.cli_ip'))
+const client_mac_place_holder = ref(_i18n('db_search.tags.cli_mac'))
+const server_ip_place_holder = ref(_i18n('db_search.tags.srv_ip'))
 const notes_placeholder = ref(_i18n('acl_page.notes'))
 const port_place_holder = ref(_i18n('port'))
 const show_feedback = ref(false);
@@ -96,18 +102,11 @@ const notes = ref(null)
 
 const note_list = [
   _i18n("acl_page.edit_acl_required"),
-  _i18n("acl_page.edit_acl_empty_port_app"),
-  _i18n("acl_page.edit_acl_switch_port_app"),
   _i18n("acl_page.edit_acl_notes"),
-]
-
-const note_list_arp = [
   _i18n("acl_page.edit_arp_only_client"),
-  _i18n("acl_page.edit_arp_use_mac"),
-  _i18n("acl_page.edit_acl_notes"),
+  _i18n("acl_page.edit_arp_tcp_udp"),
+  _i18n("acl_page.edit_save"),
 ]
-
-const showed = () => { };
 
 /* ************************************** */
 
@@ -123,13 +122,9 @@ const props = defineProps({
 watch(() => selected_l4_proto.value, (cur_value) => {
   if (cur_value.id == 'arp') {
     is_arp_proto.value = true
-    client_ref.value.classList.add('col-sm-4')
-    client_ref.value.classList.remove('col-sm-2')
   } else {
     is_arp_proto.value = false
     rule_port_type.value = true
-    client_ref.value.classList.remove('col-sm-4')
-    client_ref.value.classList.add('col-sm-2')
   }
 }, { flush: 'pre' });
 

@@ -83,7 +83,9 @@ const l7_proto = ref([])
 const notes = [
   _i18n("acl_page.acl_use"),
   _i18n("acl_page.non_blocking_rules"),
-  _i18n("acl_page.add_new_rule")
+  _i18n("acl_page.add_new_rule"),
+  _i18n("acl_page.action_column"),
+  _i18n("acl_page.action_delete_all_rules")
 ]
 
 /* ************************************** */
@@ -320,9 +322,6 @@ async function load_protocols() {
     id: 'arp',
     label: 'ARP',
     title: 'ARP',
-  })
-  l4_proto.value.sort((a, b) => {
-    return a.label.localeCompare(b.label)
   })
   url = `${http_prefix}/lua/rest/v2/get/l7/application/consts.lua`;
   rsp = await ntopng_utility.http_request(url);

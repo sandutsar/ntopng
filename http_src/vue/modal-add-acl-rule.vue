@@ -31,11 +31,11 @@
               <template v-if="single_rule.selected_l4_proto.id !== 'arp'">
                 <div class="col-sm-2 p-0 me-1">
                   <input v-model="single_rule.client" class="form-control" type="text"
-                    :placeholder="client_place_holder" required />
+                    :placeholder="client_ip_place_holder" required />
                 </div>
                 <div class="col-sm-2 p-0">
                   <input v-model="single_rule.server" class="form-control" type="text"
-                    :placeholder="server_place_holder" required />
+                    :placeholder="server_ip_place_holder" required />
                 </div>
                 <template v-if="single_rule.selected_l4_proto.id == 6 || single_rule.selected_l4_proto.id == 17">
                   <div v-if="single_rule.rule_application_type" class="col-sm-2 p-0 ms-1">
@@ -64,7 +64,7 @@
               <template v-else>
                 <div class="col-sm-4 p-0 me-1">
                   <input v-model="single_rule.client" class="form-control" type="text"
-                    :placeholder="client_place_holder" required />
+                    :placeholder="client_mac_place_holder" required />
                 </div>
               </template>
               <div class="col-sm-8 mt-2">
@@ -130,36 +130,30 @@ const feedback = ref('');
 const error = ref(i18n('acl_page.error_detected'))
 const title = ref(i18n('acl_page.add_acl_rule'));
 const new_rules_array = ref([])
-const client_place_holder = ref(_i18n('client'))
-const server_place_holder = ref(_i18n('server'))
+const client_ip_place_holder = ref(_i18n('db_search.tags.cli_ip'))
+const client_mac_place_holder = ref(_i18n('db_search.tags.cli_mac'))
+const server_ip_place_holder = ref(_i18n('db_search.tags.srv_ip'))
 const notes_placeholder = ref(_i18n('acl_page.notes'))
 const port_place_holder = ref(_i18n('port'))
 
 const note_list_advanced_settings = [
-  _i18n("acl_page.each_host_separate_line"),
-  _i18n("acl_page.rule_format"),
-  _i18n("acl_page.non_mandatory_parameters"),
-  _i18n("acl_page.select_one_parameter"),
-  _i18n("acl_page.parameters_separator"),
+  _i18n("acl_page.advanced_settings_one_rule_per_line"),
+  _i18n("acl_page.advanced_settings_rule_format"),
+  _i18n("acl_page.advanced_settings_l7_proto_port"),
+  _i18n("acl_page.advanced_settings_select_one_parameter"),
+  _i18n("acl_page.advanced_settings_parameters_separator"),
 ]
 
 const note_list = [
   _i18n("acl_page.edit_acl_required"),
-  _i18n("acl_page.edit_acl_empty_port_app"),
-  _i18n("acl_page.edit_acl_switch_port_app"),
   _i18n("acl_page.edit_acl_notes"),
+  _i18n("acl_page.edit_arp_only_client"),
+  _i18n("acl_page.edit_arp_tcp_udp"),
+  _i18n("acl_page.edit_save"),
   _i18n("acl_page.add_rule_plus"),
   _i18n("acl_page.add_rule_arp"),
   _i18n("acl_page.add_rule_advanced_rules"),
 ]
-
-const note_list_arp = [
-  _i18n("acl_page.edit_arp_only_client"),
-  _i18n("acl_page.edit_arp_use_mac"),
-  _i18n("acl_page.edit_acl_notes"),
-]
-
-const showed = () => { };
 
 /* ************************************** */
 
