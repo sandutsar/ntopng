@@ -9048,3 +9048,10 @@ const char* Flow::getDomainName() {
 
   return(NULL);
 }
+
+#if defined(NTOPNG_PRO)
+  bool Flow::isFlowAllowed(bool *is_allowed) {
+    return iface->findFlowACL(this, is_allowed);
+  };
+#endif
+

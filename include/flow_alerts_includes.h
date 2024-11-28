@@ -102,6 +102,7 @@
 #include "flow_alerts/DataExfiltrationAlert.h"
 #include "flow_alerts/ElephantFlowAlert.h"
 #include "flow_alerts/LateralMovementAlert.h"
+#include "flow_alerts/AccessControlListAlert.h"
 #include "flow_alerts/PeriodicityChangedAlert.h"
 #include "flow_alerts/LongLivedFlowAlert.h"
 #include "flow_alerts/DNSDataExfiltrationAlert.h"

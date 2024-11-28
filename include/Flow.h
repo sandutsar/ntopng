@@ -427,6 +427,10 @@ class Flow : public GenericHashEntry {
     return (predominant_alert.id != flow_alert_normal);
   };
 
+#if defined(NTOPNG_PRO)
+  bool isFlowAllowed(bool *is_allowed);
+#endif
+
   void setPredominantAlertInfo(FlowAlert *alert);
   inline bool isPredominantAlertAutoAck() {
     return !!predominant_alert_info.auto_acknowledge;

@@ -107,7 +107,8 @@ local flow_alert_keys = {
    flow_alert_ndpi_malware_host_contacted          = 98,
    flow_alert_ndpi_binary_data_transfer            = 99,
    flow_alert_tcp_flow_reset                       = 100,
-   flow_alert_ndpi_probing_attempt                 = 101
+   flow_alert_ndpi_probing_attempt                 = 101,
+   flow_alert_access_control_list                  = 102
    
    -- NOTE: do not go beyond the size of the alert_map bitmal inside Flow.h (currently 128)
 }

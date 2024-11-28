@@ -77,6 +77,10 @@ FlowAlertsLoader::FlowAlertsLoader() {
   registerAlert(PeriodicityChangedAlert::getClassType(),
                 PeriodicityChangedAlert::getDefaultScore());
 #endif
+#if defined(NTOPNG_PRO)
+  registerAlert(AccessControlListAlert::getClassType(),
+                AccessControlListAlert::getDefaultScore());
+#endif
   registerAlert(LongLivedFlowAlert::getClassType(),
                 LongLivedFlowAlert::getDefaultScore());
   registerAlert(LowGoodputFlowAlert::getClassType(),
