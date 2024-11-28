@@ -80,7 +80,7 @@ function alert_flow_blacklisted.format(ifid, alert, alert_type_params)
         who = who_string,
         blacklist = black_list_names
     })
-
+    
     if #who == 0 and alert_type_params["cat_blacklisted"] then
         if ntop.getCache(blacklist_debug) == '1' then
             traceError(TRACE_NORMAL, TRACE_CONSOLE, "Blacklisted flow with no blacklisted client nor server. Info:\n")
@@ -98,6 +98,8 @@ function alert_flow_blacklisted.format(ifid, alert, alert_type_params)
         })
     end
 
+    -- res = alert_type_params["custom_cat_file"]
+    tprint(res)
     return res
 end
 

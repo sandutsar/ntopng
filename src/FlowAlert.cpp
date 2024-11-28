@@ -69,8 +69,6 @@ ndpi_serializer* FlowAlert::getSerializedAlert() {
     ndpi_serialize_string_string(serializer, "blacklist", 
       flow->get_custom_category_file() ? flow->get_custom_category_file() : "");
 
-  flow->getProtocolJSONInfo(serializer);
-
   /* This call adds check-specific information to the serializer */
   getAlertJSON(serializer);
 

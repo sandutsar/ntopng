@@ -74,6 +74,7 @@ class Flow : public GenericHashEntry {
   std::map<FlowAlertTypeEnum, u_int16_t /* score */> alert_score;
   FlowAlertType predominant_alert;   /* This is the predominant alert */
   u_int16_t predominant_alert_score; /* The score associated to the predominant alert */
+  ndpi_serializer *alert_json_serializer;
   FlowSource flow_source;
   char *tcp_fingerprint;
   

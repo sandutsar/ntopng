@@ -38,7 +38,7 @@ end
 -- ##############################################
 
 function alert_blacklisted_server_contact:add_extra_info(alert_json)
-    if alert_json and alert_json.custom_cat_file and not isEmptyString(alert_json.custom_cat_file) then
+   if alert_json and alert_json.custom_cat_file and not isEmptyString(alert_json.custom_cat_file) then
         return " [ " .. i18n("flow_details.blacklist", { blacklist = alert_json.custom_cat_file or "" }) .. " ] "
     end
     return ""
@@ -54,7 +54,6 @@ end
 function alert_blacklisted_server_contact.format(ifid, alert, alert_type_params)
     local who = {}
 
-       tprint(alert)
     if alert_type_params["cli_blacklisted"] and alert_type_params["cli_blacklisted"] ~= "0" then
         who[#who + 1] = {
             type = i18n("client"),
