@@ -2905,6 +2905,9 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
 
   lua_get_bytes(vm);
 
+  if (json_protocol_info)
+    lua_push_str_table_entry(vm, "json_protocol_info", json_protocol_info);
+
   if(details_level >= details_high) {
     if(tcp_fingerprint)
       lua_push_str_table_entry(vm, "tcp_fingerprint", tcp_fingerprint);
@@ -9051,7 +9054,8 @@ const char* Flow::getDomainName() {
 
 #if defined(NTOPNG_PRO)
   bool Flow::isFlowAllowed(bool *is_allowed) {
-    return iface->findFlowACL(this, is_allowed);
-  };
+    if (isTCP() || isUDP() || isICMP())
+      return iface->findFlowACL(this, is_allowed);
+    return true;  };
 #endif
 

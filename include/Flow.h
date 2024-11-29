@@ -1132,6 +1132,7 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   }
 
   inline bool isTCP() const { return protocol == IPPROTO_TCP; };
+  inline bool isUDP() const { return protocol == IPPROTO_UDP; };
   inline bool isTCPEstablished() const {
     return (!isTCPClosed() && !isTCPReset() && isThreeWayHandshakeOK());
   }
