@@ -1488,13 +1488,14 @@ local function get_flow_link(fmt, add_hyperlink)
    local vlan = ''
    local tag = 'cli_ip'
    local vlan_id = 0
+   local is_in_memory = false
 
    if fmt['flow']['vlan'] and fmt['flow']['vlan']["value"] ~= 0 then
       vlan_id = tonumber(fmt['flow']['vlan']["value"])
       vlan = '@' .. get_label_link(fmt['flow']['vlan']['label'], 'vlan_id', fmt['flow']['vlan'], add_hyperlink)
    end
 
-   local reference = hostinfo2detailshref({
+   local reference, is_in_memory = hostinfo2detailshref({
 	 ip = fmt['flow']['cli_ip']['value'],
 	 vlan = vlan_id
 					  }, nil, href_icon, "", true)
@@ -1511,18 +1512,19 @@ local function get_flow_link(fmt, add_hyperlink)
    end
    label = label .. get_label_link(fmt['flow']['cli_ip']['label_long'], tag, value, add_hyperlink) .. cli_ip
 
-   if fmt['flow']['cli_port'] then
+   local cli_port = fmt['flow']['cli_port']['value']
+   if not isEmptyString(cli_port) and cli_port ~= '0' then
       label = label .. vlan .. ':' ..
 	 get_label_link(fmt['flow']['cli_port'], 'cli_port', fmt['flow']['cli_port'], add_hyperlink)
    end
 
-   if add_hyperlink then
+   if add_hyperlink and is_in_memory then
       label = label .. " " .. reference
    end
 
    label = label .. ' <i class="fas fa-exchange-alt fa-lg" aria-hidden="true"></i> '
 
-   reference = hostinfo2detailshref({
+   reference, is_in_memory = hostinfo2detailshref({
 	 ip = fmt['flow']['srv_ip']['value'],
 	 vlan = vlan_id
 				    }, nil, href_icon, "", true)
@@ -1537,12 +1539,13 @@ local function get_flow_link(fmt, add_hyperlink)
    end
    label = label .. get_label_link(fmt['flow']['srv_ip']['label_long'], tag, value, add_hyperlink) .. srv_ip
 
-   if fmt['flow']['srv_port'] then
+   local srv_port = fmt['flow']['srv_port']['value']
+   if not isEmptyString(srv_port) and srv_port ~= '0' then
       label = label .. vlan .. ':' ..
 	 get_label_link(fmt['flow']['srv_port'], 'srv_port', fmt['flow']['srv_port'], add_hyperlink)
    end
 
-   if add_hyperlink then
+   if add_hyperlink and is_in_memory then
       label = label .. " " .. reference
    end
 

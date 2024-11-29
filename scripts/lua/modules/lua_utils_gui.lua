@@ -189,6 +189,7 @@ function hostinfo2detailshref(host_info, href_params, href_value, href_tooltip, 
     show_value_with_no_ref)
     local show_href = false
     local res = ""
+    local is_in_memory = false
 
     if (href_only_with_ts == true) then
         local detailLevel = ntop.getCache("ntopng.prefs.hosts_ts_creation")
@@ -209,15 +210,16 @@ function hostinfo2detailshref(host_info, href_params, href_value, href_tooltip, 
         if not isEmptyString(hostdetails_url) then
             res = string.format("<a href='%s' data-bs-toggle='tooltip' data-bs-placement='top' title='%s'>%s</a>", hostdetails_url,
                 href_tooltip or '', href_value or '')
+            is_in_memory = true
         else
             if show_value_with_no_ref == nil or show_value_with_no_ref == true then
                 res = href_value or ''
             end
         end
 
-        return res
+        return res, is_in_memory
     else
-        return (href_value)
+        return href_value, is_in_memory
     end
 end
 
