@@ -290,12 +290,12 @@ print[[
 					}
 
 					if(rsp.alerted_flows_warning > 0 && !(systemInterfaceEnabled)) {
-						msg += "<a href=']] print (ntop.getHttpPrefix()) print [[/lua/flows_stats.lua?alert_type_severity=warning'>"
+						msg += "<a href=']] print (ntop.getHttpPrefix()) print [[/lua/flows_stats.lua?alert_type=warning'>"
 						msg += "<span class=\"badge bg-warning\" title=']] print(i18n("flow_details.alerted_flows")) print[['>"+NtopUtils.formatValue(rsp.alerted_flows_warning, 1)+ " <i class=\"fas fa-stream\"></i> ]] print[[ <i class=\"fas fa-exclamation-triangle\"></i></span></a>";
 					}
 
 					if(rsp.alerted_flows_error > 0 && !(systemInterfaceEnabled)) {
-						msg += "<a href=']] print (ntop.getHttpPrefix()) print [[/lua/flows_stats.lua?alert_type_severity=error'>"
+						msg += "<a href=']] print (ntop.getHttpPrefix()) print [[/lua/flows_stats.lua?alert_type=error'>"
 						msg += "<span class=\"badge bg-danger\" title=']] print(i18n("flow_details.dangerous_flows")) print[['>"+NtopUtils.formatValue(rsp.alerted_flows_error, 1)+ " <i class=\"fas fa-stream\"></i> ]] print[[ <i class=\"fas fa-exclamation-triangle\"></i></span></a>";
 					}
 
