@@ -1190,9 +1190,9 @@ local lang = {
     },
   },
   ["alerts_dashboard"] = {
-    ["access_control_list"] = "ACL Violation",
+    ["access_control_list"] = "ACL Violation (TCP/UDP/ICMP)",
     ["access_control_list_descr"] = "Flow violating the rules set in the ACL <a href='%{href}'><i class='fas fa-cog fa-sm'></i></a>",
-    ["access_control_list_check_description"] = "Trigger an alert whenever a flow not following the configured rules in the Access Control List page is detected <a href='" .. ntop.getHttpPrefix() .. "/lua/pro/admin/access_control_list.lua'><i class='fas fa-cog fa-sm'></i></a>",
+    ["access_control_list_check_description"] = "Trigger an alert whenever a flow with TCP/UDP/ICMP protocol not following the configured rules in the Access Control List page is detected <a href='" .. ntop.getHttpPrefix() .. "/lua/pro/admin/access_control_list.lua'><i class='fas fa-cog fa-sm'></i></a>. <b>This does not block the traffic, only triggers the alert</b>",
     ["active_flows_anomaly"] = "Live Flows Anomaly",
     ["add_filter"] = "Add Filter",
     ["alert"] = "Alert",

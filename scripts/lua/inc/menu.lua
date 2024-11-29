@@ -34,10 +34,38 @@ local has_help_enabled = (ntop.getPref("ntopng.prefs.menu_entries.help") ~= '0')
 local has_developer_enabled = (ntop.getPref(
                                   "ntopng.prefs.menu_entries.developer") ~= '0')
 local vs_utils = require "vs_utils"
+local behavior_utils = require("behavior_utils")
+local checks = require "checks"
+
+-- ************************************
 
 local is_system_interface = page_utils.is_system_view()
-local behavior_utils = require("behavior_utils")
-local session_user = _SESSION['user']
+local session_user = _SESSION['user'] 
+local checks_config = checks.getConfigset()["config"]
+local interface_config = checks_config["interface"]
+local flow_config = checks_config["flow"]
+
+-- Check if some alerts are enabled
+local devices_exclusion_enabled = false
+local acl_violation_enabled = false
+
+if (interface_config) then
+    -- Interface alerts
+    if (interface_config["device_connection_disconnection"]) and
+        (interface_config["device_connection_disconnection"]["min"]["enabled"]) then
+        devices_exclusion_enabled = true
+    end
+end
+
+if (flow_config) then
+    -- Interface alerts
+    if (flow_config["access_control_list"]) and
+        (flow_config["access_control_list"]["all"]["enabled"]) then
+        acl_violation_enabled = true
+    end
+end
+
+-- ************************************
 
 local observationPointId = nil
 print([[
@@ -334,14 +362,6 @@ else
     ]] --
 
     -- ##############################################
-    local checks = require "checks"
-    local interface_config = checks.getConfigset()["config"]["interface"]
-    local devices_exclusion_enabled = false
-    if (interface_config) and
-        (interface_config["device_connection_disconnection"]) and
-        (interface_config["device_connection_disconnection"]["min"]["enabled"]) then
-        devices_exclusion_enabled = true
-    end
     -- Hosts
     page_utils.add_menubar_section({
         section = page_utils.menu_sections.hosts,
@@ -717,7 +737,7 @@ page_utils.add_menubar_section({
             url = '/lua/admin/blacklists.lua?enabled_status=all'
         },  {entry = page_utils.menu_entries.divider}, {
             entry = page_utils.menu_entries.access_control_list,
-            hidden = not is_admin or not ntop.isEnterpriseL(),
+            hidden = not is_admin or not ntop.isEnterpriseL() or not acl_violation_enabled,
             url = '/lua/pro/admin/access_control_list.lua'
         }, {
             entry = page_utils.menu_entries.manage_configurations,
