@@ -1357,10 +1357,9 @@ Flow *NetworkInterface::getFlow(int32_t if_index, Mac *src_mac, Mac *dst_mac, u_
     try {
       INTERFACE_PROFILING_SECTION_ENTER("NetworkInterface::getFlow: new Flow", 2);
 
-      ret = new (std::nothrow)
-	Flow(this, if_index, vlan_id, observation_domain_id, private_flow_id, l4_proto,
-	     src_mac, src_ip, src_port, dst_mac, dst_ip, dst_port, icmp_info,
-	     first_seen, last_seen, view_cli_mac, view_srv_mac);
+      ret = new (std::nothrow)Flow(this, if_index, vlan_id, observation_domain_id, private_flow_id, l4_proto,
+				   src_mac, src_ip, src_port, dst_mac, dst_ip, dst_port, icmp_info,
+				   first_seen, last_seen, view_cli_mac, view_srv_mac);
       INTERFACE_PROFILING_SECTION_EXIT(2);
     } catch (std::bad_alloc &ba) {
       static bool oom_warning_sent = false;
@@ -1428,7 +1427,7 @@ Flow *NetworkInterface::getFlow(int32_t if_index, Mac *src_mac, Mac *dst_mac, u_
         srcHost->set_mac(src_mac);
 
 	/* We're changing host's special mac with a non-special one */
-	incNumHosts(srcHost, srcHost->isRxOnlyHost());
+	/* incNumHosts(srcHost, srcHost->isRxOnlyHost()); */
 	      
         srcHost->updateHostPool(true /* Inline */);
       }
@@ -1453,7 +1452,7 @@ Flow *NetworkInterface::getFlow(int32_t if_index, Mac *src_mac, Mac *dst_mac, u_
         dstHost->set_mac(dst_mac);
 
 	/* We're changing host's special mac with a non-special one */
-	incNumHosts(dstHost, dstHost->isRxOnlyHost());
+	/* incNumHosts(dstHost, dstHost->isRxOnlyHost()); */
 
         dstHost->updateHostPool(true /* Inline */);
       }
