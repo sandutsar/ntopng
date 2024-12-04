@@ -41,9 +41,37 @@ class Flow : public GenericHashEntry {
   int32_t iface_index;  /* Interface index on which this flow has been first observed */
   Host *cli_host, *srv_host; /* They are ALWAYS NULL on ViewInterfaces. For shared hosts see below viewFlowStats */
   IpAddress *cli_ip_addr, *srv_ip_addr;
-  /* IPv4 only, so a int32 bit is only needed */
-  u_int32_t src_ip_addr_pre_nat, dst_ip_addr_pre_nat,
-            src_ip_addr_post_nat, dst_ip_addr_post_nat;
+
+  struct {
+    char *tcp_fingerprint;
+    u_int8_t src2dst_tcp_flags, dst2src_tcp_flags;
+
+    /* TCP stats */
+    TCPSeqNum tcp_seq_s2d, tcp_seq_d2s;
+    u_int16_t cli2srv_window, srv2cli_window;    
+    struct timeval synTime, synAckTime, ackTime; /* network Latency (3-way handshake) */
+    struct timeval clientNwLatency; /* The RTT/2 between the client and nprobe */
+    struct timeval serverNwLatency; /* The RTT/2 between nprobe and the server */
+  } tcp;
+
+  /* Data collected from nProbe */
+  struct {
+    u_int32_t prevAdjacentAS, nextAdjacentAS;
+
+    struct {
+      char *wlan_ssid;
+      u_int8_t wtp_mac_address[6];    
+    } wifi;
+    
+    /* IPv4 only, so a int32 bit is only needed */
+    struct {
+      u_int32_t src_ip_addr_pre_nat, dst_ip_addr_pre_nat,
+	src_ip_addr_post_nat, dst_ip_addr_post_nat;
+      u_int16_t src_port_pre_nat, dst_port_pre_nat,
+	src_port_post_nat, dst_port_post_nat;
+    } nat;    
+  } collection;
+
   ICMPinfo *icmp_info;
   char *category_list_name_shared_pointer; /* NOTE: this is a pointer handled by
 					      Ntop::getPersistentCustomListNameById()
@@ -52,13 +80,11 @@ class Flow : public GenericHashEntry {
   u_int32_t privateFlowId; /* Used to store specific flow info such as DNS TransactionId or SIP CallId */
   u_int8_t cli2srv_tos, srv2cli_tos; /* RFC 2474, 3168 */
   u_int16_t cli_port, srv_port;
-  u_int16_t src_port_pre_nat, dst_port_pre_nat,
-            src_port_post_nat, dst_port_post_nat;
   u_int16_t vlanId;
   u_int32_t vrfId;
-  u_int32_t srcAS, dstAS, prevAdjacentAS, nextAdjacentAS;
+  u_int32_t srcAS, dstAS;
   u_int32_t protocolErrorCode;
-  u_int8_t protocol, src2dst_tcp_flags, dst2src_tcp_flags, flow_verdict;
+  u_int8_t protocol, flow_verdict;
   u_int16_t flow_score;
   bool twh_over_view; /* This flag is used for view interfaces */
   u_int8_t view_cli_mac[6], view_srv_mac[6];
@@ -76,16 +102,12 @@ class Flow : public GenericHashEntry {
   u_int16_t predominant_alert_score; /* The score associated to the predominant alert */
   ndpi_serializer *alert_json_serializer;
   FlowSource flow_source;
-  char *tcp_fingerprint;
   
   struct {
-    u_int8_t is_cli_attacker : 1, is_cli_victim : 1, is_srv_attacker : 1,
-        is_srv_victim : 1, auto_acknowledge : 1;
+    u_int8_t is_cli_attacker : 1, is_cli_victim : 1, is_srv_attacker : 1, is_srv_victim : 1, auto_acknowledge : 1;
   } predominant_alert_info;
-
+  
   char *json_protocol_info, *riskInfo, *end_reason;
-  char *wlan_ssid;
-  u_int8_t wtp_mac_address[6];
 
   /* Calculate the entropy on the first MAX_ENTROPY_BYTES bytes */
   struct {
@@ -250,14 +272,6 @@ class Flow : public GenericHashEntry {
   /* IP stats */
   IPPacketStats ip_stats_s2d, ip_stats_d2s;
 
-  /* TCP stats */
-  TCPSeqNum tcp_seq_s2d, tcp_seq_d2s;
-  u_int16_t cli2srv_window, srv2cli_window;
-
-  struct timeval synTime, synAckTime,
-      ackTime;                    /* network Latency (3-way handshake) */
-  struct timeval clientNwLatency; /* The RTT/2 between the client and nprobe */
-  struct timeval serverNwLatency; /* The RTT/2 between nprobe and the server */
   struct timeval c2sFirstGoodputTime;
   float rttSec, applLatencyMsec;
 
@@ -563,10 +577,10 @@ class Flow : public GenericHashEntry {
   }
 
   inline u_int8_t getTcpFlags() const {
-    return (src2dst_tcp_flags | dst2src_tcp_flags);
+    return (tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags);
   };
-  inline u_int8_t getTcpFlagsCli2Srv() const { return (src2dst_tcp_flags); };
-  inline u_int8_t getTcpFlagsSrv2Cli() const { return (dst2src_tcp_flags); };
+  inline u_int8_t getTcpFlagsCli2Srv() const { return (tcp.src2dst_tcp_flags); };
+  inline u_int8_t getTcpFlagsSrv2Cli() const { return (tcp.dst2src_tcp_flags); };
 #ifdef HAVE_NEDGE
   bool checkPassVerdict(const struct tm *now);
   bool isPassVerdict() const;
@@ -1118,10 +1132,10 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   /* http://bradhedlund.com/2008/12/19/how-to-calculate-tcp-throughput-for-long-distance-links/
    */
   inline float getCli2SrvMaxThpt() const {
-    return (rttSec ? ((float)(cli2srv_window * 8) / rttSec) : 0);
+    return (rttSec ? ((float)(tcp.cli2srv_window * 8) / rttSec) : 0);
   }
   inline float getSrv2CliMaxThpt() const {
-    return (rttSec ? ((float)(srv2cli_window * 8) / rttSec) : 0);
+    return (rttSec ? ((float)(tcp.srv2cli_window * 8) / rttSec) : 0);
   }
 
   inline InterarrivalStats *getCli2SrvIATStats() const {
@@ -1137,24 +1151,24 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
     return (!isTCPClosed() && !isTCPReset() && isThreeWayHandshakeOK());
   }
   inline bool isTCPConnecting() const {
-    return (src2dst_tcp_flags == TH_SYN &&
-            (!dst2src_tcp_flags || (dst2src_tcp_flags == (TH_SYN | TH_ACK))));
+    return (tcp.src2dst_tcp_flags == TH_SYN &&
+            (!tcp.dst2src_tcp_flags || (tcp.dst2src_tcp_flags == (TH_SYN | TH_ACK))));
   }
   inline bool isTCPClosed() const {
-    return (((src2dst_tcp_flags & (TH_SYN | TH_ACK | TH_FIN)) ==
+    return (((tcp.src2dst_tcp_flags & (TH_SYN | TH_ACK | TH_FIN)) ==
              (TH_SYN | TH_ACK | TH_FIN)) &&
-            ((dst2src_tcp_flags & (TH_SYN | TH_ACK | TH_FIN)) ==
+            ((tcp.dst2src_tcp_flags & (TH_SYN | TH_ACK | TH_FIN)) ==
              (TH_SYN | TH_ACK | TH_FIN)));
   }
   inline bool isTCPReset() const {
     return (!isTCPClosed() &&
-            ((src2dst_tcp_flags & TH_RST) || (dst2src_tcp_flags & TH_RST)));
+            ((tcp.src2dst_tcp_flags & TH_RST) || (tcp.dst2src_tcp_flags & TH_RST)));
   };
   inline bool isOnlyTCPReset() const {
-    return ((src2dst_tcp_flags & TH_RST) || (dst2src_tcp_flags & TH_RST));
+    return ((tcp.src2dst_tcp_flags & TH_RST) || (tcp.dst2src_tcp_flags & TH_RST));
   }
   inline bool isTCPRefused() const {
-    return (!isThreeWayHandshakeOK() && (dst2src_tcp_flags & TH_RST) == TH_RST);
+    return (!isThreeWayHandshakeOK() && (tcp.dst2src_tcp_flags & TH_RST) == TH_RST);
   };
   inline bool isTCPZeroWindow() const {
     return (src2dst_tcp_zero_window || dst2src_tcp_zero_window);
@@ -1162,38 +1176,40 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   inline void setVRFid(u_int32_t v) { vrfId = v; }
   inline void setSrcAS(u_int32_t v) { srcAS = v; }
   inline void setDstAS(u_int32_t v) { dstAS = v; }
-  inline void setPrevAdjacentAS(u_int32_t v) { prevAdjacentAS = v; }
-  inline void setNextAdjacentAS(u_int32_t v) { nextAdjacentAS = v; }
+  inline void setPrevAdjacentAS(u_int32_t v) { collection.prevAdjacentAS = v; }
+  inline void setNextAdjacentAS(u_int32_t v) { collection.nextAdjacentAS = v; }
 
   inline ViewInterfaceFlowStats *getViewInterfaceFlowStats() {
     return (viewFlowStats);
   }
 
   inline double getFlowNwLatency(bool client) const {
-    return client ? Utils::timeval2ms(&clientNwLatency)
-                  : Utils::timeval2ms(&serverNwLatency);
+    return client ? Utils::timeval2ms(&tcp.clientNwLatency)
+                  : Utils::timeval2ms(&tcp.serverNwLatency);
   };
   inline void setFlowNwLatency(const struct timeval *const tv, bool client) {
     if (client) {
-      memcpy(&clientNwLatency, tv, sizeof(*tv));
+      memcpy(&tcp.clientNwLatency, tv, sizeof(*tv));
+      
       if (cli_host)
-        cli_host->updateRoundTripTime(Utils::timeval2ms(&clientNwLatency));
+        cli_host->updateRoundTripTime(Utils::timeval2ms(&tcp.clientNwLatency));
     } else {
-      memcpy(&serverNwLatency, tv, sizeof(*tv));
+      memcpy(&tcp.serverNwLatency, tv, sizeof(*tv));
+      
       if (srv_host)
-        srv_host->updateRoundTripTime(Utils::timeval2ms(&serverNwLatency));
+        srv_host->updateRoundTripTime(Utils::timeval2ms(&tcp.serverNwLatency));
     }
   }
   inline void setFlowTcpWindow(u_int16_t window_val, bool client) {
     if (client)
-      cli2srv_window = window_val;
+      tcp.cli2srv_window = window_val;
     else
-      srv2cli_window = window_val;
+      tcp.srv2cli_window = window_val;
   }
   inline void setRtt() {
-    rttSec = ((float)(serverNwLatency.tv_sec + clientNwLatency.tv_sec)) +
-             ((float)(serverNwLatency.tv_usec + clientNwLatency.tv_usec)) /
-                 (float)1000000;
+    rttSec = ((float)(tcp.serverNwLatency.tv_sec + tcp.clientNwLatency.tv_sec)) +
+      ((float)(tcp.serverNwLatency.tv_usec + tcp.clientNwLatency.tv_usec)) /
+      (float)1000000;
   }
   inline void setFlowApplLatency(float latency_msecs) {
     applLatencyMsec = latency_msecs;
@@ -1343,8 +1359,8 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   char *getFlowRiskName();
   void getJSONRiskInfo(ndpi_serializer *serializer);
   void setWLANInfo(char *wlan_ssid, u_int8_t *wtp_mac_address);
-  char *getWLANSSID() { return (wlan_ssid); };
-  u_int8_t *getWTPMACAddress() { return (wtp_mac_address); };
+  char *getWLANSSID() { return (collection.wifi.wlan_ssid); };
+  u_int8_t *getWTPMACAddress() { return (collection.wifi.wtp_mac_address); };
 
   inline FlowTrafficStats *getTrafficStats() { return (&stats); };
   inline char *get_custom_category_file() const {
@@ -1416,14 +1432,14 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   bool isTCPFlagSet(u_int8_t flags, int flag_to_check);
   MinorConnectionStates calculateConnectionState(bool is_cumulative);
   MajorConnectionStates getMajorConnState();
-  inline u_int32_t getPreNATSrcIp() { return ntohl(src_ip_addr_pre_nat); };
-  inline u_int32_t getPreNATDstIp() { return ntohl(dst_ip_addr_pre_nat); };
-  inline u_int32_t getPostNATSrcIp() { return ntohl(src_ip_addr_post_nat); };
-  inline u_int32_t getPostNATDstIp() { return ntohl(dst_ip_addr_post_nat); };
-  inline u_int16_t getPreNATSrcPort() { return ntohs(src_port_pre_nat); };
-  inline u_int16_t getPreNATDstPort() { return ntohs(dst_port_pre_nat); };
-  inline u_int16_t getPostNATSrcPort() { return ntohs(src_port_post_nat); };
-  inline u_int16_t getPostNATDstPort() { return ntohs(dst_port_post_nat); };
+  inline u_int32_t getPreNATSrcIp() { return ntohl(collection.nat.src_ip_addr_pre_nat); };
+  inline u_int32_t getPreNATDstIp() { return ntohl(collection.nat.dst_ip_addr_pre_nat); };
+  inline u_int32_t getPostNATSrcIp() { return ntohl(collection.nat.src_ip_addr_post_nat); };
+  inline u_int32_t getPostNATDstIp() { return ntohl(collection.nat.dst_ip_addr_post_nat); };
+  inline u_int16_t getPreNATSrcPort() { return ntohs(collection.nat.src_port_pre_nat); };
+  inline u_int16_t getPreNATDstPort() { return ntohs(collection.nat.dst_port_pre_nat); };
+  inline u_int16_t getPostNATSrcPort() { return ntohs(collection.nat.src_port_post_nat); };
+  inline u_int16_t getPostNATDstPort() { return ntohs(collection.nat.dst_port_post_nat); };
   inline bool isFlowAccounted()        { return iface_flow_accounted; };
   inline void setFlowAccounted()       { iface_flow_accounted = 1;    };
   void accountFlowTraffic();
