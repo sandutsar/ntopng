@@ -8293,9 +8293,9 @@ void NetworkInterface::FillObsHash() {
 
         if (keys[i]) free(keys[i]);
       }
-
-      free(keys);
     }
+
+    if (keys) free(keys);
   }
 }
 
