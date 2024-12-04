@@ -4542,8 +4542,12 @@ void Flow::alert2JSON(FlowAlert *alert, ndpi_serializer *s) {
 
   ndpi_serialize_string_string(s, "info", getFlowInfo(false).c_str());
 
-  /* Serialize alert JSON */
-  
+  /* Serialize alert JSON, free the serializer if already available, otherwise memory leak */
+  if (alert_json_serializer) {
+    ndpi_term_serializer(alert_json_serializer);
+    free(alert_json_serializer);
+  }
+
   alert_json_serializer = alert->getSerializedAlert();
 
   if(alert_json_serializer)
@@ -7961,6 +7965,7 @@ void Flow::setProtocolJSONInfo() {
     if(alert_json_serializer == NULL) return;
     
     if(ndpi_init_serializer(alert_json_serializer, ndpi_serialization_format_json) == -1) {
+      ndpi_term_serializer(alert_json_serializer);
       free(alert_json_serializer);
       alert_json_serializer = NULL;
       return;
@@ -8162,6 +8167,13 @@ void Flow::setPredominantAlertInfo(FlowAlert *alert) {
   /* Serialize alert JSON
    * Note: this will also add protocol information by calling
    * flow->getProtocolJSONInfo */
+  /* Free the serializer, because the getSerializedAlert is going to allocate an other serializer 
+   * so a leak might appear otherwise */
+  if (alert_json_serializer) {
+    ndpi_term_serializer(alert_json_serializer);
+    free(alert_json_serializer);
+  }
+  
   alert_json_serializer = alert->getSerializedAlert();
 
   if(alert_json_serializer)
