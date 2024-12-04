@@ -10859,7 +10859,12 @@ void NetworkInterface::checkDHCPStorm(time_t when, u_int32_t num_pkts) {
 /* *************************************** */
 
 void NetworkInterface::incNumHosts(Host *host, bool rxOnlyHost) {
-  bool local = host->isLocalHost();
+  bool local;
+
+  if(!host->isUnicastHost())
+    return; /* Account only unicast hosts */
+    
+  local = host->isLocalHost();
   
   /* Do not increase nor decrease hosts in case ntopng is shutting down, it's useless */
   if(isShuttingDown() || (!host->isUnicastHost()))
@@ -10887,7 +10892,12 @@ void NetworkInterface::incNumHosts(Host *host, bool rxOnlyHost) {
 /* *************************************** */
 
 void NetworkInterface::decNumHosts(Host *host, bool rxOnlyHost) {
-  bool local = host->isLocalHost();
+  bool local;
+
+  if(!host->isUnicastHost())
+    return; /* Account only unicast hosts */
+  
+  local = host->isLocalHost();
   
   /* Do not increase nor decrease hosts in case ntopng is shutting down, it's useless */
   if(isShuttingDown() || (!host->isUnicastHost()))
