@@ -32,6 +32,18 @@ typedef struct {
   u_int64_t last, next;
 } TCPSeqNum;
 
+typedef struct {
+  char *tcp_fingerprint;
+  u_int8_t src2dst_tcp_flags, dst2src_tcp_flags;
+
+  /* TCP stats */
+  TCPSeqNum tcp_seq_s2d, tcp_seq_d2s;
+  u_int16_t cli2srv_window, srv2cli_window;
+  struct timeval synTime, synAckTime, ackTime; /* network Latency (3-way handshake) */
+  struct timeval clientNwLatency; /* The RTT/2 between the client and nprobe */
+  struct timeval serverNwLatency; /* The RTT/2 between nprobe and the server */
+} FlowTCP;
+
 class FlowAlert;
 class FlowCheck;
 
@@ -42,34 +54,25 @@ class Flow : public GenericHashEntry {
   Host *cli_host, *srv_host; /* They are ALWAYS NULL on ViewInterfaces. For shared hosts see below viewFlowStats */
   IpAddress *cli_ip_addr, *srv_ip_addr;
 
-  struct {
-    char *tcp_fingerprint;
-    u_int8_t src2dst_tcp_flags, dst2src_tcp_flags;
-
-    /* TCP stats */
-    TCPSeqNum tcp_seq_s2d, tcp_seq_d2s;
-    u_int16_t cli2srv_window, srv2cli_window;    
-    struct timeval synTime, synAckTime, ackTime; /* network Latency (3-way handshake) */
-    struct timeval clientNwLatency; /* The RTT/2 between the client and nprobe */
-    struct timeval serverNwLatency; /* The RTT/2 between nprobe and the server */
-  } tcp;
+  FlowTCP *tcp;
 
   /* Data collected from nProbe */
   struct {
     u_int32_t prevAdjacentAS, nextAdjacentAS;
+    u_int32_t vrfId;
 
     struct {
       char *wlan_ssid;
-      u_int8_t wtp_mac_address[6];    
+      u_int8_t wtp_mac_address[6];
     } wifi;
-    
-    /* IPv4 only, so a int32 bit is only needed */
+
     struct {
+      /* IPv4 only, so a int32 bit is only needed */
       u_int32_t src_ip_addr_pre_nat, dst_ip_addr_pre_nat,
 	src_ip_addr_post_nat, dst_ip_addr_post_nat;
       u_int16_t src_port_pre_nat, dst_port_pre_nat,
 	src_port_post_nat, dst_port_post_nat;
-    } nat;    
+    } nat;
   } collection;
 
   ICMPinfo *icmp_info;
@@ -81,7 +84,6 @@ class Flow : public GenericHashEntry {
   u_int8_t cli2srv_tos, srv2cli_tos; /* RFC 2474, 3168 */
   u_int16_t cli_port, srv_port;
   u_int16_t vlanId;
-  u_int32_t vrfId;
   u_int32_t srcAS, dstAS;
   u_int32_t protocolErrorCode;
   u_int8_t protocol, flow_verdict;
@@ -102,11 +104,11 @@ class Flow : public GenericHashEntry {
   u_int16_t predominant_alert_score; /* The score associated to the predominant alert */
   ndpi_serializer *alert_json_serializer;
   FlowSource flow_source;
-  
+
   struct {
     u_int8_t is_cli_attacker : 1, is_cli_victim : 1, is_srv_attacker : 1, is_srv_victim : 1, auto_acknowledge : 1;
   } predominant_alert_info;
-  
+
   char *json_protocol_info, *riskInfo, *end_reason;
 
   /* Calculate the entropy on the first MAX_ENTROPY_BYTES bytes */
@@ -122,7 +124,7 @@ class Flow : public GenericHashEntry {
       swap_requested : 1, has_malicious_cli_signature : 1,
       has_malicious_srv_signature : 1, src2dst_tcp_zero_window : 1,
       dst2src_tcp_zero_window : 1, non_zero_payload_observed : 1,
-    is_periodic_flow : 1, ____notused:1;  
+    is_periodic_flow : 1, ____notused:1;
   u_int8_t iface_flow_accounted:1, _notused:7;
 
   u_int8_t rtp_stream_type;
@@ -254,7 +256,7 @@ class Flow : public GenericHashEntry {
       char * mail_from;
       char * rcpt_to;
     } smtp;
-    
+
   } protos;
 
   struct {
@@ -303,21 +305,21 @@ class Flow : public GenericHashEntry {
   } flowShaperIds;
 #endif
   struct timeval last_update_time;
-  
+
   float top_bytes_thpt, top_goodput_bytes_thpt, top_pkts_thpt;
   float bytes_thpt, goodput_bytes_thpt;
   float pkts_thpt;
   ValueTrend bytes_thpt_trend, goodput_bytes_thpt_trend, pkts_thpt_trend;
-  
-  MinorConnectionStates current_c_state; 
+
+  MinorConnectionStates current_c_state;
   u_int counter = 0;
   /*
     IMPORTANT NOTE
-    
+
     if you add a new 'directional' field such as cliX and serverX
     you need to handle it in the Flow::swap() method
   */
-  
+
   void deferredInitialization();
   char *intoaV4(unsigned int addr, char *buf, u_short bufLen);
   void allocDPIMemory();
@@ -384,7 +386,7 @@ class Flow : public GenericHashEntry {
   void updateTCPHostServices(Host *cli_h, Host *srv_h);
   void updateUDPHostServices();
   void updateServerName(Host *h);
-  
+
  public:
   Flow(NetworkInterface *_iface, int32_t iface_idx,
        u_int16_t _vlanId,
@@ -463,7 +465,7 @@ class Flow : public GenericHashEntry {
   };
   inline char *getProtocolInfo() { return json_protocol_info; };
   const char* getDomainName();
-  
+
   void setProtocolJSONInfo();
   void getProtocolJSONInfo(ndpi_serializer *serializer);
   void getCustomFieldsInfo(ndpi_serializer *serializer);
@@ -536,13 +538,13 @@ class Flow : public GenericHashEntry {
   }
   inline u_int16_t getCliDeviceDisallowedProtocol() const {
     DeviceProtoStatus cli_ps = cli_host->getDeviceAllowedProtocolStatus(get_detected_protocol(), true);
-    
+
     return (cli_ps == device_proto_forbidden_app) ? ndpiDetectedProtocol.proto.app_protocol
                : ndpiDetectedProtocol.proto.master_protocol;
   }
   inline u_int16_t getSrvDeviceDisallowedProtocol() const {
     DeviceProtoStatus srv_ps = srv_host->getDeviceAllowedProtocolStatus(get_detected_protocol(), false);
-    
+
     return (srv_ps == device_proto_forbidden_app) ? ndpiDetectedProtocol.proto.app_protocol
                : ndpiDetectedProtocol.proto.master_protocol;
   }
@@ -577,10 +579,10 @@ class Flow : public GenericHashEntry {
   }
 
   inline u_int8_t getTcpFlags() const {
-    return (tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags);
+    return(tcp ? (tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags) : 0);
   };
-  inline u_int8_t getTcpFlagsCli2Srv() const { return (tcp.src2dst_tcp_flags); };
-  inline u_int8_t getTcpFlagsSrv2Cli() const { return (tcp.dst2src_tcp_flags); };
+  inline u_int8_t getTcpFlagsCli2Srv() const { return (tcp ? tcp->src2dst_tcp_flags : 0); };
+  inline u_int8_t getTcpFlagsSrv2Cli() const { return (tcp ? tcp->dst2src_tcp_flags : 0); };
 #ifdef HAVE_NEDGE
   bool checkPassVerdict(const struct tm *now);
   bool isPassVerdict() const;
@@ -668,14 +670,14 @@ class Flow : public GenericHashEntry {
                     u_int in_fragments, u_int out_fragments, time_t first_seen,
                     time_t last_seen);
 
-  void addPrePostNATIPv4(u_int32_t _src_ip_addr_pre_nat, 
+  void addPrePostNATIPv4(u_int32_t _src_ip_addr_pre_nat,
                           u_int32_t _dst_ip_addr_pre_nat,
-                          u_int32_t _src_ip_addr_post_nat, 
+                          u_int32_t _src_ip_addr_post_nat,
                           u_int32_t _dst_ip_addr_post_nat);
 
-  void addPrePostNATPort(u_int32_t _src_port_pre_nat, 
+  void addPrePostNATPort(u_int32_t _src_port_pre_nat,
                           u_int32_t _dst_port_pre_nat,
-                          u_int32_t _src_port_post_nat, 
+                          u_int32_t _src_port_post_nat,
                           u_int32_t _dst_port_post_nat);
   void check_swap();
 
@@ -683,51 +685,51 @@ class Flow : public GenericHashEntry {
   inline bool isDetectionCompleted() const {
     return (detection_completed ? true : false);
   };
-  
+
   inline bool isOneWay() const {
     return (get_packets() && (!get_packets_cli2srv() || !get_packets_srv2cli()));
   };
-  
+
   inline bool isBidirectional() const {
     return (get_packets_cli2srv() && get_packets_srv2cli());
   };
-  
+
   inline bool isRemoteToRemote() const {
     return (cli_host && srv_host && !cli_host->isLocalHost() &&
             !srv_host->isLocalHost());
   };
-  
+
   inline bool isLocalToRemote() const {
     return get_cli_ip_addr()->isLocalHost() && !get_srv_ip_addr()->isLocalHost();
   };
-  
+
   inline bool isRemoteToLocal() const {
     return !get_cli_ip_addr()->isLocalHost() && get_srv_ip_addr()->isLocalHost();
   };
-  
+
   inline bool isLocalToLocal() const {
     return get_cli_ip_addr()->isLocalHost() && get_srv_ip_addr()->isLocalHost();
   };
-  
+
   inline bool isUnicast() const {
     return (cli_ip_addr && srv_ip_addr &&
             !cli_ip_addr->isBroadMulticastAddress() &&
             !srv_ip_addr->isBroadMulticastAddress());
   };
-  
+
   inline u_int32_t get_cli_ipv4() const {
     return (cli_host->get_ip()->get_ipv4());
   };
-  
+
   inline u_int32_t get_srv_ipv4() const {
     return (srv_host->get_ip()->get_ipv4());
   };
-  
+
   inline ndpi_protocol get_detected_protocol() const {
     return (isDetectionCompleted() ? ndpiDetectedProtocol
                                    : ndpiUnknownProtocol);
   };
-  
+
   inline struct ndpi_flow_struct *get_ndpi_flow() const { return (ndpiFlow); };
   inline const struct ndpi_in6_addr *get_cli_ipv6() const {
     return (cli_host->get_ip()->get_ipv6());
@@ -1123,7 +1125,7 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   inline char *get_profile_name() {
     return (
 #if !defined(HAVE_NEDGE)
-      trafficProfile ? trafficProfile->getName() : 
+      trafficProfile ? trafficProfile->getName() :
 #endif
       (char *)""
     );
@@ -1132,10 +1134,16 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   /* http://bradhedlund.com/2008/12/19/how-to-calculate-tcp-throughput-for-long-distance-links/
    */
   inline float getCli2SrvMaxThpt() const {
-    return (rttSec ? ((float)(tcp.cli2srv_window * 8) / rttSec) : 0);
+    if(tcp == NULL)
+      return(0);
+    else
+      return (rttSec ? ((float)(tcp->cli2srv_window * 8) / rttSec) : 0);
   }
   inline float getSrv2CliMaxThpt() const {
-    return (rttSec ? ((float)(tcp.srv2cli_window * 8) / rttSec) : 0);
+    if(tcp == NULL)
+      return(0);
+    else
+      return (rttSec ? ((float)(tcp->srv2cli_window * 8) / rttSec) : 0);
   }
 
   inline InterarrivalStats *getCli2SrvIATStats() const {
@@ -1151,29 +1159,44 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
     return (!isTCPClosed() && !isTCPReset() && isThreeWayHandshakeOK());
   }
   inline bool isTCPConnecting() const {
-    return (tcp.src2dst_tcp_flags == TH_SYN &&
-            (!tcp.dst2src_tcp_flags || (tcp.dst2src_tcp_flags == (TH_SYN | TH_ACK))));
+    if(tcp == NULL)
+      return(false);
+    else
+      return (tcp->src2dst_tcp_flags == TH_SYN &&
+	      (!tcp->dst2src_tcp_flags || (tcp->dst2src_tcp_flags == (TH_SYN | TH_ACK))));
   }
   inline bool isTCPClosed() const {
-    return (((tcp.src2dst_tcp_flags & (TH_SYN | TH_ACK | TH_FIN)) ==
-             (TH_SYN | TH_ACK | TH_FIN)) &&
-            ((tcp.dst2src_tcp_flags & (TH_SYN | TH_ACK | TH_FIN)) ==
-             (TH_SYN | TH_ACK | TH_FIN)));
+    if(tcp == NULL)
+      return(false);
+    else
+      return (((tcp->src2dst_tcp_flags & (TH_SYN | TH_ACK | TH_FIN)) ==
+	       (TH_SYN | TH_ACK | TH_FIN)) &&
+	      ((tcp->dst2src_tcp_flags & (TH_SYN | TH_ACK | TH_FIN)) ==
+	       (TH_SYN | TH_ACK | TH_FIN)));
   }
   inline bool isTCPReset() const {
-    return (!isTCPClosed() &&
-            ((tcp.src2dst_tcp_flags & TH_RST) || (tcp.dst2src_tcp_flags & TH_RST)));
+    if(tcp == NULL)
+      return(false);
+    else
+      return (!isTCPClosed() &&
+	      ((tcp->src2dst_tcp_flags & TH_RST) || (tcp->dst2src_tcp_flags & TH_RST)));
   };
   inline bool isOnlyTCPReset() const {
-    return ((tcp.src2dst_tcp_flags & TH_RST) || (tcp.dst2src_tcp_flags & TH_RST));
+    if(tcp == NULL)
+      return(false);
+    else
+      return ((tcp->src2dst_tcp_flags & TH_RST) || (tcp->dst2src_tcp_flags & TH_RST));
   }
   inline bool isTCPRefused() const {
-    return (!isThreeWayHandshakeOK() && (tcp.dst2src_tcp_flags & TH_RST) == TH_RST);
+    if(tcp == NULL)
+      return(false);
+    else
+      return (!isThreeWayHandshakeOK() && (tcp->dst2src_tcp_flags & TH_RST) == TH_RST);
   };
   inline bool isTCPZeroWindow() const {
     return (src2dst_tcp_zero_window || dst2src_tcp_zero_window);
   };
-  inline void setVRFid(u_int32_t v) { vrfId = v; }
+  inline void setVRFid(u_int32_t v) { collection.vrfId = v; }
   inline void setSrcAS(u_int32_t v) { srcAS = v; }
   inline void setDstAS(u_int32_t v) { dstAS = v; }
   inline void setPrevAdjacentAS(u_int32_t v) { collection.prevAdjacentAS = v; }
@@ -1184,32 +1207,40 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   }
 
   inline double getFlowNwLatency(bool client) const {
-    return client ? Utils::timeval2ms(&tcp.clientNwLatency)
-                  : Utils::timeval2ms(&tcp.serverNwLatency);
+    if(tcp == NULL)
+      return(0.0);
+    else
+      return client ? Utils::timeval2ms(&tcp->clientNwLatency)
+	: Utils::timeval2ms(&tcp->serverNwLatency);
   };
   inline void setFlowNwLatency(const struct timeval *const tv, bool client) {
-    if (client) {
-      memcpy(&tcp.clientNwLatency, tv, sizeof(*tv));
-      
-      if (cli_host)
-        cli_host->updateRoundTripTime(Utils::timeval2ms(&tcp.clientNwLatency));
-    } else {
-      memcpy(&tcp.serverNwLatency, tv, sizeof(*tv));
-      
-      if (srv_host)
-        srv_host->updateRoundTripTime(Utils::timeval2ms(&tcp.serverNwLatency));
+    if(tcp != NULL) {
+      if (client) {
+	memcpy(&tcp->clientNwLatency, tv, sizeof(*tv));
+
+	if (cli_host)
+	  cli_host->updateRoundTripTime(Utils::timeval2ms(&tcp->clientNwLatency));
+      } else {
+	memcpy(&tcp->serverNwLatency, tv, sizeof(*tv));
+
+	if (srv_host)
+	  srv_host->updateRoundTripTime(Utils::timeval2ms(&tcp->serverNwLatency));
+      }
     }
   }
   inline void setFlowTcpWindow(u_int16_t window_val, bool client) {
-    if (client)
-      tcp.cli2srv_window = window_val;
-    else
-      tcp.srv2cli_window = window_val;
+    if(tcp != NULL) {
+      if (client)
+	tcp->cli2srv_window = window_val;
+      else
+	tcp->srv2cli_window = window_val;
+    }
   }
   inline void setRtt() {
-    rttSec = ((float)(tcp.serverNwLatency.tv_sec + tcp.clientNwLatency.tv_sec)) +
-      ((float)(tcp.serverNwLatency.tv_usec + tcp.clientNwLatency.tv_usec)) /
-      (float)1000000;
+    if(tcp != NULL)
+      rttSec = ((float)(tcp->serverNwLatency.tv_sec + tcp->clientNwLatency.tv_sec)) +
+	((float)(tcp->serverNwLatency.tv_usec + tcp->clientNwLatency.tv_usec)) /
+	(float)1000000;
   }
   inline void setFlowApplLatency(float latency_msecs) {
     applLatencyMsec = latency_msecs;

@@ -50,8 +50,16 @@ Flow::Flow(NetworkInterface *_iface,
     iface_index = _iface_idx,
     vlanId = _vlanId, protocol = _protocol, cli_port = _cli_port,
     srv_port = _srv_port, privateFlowId = _private_flow_id;
-  flow_dropped_counts_increased = 0, vrfId = 0, protocolErrorCode = 0;
-  srcAS = dstAS = collection.prevAdjacentAS = collection.nextAdjacentAS = 0;
+  flow_dropped_counts_increased = 0, protocolErrorCode = 0;
+  srcAS = dstAS = 0;
+
+  memset(&collection, 0, sizeof(collection));
+
+  if(_protocol == IPPROTO_TCP)
+    tcp = (FlowTCP*)calloc(1, sizeof(FlowTCP));
+  else
+    tcp = NULL;
+  
   predominant_alert.id = flow_alert_normal,
     predominant_alert.category = alert_category_other,
     predominant_alert_score = 0;
@@ -75,7 +83,6 @@ Flow::Flow(NetworkInterface *_iface,
   src2dst_tcp_zero_window = dst2src_tcp_zero_window = 0;
   swap_done = swap_requested = 0;
   current_c_state = MINOR_NO_STATE;
-  tcp.tcp_fingerprint = NULL;
 #ifdef HAVE_NEDGE
   last_conntrack_update = 0;
   marker = MARKER_NO_ACTION;
@@ -92,8 +99,7 @@ Flow::Flow(NetworkInterface *_iface,
   twh_over_view = false;
   flow_verdict = 0;
   operating_system = os_unknown;
-  tcp.src2dst_tcp_flags = 0, tcp.dst2src_tcp_flags = 0, last_update_time.tv_sec = 0,
-    last_update_time.tv_usec = 0;
+  last_update_time.tv_sec = 0, last_update_time.tv_usec = 0;
   bytes_thpt = 0, goodput_bytes_thpt = 0;
   pkts_thpt = 0;
   top_bytes_thpt = 0, top_pkts_thpt = 0, top_goodput_bytes_thpt = 0,
@@ -106,8 +112,6 @@ Flow::Flow(NetworkInterface *_iface,
   ndpiFlowRiskName = NULL;
   viewFlowStats = NULL, suspicious_dga_domain = NULL;
   flow_payload = NULL, flow_payload_len = 0;
-  collection.wifi.wlan_ssid = NULL;
-  memset(collection.wifi.wtp_mac_address, 0, sizeof(collection.wifi.wtp_mac_address));
 
   last_db_dump.partial = NULL;
   last_db_dump.first_seen = last_db_dump.last_seen = 0;
@@ -121,11 +125,6 @@ Flow::Flow(NetworkInterface *_iface,
   cli_ip_addr = srv_ip_addr = NULL;
   cli_host = srv_host = NULL;
   
-  collection.nat.src_ip_addr_pre_nat = collection.nat.dst_ip_addr_pre_nat =
-    collection.nat.src_ip_addr_post_nat = collection.nat.dst_ip_addr_post_nat = 0;  
-  collection.nat.src_port_pre_nat = collection.nat.dst_port_pre_nat =
-    collection.nat.src_port_post_nat = collection.nat.dst_port_post_nat = 0;
-
   INTERFACE_PROFILING_SUB_SECTION_ENTER(iface,
                                         "Flow::Flow: iface->findFlowHosts", 7);
   iface->findFlowHosts(_iface_idx, _vlanId, _observation_point_id, _private_flow_id,
@@ -214,17 +213,8 @@ Flow::Flow(NetworkInterface *_iface,
   first_seen = _first_seen, last_seen = _last_seen;
   bytes_thpt_trend = trend_unknown, pkts_thpt_trend = trend_unknown;
 
-  tcp.synTime.tv_sec = tcp.synTime.tv_usec = 0, tcp.ackTime.tv_sec = tcp.ackTime.tv_usec = 0,
-    tcp.synAckTime.tv_sec = tcp.synAckTime.tv_usec = 0, rttSec = 0,
-    tcp.cli2srv_window = tcp.srv2cli_window = 0,
-    c2sFirstGoodputTime.tv_sec = c2sFirstGoodputTime.tv_usec = 0;
-
   memset(&ip_stats_s2d, 0, sizeof(ip_stats_s2d)),
     memset(&ip_stats_d2s, 0, sizeof(ip_stats_d2s));
-  memset(&tcp.tcp_seq_s2d, 0, sizeof(tcp.tcp_seq_s2d)),
-    memset(&tcp.tcp_seq_d2s, 0, sizeof(tcp.tcp_seq_d2s));
-  memset(&tcp.clientNwLatency, 0, sizeof(tcp.clientNwLatency)),
-    memset(&tcp.serverNwLatency, 0, sizeof(tcp.serverNwLatency));
   memset(&customFlowAlert, 0, sizeof(customFlowAlert));
 
   if(iface->isPacketInterface() && !iface->isSampledTraffic()) {
@@ -384,40 +374,42 @@ void Flow::freeDPIMemory() {
     setRisk(ndpi_flow_risk_bitmap | ndpiFlow->risk);
     ndpi_confidence = ndpiFlow->confidence;
 
-    if((tcp.tcp_fingerprint == NULL) && ndpiFlow->tcp.fingerprint
-       && (cli_host || getViewSharedClient())) {
-      Host *h = cli_host ? cli_host : getViewSharedClient();
+    if(tcp != NULL) {
+      if((tcp->tcp_fingerprint == NULL) && ndpiFlow->tcp.fingerprint
+	 && (cli_host || getViewSharedClient())) {
+	Host *h = cli_host ? cli_host : getViewSharedClient();
 
 #if 0
-      char buf[64];
+	char buf[64];
 
-      ntop->getTrace()->traceEvent(TRACE_WARNING, "->> %s [%s][%s@%d]",
-				   ndpiFlow->tcp.fingerprint,
-				   ndpi_print_os_hint(ndpiFlow->tcp.os_hint),
-				   h->get_ip()->print(buf, sizeof(buf)),
-				   vlanId);
+	ntop->getTrace()->traceEvent(TRACE_WARNING, "->> %s [%s][%s@%d]",
+				     ndpiFlow->tcp.fingerprint,
+				     ndpi_print_os_hint(ndpiFlow->tcp.os_hint),
+				     h->get_ip()->print(buf, sizeof(buf)),
+				     vlanId);
 #endif
 
-      h->setTCPfingerprint(ndpiFlow->tcp.fingerprint,
-			   (enum operating_system_hint)ndpiFlow->tcp.os_hint);
+	h->setTCPfingerprint(ndpiFlow->tcp.fingerprint,
+			     (enum operating_system_hint)ndpiFlow->tcp.os_hint);
 
-      if((ndpiFlow->tcp.os_hint == os_hint_unknown) && h->isLocalHost()) {
-	char buf[64], log[128];
+	if((ndpiFlow->tcp.os_hint == os_hint_unknown) && h->isLocalHost()) {
+	  char buf[64], log[128];
 
-	snprintf(log, sizeof(log), "%s,%s",
-		 h->get_ip()->print(buf, sizeof(buf)),
-		 Utils::OSType2Str(h->getOS()));
+	  snprintf(log, sizeof(log), "%s,%s",
+		   h->get_ip()->print(buf, sizeof(buf)),
+		   Utils::OSType2Str(h->getOS()));
 
-	ntop->getTrace()->traceEvent(TRACE_INFO, "** Unknown TCP fingerprint %s [%s]",
-				     ndpiFlow->tcp.fingerprint, log);
+	  ntop->getTrace()->traceEvent(TRACE_INFO, "** Unknown TCP fingerprint %s [%s]",
+				       ndpiFlow->tcp.fingerprint, log);
 
-	ntop->getRedis()->hashSet(CONST_STR_UNKNOWN_TCP_FINGERPRINTS,
-				  ndpiFlow->tcp.fingerprint, log);
+	  ntop->getRedis()->hashSet(CONST_STR_UNKNOWN_TCP_FINGERPRINTS,
+				    ndpiFlow->tcp.fingerprint, log);
+	}
+
+	tcp->tcp_fingerprint = strdup(ndpiFlow->tcp.fingerprint);
       }
-
-      tcp.tcp_fingerprint = strdup(ndpiFlow->tcp.fingerprint);
     }
-
+    
     ndpi_free_flow(ndpiFlow);
     ndpiFlow = NULL;
   }
@@ -503,7 +495,11 @@ Flow::~Flow() {
     free(alert_json_serializer);
   }
 
-  if(tcp.tcp_fingerprint) free(tcp.tcp_fingerprint);
+  if(tcp != NULL) {
+    if(tcp->tcp_fingerprint) free(tcp->tcp_fingerprint);
+    free(tcp);
+  }
+  
   if(riskInfo) free(riskInfo);
   if(end_reason) free(end_reason);
   if(collection.wifi.wlan_ssid) free(collection.wifi.wlan_ssid);
@@ -648,7 +644,7 @@ void Flow::processDetectedProtocol(u_int8_t *payload, u_int16_t payload_len) {
     cli_h->addContactedDomainName(domain_name);
 
   /* NOTE: UDP flows are updated when the flow ends */
-  if(protocol == IPPROTO_TCP)
+  if(tcp != NULL)
     updateTCPHostServices(cli_h, srv_h);
   else {
     switch (l7proto) {
@@ -1749,7 +1745,7 @@ char *Flow::print(char *buf, u_int buf_len, bool full_report) const {
 #endif
 
   tcp_buf[0] = '\0';
-  if(protocol == IPPROTO_TCP) {
+  if(tcp != NULL) {
     int len = 0;
 
     if((stats.get_cli2srv_tcp_ooo() + stats.get_srv2cli_tcp_ooo()) > 0)
@@ -1795,8 +1791,8 @@ char *Flow::print(char *buf, u_int buf_len, bool full_report) const {
 	   flow_device.out_index, get_packets_cli2srv(), get_packets_srv2cli(),
 	   (long long unsigned)get_bytes_cli2srv(),
 	   (long long unsigned)get_bytes_srv2cli(),
-	   printTCPflags(tcp.src2dst_tcp_flags, buf3, sizeof(buf3)),
-	   printTCPflags(tcp.dst2src_tcp_flags, buf4, sizeof(buf4)),
+	   printTCPflags(tcp->src2dst_tcp_flags, buf3, sizeof(buf3)),
+	   printTCPflags(tcp->dst2src_tcp_flags, buf4, sizeof(buf4)),
 	   printTCPState(buf5, sizeof(buf5)),
 	   (isTLS() && protos.tls.server_names) ? "[" : "",
 	   (isTLS() && protos.tls.server_names) ? protos.tls.server_names : "",
@@ -2909,8 +2905,8 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
     lua_push_str_table_entry(vm, "json_protocol_info", json_protocol_info);
 
   if(details_level >= details_high) {
-    if(tcp.tcp_fingerprint)
-      lua_push_str_table_entry(vm, "tcp_fingerprint", tcp.tcp_fingerprint);
+    if(tcp && tcp->tcp_fingerprint)
+      lua_push_str_table_entry(vm, "tcp_fingerprint", tcp->tcp_fingerprint);
 
     if(swap_done) lua_push_bool_table_entry(vm, "flow_swapped", true);
     lua_push_uint32_table_entry(vm, "flow_source", flow_source);
@@ -2920,7 +2916,8 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
     lua_get_info(vm, true /* Client */);
     lua_get_info(vm, false /* Server */);
 
-    if(vrfId) lua_push_uint64_table_entry(vm, "vrfId", vrfId);
+    if(collection.vrfId)
+      lua_push_uint64_table_entry(vm, "vrfId", collection.vrfId);
 
     /* See VLANAddressTree.h for details */
     lua_push_uint32_table_entry(vm, "observation_point_id",
@@ -3383,8 +3380,8 @@ bool Flow::is_hash_entry_state_idle_transition_ready() {
       iface->getIfType() == interface_type_SYSLOG) {
     ret = is_active_entry_now_idle(iface->getFlowMaxIdle());
   } else {
-    if(protocol == IPPROTO_TCP) {
-      u_int8_t tcp_flags = tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags;
+    if(tcp != NULL) {
+      u_int8_t tcp_flags = tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags;
 
       /*
        * The flow is considered idle after a MAX_TCP_FLOW_IDLE
@@ -3615,10 +3612,10 @@ void Flow::formatECSNetwork(json_object *my_object, const IpAddress *addr) {
 			     Utils::jsonLabel(L7_PROTO_NAME, "protocol", jsonbuf, sizeof(jsonbuf)),
 			     json_object_new_string(get_detected_protocol_name(buf, sizeof(buf))));
 
-    if(protocol == IPPROTO_TCP)
+    if(tcp != NULL)
       json_object_object_add(network_object,
 			     Utils::jsonLabel(TCP_FLAGS, "tcp_flags", jsonbuf, sizeof(jsonbuf)),
-			     json_object_new_int(tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags));
+			     json_object_new_int(tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags));
 
     json_object_object_add(network_object,
                            Utils::jsonLabel(FIRST_SWITCHED, "first_seen",
@@ -3841,13 +3838,13 @@ void Flow::formatECSHost(json_object *my_object, bool is_client,
                                               "vlan", jsonbuf, sizeof(jsonbuf)),
                              json_object_new_int(vlanId));
 
-    if(protocol == IPPROTO_TCP)
+    if(tcp != NULL)
       json_object_object_add(
 			     host_object,
 			     Utils::jsonLabel(
 					      is_client ? CLIENT_NW_LATENCY_MS : SERVER_NW_LATENCY_MS,
 					      "latency", jsonbuf, sizeof(jsonbuf)),
-			     json_object_new_double(toMs(&tcp.clientNwLatency)));
+			     json_object_new_double(toMs(&tcp->clientNwLatency)));
 
     json_object_object_add(my_object, is_client ? "client" : "server",
                            host_object);
@@ -4071,10 +4068,10 @@ void Flow::formatGenericFlow(json_object *my_object) {
                                                                    sizeof(mac_buf))));
   }
 
-  if(protocol == IPPROTO_TCP) {
+  if(tcp != NULL) {
     json_object_object_add(my_object,
 			   Utils::jsonLabel(TCP_FLAGS, "TCP_FLAGS", jsonbuf, sizeof(jsonbuf)),
-			   json_object_new_int(tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags));
+			   json_object_new_int(tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags));
 
     json_object_object_add(my_object,
                            Utils::jsonLabel(TCP_FLAGS, "IN_RETRANSMISSIONS",
@@ -4138,15 +4135,15 @@ void Flow::formatGenericFlow(json_object *my_object) {
 			   Utils::jsonLabel(SRC_VLAN, "SRC_VLAN", jsonbuf, sizeof(jsonbuf)),
 			   json_object_new_int(vlanId));
 
-  if(protocol == IPPROTO_TCP) {
+  if(tcp != NULL) {
     json_object_object_add(my_object,
 			   Utils::jsonLabel(CLIENT_NW_LATENCY_MS, "CLIENT_NW_LATENCY_MS", jsonbuf,
 					    sizeof(jsonbuf)),
-			   json_object_new_double(toMs(&tcp.clientNwLatency)));
+			   json_object_new_double(toMs(&tcp->clientNwLatency)));
     json_object_object_add(my_object,
 			   Utils::jsonLabel(SERVER_NW_LATENCY_MS, "SERVER_NW_LATENCY_MS", jsonbuf,
 					    sizeof(jsonbuf)),
-			   json_object_new_double(toMs(&tcp.serverNwLatency)));
+			   json_object_new_double(toMs(&tcp->serverNwLatency)));
   }
 
   c = cli_host ? cli_host->get_country(buf, sizeof(buf)) : NULL;
@@ -5040,9 +5037,9 @@ void Flow::updateServerPortsStats(Host *server, ndpi_protocol *proto, time_t whe
       ) {
     switch (protocol) {
     case IPPROTO_TCP:
-      if(((tcp.src2dst_tcp_flags & TH_SYN) == TH_SYN)
+      if(((tcp->src2dst_tcp_flags & TH_SYN) == TH_SYN)
 	 /* Ignore connections refused */
-	 && ((tcp.dst2src_tcp_flags & TH_RST) == 0)
+	 && ((tcp->dst2src_tcp_flags & TH_RST) == 0)
 	 ) {
 	if(vlanId == 0) /* In case the VLAN is 0 set this port to the network interface */
 	  iface->setServerPort(true, ntohs(srv_port), proto);
@@ -5091,7 +5088,7 @@ void Flow::updateClientContactedPorts(Host *client, ndpi_protocol *proto) {
   if(client->isLocalHost()) {
     switch (protocol) {
     case IPPROTO_TCP:
-      if((tcp.src2dst_tcp_flags & TH_SYN) == TH_SYN)
+      if((tcp->src2dst_tcp_flags & TH_SYN) == TH_SYN)
 	client->setContactedPort((protocol == IPPROTO_TCP), ntohs(srv_port), proto);
       break;
 
@@ -5366,7 +5363,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
     /* Update syn alerts counters. In case of cumulative flags, the AND is used as possibly other flags can be present  */
 
     /* We have received a SYN flag not observed before for this flow */
-    if((flags == TH_SYN) && (((tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags) & TH_SYN) != TH_SYN)) {
+    if((flags == TH_SYN) && (((tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags) & TH_SYN) != TH_SYN)) {
       if(cli_host)
 	cli_host->updateSynAlertsCounter(when->tv_sec, src2dst_direction);
 
@@ -5381,7 +5378,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
     }
 
     /* We have received a RST flag not observed before for this flow */
-    if((flags == TH_RST) && (((tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags) & TH_RST) != TH_RST)) {
+    if((flags == TH_RST) && (((tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags) & TH_RST) != TH_RST)) {
       iface->getTcpFlowStats()->incReset();
 
       if(cli_host)
@@ -5392,7 +5389,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
     }
 
     /* We have received a FIN flag not observed before for this flow */
-    if((flags == TH_FIN) && (((tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags) & TH_FIN) != TH_FIN)) {
+    if((flags == TH_FIN) && (((tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags) & TH_FIN) != TH_FIN)) {
       if(cli_host)
 	cli_host->updateFinAlertsCounter(when->tv_sec, src2dst_direction);
 
@@ -5416,9 +5413,9 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
     }
 
     if(src2dst_direction)
-      tcp.src2dst_tcp_flags |= flags;
+      tcp->src2dst_tcp_flags |= flags;
     else
-      tcp.dst2src_tcp_flags |= flags;
+      tcp->dst2src_tcp_flags |= flags;
 
     /*
       Note
@@ -5461,11 +5458,11 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
 	srv_network_stats->updateSynAckAlertsCounter(when->tv_sec, !src2dst_direction);
     }
 
-    if((flags & TH_SYN) && (((tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags) & TH_SYN) != TH_SYN)) {
+    if((flags & TH_SYN) && (((tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags) & TH_SYN) != TH_SYN)) {
       iface->getTcpFlowStats()->incSyn();
     }
 
-    if((flags & TH_RST) && (((tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags) & TH_RST) != TH_RST)) {
+    if((flags & TH_RST) && (((tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags) & TH_RST) != TH_RST)) {
       iface->getTcpFlowStats()->incReset();
 
       if(cli_host)
@@ -5475,7 +5472,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
 	srv_host->updateRstAlertsCounter(when->tv_sec, !src2dst_direction);
     }
 
-    if((flags & TH_FIN) && (((tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags) & TH_FIN) != TH_FIN)) {
+    if((flags & TH_FIN) && (((tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags) & TH_FIN) != TH_FIN)) {
       if(cli_host)
 	cli_host->updateFinAlertsCounter(when->tv_sec, src2dst_direction);
 
@@ -5486,7 +5483,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
     }
 
     if((flags & (TH_FIN | TH_ACK))
-	&& (((tcp.src2dst_tcp_flags | tcp.dst2src_tcp_flags) & (TH_FIN | TH_ACK)) != (TH_FIN | TH_ACK))) {
+	&& (((tcp->src2dst_tcp_flags | tcp->dst2src_tcp_flags) & (TH_FIN | TH_ACK)) != (TH_FIN | TH_ACK))) {
       if(cli_host)
 	cli_host->updateFinAckAlertsCounter(when->tv_sec, src2dst_direction);
 
@@ -5499,43 +5496,43 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
     /* *** */
 
     if(src2dst_direction)
-      tcp.src2dst_tcp_flags |= flags;
+      tcp->src2dst_tcp_flags |= flags;
     else
-      tcp.dst2src_tcp_flags |= flags;
+      tcp->dst2src_tcp_flags |= flags;
 
     calculateConnectionState(false);
 
     if(!twh_over) {
       if(flags_3wh == TH_SYN) {
-        if(tcp.synTime.tv_sec == 0) memcpy(&tcp.synTime, when, sizeof(struct timeval));
+        if(tcp->synTime.tv_sec == 0) memcpy(&tcp->synTime, when, sizeof(struct timeval));
 
-	if((tcp.src2dst_tcp_flags & (TH_SYN | TH_ACK)) == (TH_SYN | TH_ACK)) {
+	if((tcp->src2dst_tcp_flags & (TH_SYN | TH_ACK)) == (TH_SYN | TH_ACK)) {
 	  /* SYN|ACK arrived before SYN */
 	  swap_requested = true;
 	}
       } else if(flags_3wh == (TH_SYN | TH_ACK)) {
-        if((tcp.synAckTime.tv_sec == 0) && (tcp.synTime.tv_sec > 0)) {
-          memcpy(&tcp.synAckTime, when, sizeof(struct timeval));
-          timeval_diff(&tcp.synTime, (struct timeval *)when, &tcp.serverNwLatency, 1);
+        if((tcp->synAckTime.tv_sec == 0) && (tcp->synTime.tv_sec > 0)) {
+          memcpy(&tcp->synAckTime, when, sizeof(struct timeval));
+          timeval_diff(&tcp->synTime, (struct timeval *)when, &tcp->serverNwLatency, 1);
 
           /* Coherence check */
-          if(tcp.serverNwLatency.tv_sec > 5)
-            memset(&tcp.serverNwLatency, 0, sizeof(tcp.serverNwLatency));
+          if(tcp->serverNwLatency.tv_sec > 5)
+            memset(&tcp->serverNwLatency, 0, sizeof(tcp->serverNwLatency));
           else if(srv_host)
-            srv_host->updateRoundTripTime(Utils::timeval2ms(&tcp.serverNwLatency));
+            srv_host->updateRoundTripTime(Utils::timeval2ms(&tcp->serverNwLatency));
         }
       } else if((flags_3wh == TH_ACK) ||
                  (flags_3wh == (TH_ACK | TH_PUSH)) /* TCP Fast Open may contain data and PSH
 						      in the final TWH ACK */) {
-        if((tcp.ackTime.tv_sec == 0) && (tcp.synAckTime.tv_sec > 0)) {
-          memcpy(&tcp.ackTime, when, sizeof(struct timeval));
-          timeval_diff(&tcp.synAckTime, (struct timeval *)when, &tcp.clientNwLatency, 1);
+        if((tcp->ackTime.tv_sec == 0) && (tcp->synAckTime.tv_sec > 0)) {
+          memcpy(&tcp->ackTime, when, sizeof(struct timeval));
+          timeval_diff(&tcp->synAckTime, (struct timeval *)when, &tcp->clientNwLatency, 1);
 
           /* Coherence check */
-          if(tcp.clientNwLatency.tv_sec > 5)
-            memset(&tcp.clientNwLatency, 0, sizeof(tcp.clientNwLatency));
+          if(tcp->clientNwLatency.tv_sec > 5)
+            memset(&tcp->clientNwLatency, 0, sizeof(tcp->clientNwLatency));
           else if(cli_host)
-            cli_host->updateRoundTripTime(Utils::timeval2ms(&tcp.clientNwLatency));
+            cli_host->updateRoundTripTime(Utils::timeval2ms(&tcp->clientNwLatency));
 
           setRtt();
           iface->getTcpFlowStats()->incEstablished();
@@ -5781,99 +5778,99 @@ void Flow::updateTcpSeqNum(const struct bpf_timeval *when, u_int32_t seq_num,
     if(debug)
       ntop->getTrace()->traceEvent(TRACE_WARNING,
                                    "[src2dst][last: %u][next: %u]",
-                                   tcp.tcp_seq_s2d.last, tcp.tcp_seq_s2d.next);
+                                   tcp->tcp_seq_s2d.last, tcp->tcp_seq_s2d.next);
 
-    if(window > 0) tcp.srv2cli_window = window; /* Note the window is reverted */
-    if(tcp.tcp_seq_s2d.next > 0) {
-      if((tcp.tcp_seq_s2d.next !=
+    if(window > 0) tcp->srv2cli_window = window; /* Note the window is reverted */
+    if(tcp->tcp_seq_s2d.next > 0) {
+      if((tcp->tcp_seq_s2d.next !=
            seq_num) /* If equal, seq_num is the expected seq_num as determined
                        with prev. segment */
-          && (tcp.tcp_seq_s2d.next != (seq_num - 1))) {
-        if((seq_num == tcp.tcp_seq_s2d.next - 1) &&
+          && (tcp->tcp_seq_s2d.next != (seq_num - 1))) {
+        if((seq_num == tcp->tcp_seq_s2d.next - 1) &&
             (payload_Len == 0 || payload_Len == 1) &&
             ((flags & (TH_SYN | TH_FIN | TH_RST)) == 0)) {
           if(debug)
             ntop->getTrace()->traceEvent(TRACE_WARNING,
                                          "[src2dst] Packet KeepAlive");
           cnt_keep_alive++;
-        } else if(tcp.tcp_seq_s2d.last == seq_num) {
-          if(tcp.tcp_seq_s2d.next != tcp.tcp_seq_s2d.last) {
+        } else if(tcp->tcp_seq_s2d.last == seq_num) {
+          if(tcp->tcp_seq_s2d.next != tcp->tcp_seq_s2d.last) {
             cnt_retx++;
             if(debug)
               ntop->getTrace()->traceEvent(TRACE_WARNING,
                                            "[src2dst] Packet retransmission");
           }
-        } else if((tcp.tcp_seq_s2d.last > seq_num) &&
-                   (seq_num < tcp.tcp_seq_s2d.next)) {
+        } else if((tcp->tcp_seq_s2d.last > seq_num) &&
+                   (seq_num < tcp->tcp_seq_s2d.next)) {
           cnt_lost++;
           if(debug)
             ntop->getTrace()->traceEvent(
 					 TRACE_WARNING, "[src2dst] Packet lost [last: %u][act: %u]",
-					 tcp.tcp_seq_s2d.last, seq_num);
+					 tcp->tcp_seq_s2d.last, seq_num);
         } else {
           cnt_ooo++;
           update_last_seqnum =
-	    ((seq_num - 1) > tcp.tcp_seq_s2d.last) ? true : false;
+	    ((seq_num - 1) > tcp->tcp_seq_s2d.last) ? true : false;
           if(debug)
             ntop->getTrace()->traceEvent(
 					 TRACE_WARNING, "[src2dst] Packet OOO [last: %u][act: %u]",
-					 tcp.tcp_seq_s2d.last, seq_num);
+					 tcp->tcp_seq_s2d.last, seq_num);
         }
       }
     }
 
-    tcp.tcp_seq_s2d.next = next_seq_num;
-    if(update_last_seqnum) tcp.tcp_seq_s2d.last = seq_num;
+    tcp->tcp_seq_s2d.next = next_seq_num;
+    if(update_last_seqnum) tcp->tcp_seq_s2d.last = seq_num;
   } else {
     if(debug)
       ntop->getTrace()->traceEvent(TRACE_WARNING,
                                    "[dst2src][last: %u][next: %u]",
-                                   tcp.tcp_seq_d2s.last, tcp.tcp_seq_d2s.next);
+                                   tcp->tcp_seq_d2s.last, tcp->tcp_seq_d2s.next);
 
-    if(window > 0) tcp.cli2srv_window = window; /* Note the window is reverted */
-    if(tcp.tcp_seq_d2s.next > 0) {
-      if((tcp.tcp_seq_d2s.next != seq_num) &&
-          (tcp.tcp_seq_d2s.next != (seq_num - 1))) {
-        if((seq_num == tcp.tcp_seq_d2s.next - 1) &&
+    if(window > 0) tcp->cli2srv_window = window; /* Note the window is reverted */
+    if(tcp->tcp_seq_d2s.next > 0) {
+      if((tcp->tcp_seq_d2s.next != seq_num) &&
+          (tcp->tcp_seq_d2s.next != (seq_num - 1))) {
+        if((seq_num == tcp->tcp_seq_d2s.next - 1) &&
             (payload_Len == 0 || payload_Len == 1) &&
             ((flags & (TH_SYN | TH_FIN | TH_RST)) == 0)) {
           if(debug)
             ntop->getTrace()->traceEvent(TRACE_WARNING,
                                          "[dst2src] Packet KeepAlive");
           cnt_keep_alive++;
-        } else if(tcp.tcp_seq_d2s.last == seq_num) {
-          if(tcp.tcp_seq_d2s.next != tcp.tcp_seq_d2s.last) {
+        } else if(tcp->tcp_seq_d2s.last == seq_num) {
+          if(tcp->tcp_seq_d2s.next != tcp->tcp_seq_d2s.last) {
             cnt_retx++;
             if(debug)
               ntop->getTrace()->traceEvent(TRACE_WARNING,
                                            "[dst2src] Packet retransmission");
           }
           // bytes
-        } else if((tcp.tcp_seq_d2s.last > seq_num) &&
-                   (seq_num < tcp.tcp_seq_d2s.next)) {
+        } else if((tcp->tcp_seq_d2s.last > seq_num) &&
+                   (seq_num < tcp->tcp_seq_d2s.next)) {
           cnt_lost++;
           if(debug)
             ntop->getTrace()->traceEvent(
 					 TRACE_WARNING, "[dst2src] Packet lost [last: %u][act: %u]",
-					 tcp.tcp_seq_d2s.last, seq_num);
+					 tcp->tcp_seq_d2s.last, seq_num);
         } else {
           cnt_ooo++;
           update_last_seqnum =
-	    ((seq_num - 1) > tcp.tcp_seq_d2s.last) ? true : false;
+	    ((seq_num - 1) > tcp->tcp_seq_d2s.last) ? true : false;
           if(debug)
             ntop->getTrace()->traceEvent(TRACE_WARNING,
                                          "[dst2src] [last: %u][next: %u]",
-                                         tcp.tcp_seq_d2s.last, tcp.tcp_seq_d2s.next);
+                                         tcp->tcp_seq_d2s.last, tcp->tcp_seq_d2s.next);
           if(debug)
             ntop->getTrace()->traceEvent(
 					 TRACE_WARNING, "[dst2src] Packet OOO [last: %u][act: %u]",
-					 tcp.tcp_seq_d2s.last, seq_num);
+					 tcp->tcp_seq_d2s.last, seq_num);
         }
       }
     }
 
-    tcp.tcp_seq_d2s.next = next_seq_num;
-    if(update_last_seqnum) tcp.tcp_seq_d2s.last = seq_num;
+    tcp->tcp_seq_d2s.next = next_seq_num;
+    if(update_last_seqnum) tcp->tcp_seq_d2s.last = seq_num;
   }
 
   if(cnt_keep_alive || cnt_lost || cnt_ooo || cnt_retx)
@@ -6467,7 +6464,7 @@ void Flow::dissectMDNS(u_int8_t *payload, u_int16_t payload_len) {
       dtype = device_multimedia;
     else if(strstr(name, "_ssh._"))
       dtype = device_workstation;
-    else if(strstr(name, "._daap._") || strstr(name, "_afpovertcp._") ||
+    else if(strstr(name, "._daap._") || strstr(name, "_afpovertcp->_") ||
              strstr(name, "_adisk._") || strstr(name, "_smb._"))
       dtype = device_nas;
     else if(strstr(name, "_hap._"))
@@ -7815,7 +7812,7 @@ void Flow::getSIPInfo(ndpi_serializer *serializer) const {
 void Flow::lua_get_tcp_info(lua_State *vm) const {
   if(get_protocol() == IPPROTO_TCP) {
     lua_push_bool_table_entry(
-			      vm, "tcp.seq_problems",
+			      vm, "tcp->seq_problems",
 			      (stats.get_cli2srv_tcp_retr() || stats.get_cli2srv_tcp_ooo() ||
 			       stats.get_cli2srv_tcp_lost() || stats.get_cli2srv_tcp_keepalive() ||
 			       stats.get_srv2cli_tcp_retr() || stats.get_srv2cli_tcp_ooo() ||
@@ -7823,13 +7820,13 @@ void Flow::lua_get_tcp_info(lua_State *vm) const {
 			      ? true
 			      : false);
 
-    lua_push_float_table_entry(vm, "tcp.nw_latency.client",
-                               toMs(&tcp.clientNwLatency));
-    lua_push_float_table_entry(vm, "tcp.nw_latency.server",
-                               toMs(&tcp.serverNwLatency));
-    lua_push_float_table_entry(vm, "tcp.appl_latency", applLatencyMsec);
-    lua_push_float_table_entry(vm, "tcp.max_thpt.cli2srv", getCli2SrvMaxThpt());
-    lua_push_float_table_entry(vm, "tcp.max_thpt.srv2cli", getSrv2CliMaxThpt());
+    lua_push_float_table_entry(vm, "tcp->nw_latency.client",
+                               toMs(&tcp->clientNwLatency));
+    lua_push_float_table_entry(vm, "tcp->nw_latency.server",
+                               toMs(&tcp->serverNwLatency));
+    lua_push_float_table_entry(vm, "tcp->appl_latency", applLatencyMsec);
+    lua_push_float_table_entry(vm, "tcp->max_thpt.cli2srv", getCli2SrvMaxThpt());
+    lua_push_float_table_entry(vm, "tcp->max_thpt.srv2cli", getSrv2CliMaxThpt());
 
     lua_push_uint64_table_entry(vm, "cli2srv.retransmissions",
                                 stats.get_cli2srv_tcp_retr());
@@ -7848,8 +7845,8 @@ void Flow::lua_get_tcp_info(lua_State *vm) const {
     lua_push_uint64_table_entry(vm, "srv2cli.keep_alive",
                                 stats.get_srv2cli_tcp_keepalive());
 
-    lua_push_uint64_table_entry(vm, "cli2srv.tcp_flags", tcp.src2dst_tcp_flags);
-    lua_push_uint64_table_entry(vm, "srv2cli.tcp_flags", tcp.dst2src_tcp_flags);
+    lua_push_uint64_table_entry(vm, "cli2srv.tcp_flags", tcp->src2dst_tcp_flags);
+    lua_push_uint64_table_entry(vm, "srv2cli.tcp_flags", tcp->dst2src_tcp_flags);
 
     lua_push_bool_table_entry(vm, "tcp_established", isTCPEstablished());
     lua_push_bool_table_entry(vm, "tcp_connecting", isTCPConnecting());
@@ -8422,7 +8419,7 @@ void Flow::lua_entropy(lua_State *vm) {
 
 void Flow::check_swap()
   /* NOTE: keep in sync with  ZMQParserInterface::preprocessFlow() */{
-  if(((protocol == IPPROTO_TCP) && ((tcp.src2dst_tcp_flags & TH_SYN) == TH_SYN) /* Ignore in case we have seen a SYN */)
+  if(((protocol == IPPROTO_TCP) && ((tcp->src2dst_tcp_flags & TH_SYN) == TH_SYN) /* Ignore in case we have seen a SYN */)
       || (get_cli_port() == 0) || (get_srv_port() == 0))
     return;
 
@@ -8586,7 +8583,7 @@ void Flow::swap() {
   }
 
   Utils::swap16(&cli_port, &srv_port), Utils::swap32(&srcAS, &dstAS),
-    Utils::swap8(&tcp.src2dst_tcp_flags, &tcp.dst2src_tcp_flags);
+    Utils::swap8(&tcp->src2dst_tcp_flags, &tcp->dst2src_tcp_flags);
   initial_bytes_entropy.c2s = initial_bytes_entropy.s2c;
   initial_bytes_entropy.s2c = s;
 
@@ -8599,10 +8596,10 @@ void Flow::swap() {
   predominant_alert_info.is_srv_attacker = f1,
     predominant_alert_info.is_srv_victim = f2;
 
-  memcpy(&ts, &tcp.tcp_seq_s2d, sizeof(TCPSeqNum));
-  memcpy(&tcp.tcp_seq_d2s, &tcp.tcp_seq_s2d, sizeof(TCPSeqNum));
-  memcpy(&tcp.tcp_seq_s2d, &ts, sizeof(TCPSeqNum));
-  Utils::swap16(&tcp.cli2srv_window, &tcp.srv2cli_window);
+  memcpy(&ts, &tcp->tcp_seq_s2d, sizeof(TCPSeqNum));
+  memcpy(&tcp->tcp_seq_d2s, &tcp->tcp_seq_s2d, sizeof(TCPSeqNum));
+  memcpy(&tcp->tcp_seq_s2d, &ts, sizeof(TCPSeqNum));
+  Utils::swap16(&tcp->cli2srv_window, &tcp->srv2cli_window);
 
   cli2srvPktTime = srv2cliPktTime;
   srv2cliPktTime = is;
@@ -8671,8 +8668,8 @@ void Flow::updateTCPHostServices(Host *cli_h, Host *srv_h) {
 
   case NDPI_PROTOCOL_SSH:
   case NDPI_PROTOCOL_TLS:
-    if((((tcp.src2dst_tcp_flags & TH_SYN) == 0) && ((tcp.dst2src_tcp_flags & TH_SYN) != 0))
-       || ((((tcp.src2dst_tcp_flags|tcp.dst2src_tcp_flags) & TH_SYN) == 0) /* No SYN observed */
+    if((((tcp->src2dst_tcp_flags & TH_SYN) == 0) && ((tcp->dst2src_tcp_flags & TH_SYN) != 0))
+       || ((((tcp->src2dst_tcp_flags|tcp->dst2src_tcp_flags) & TH_SYN) == 0) /* No SYN observed */
 	   && (get_cli_port() < get_srv_port())))
       swap_requested = 1;
     break;
@@ -8850,10 +8847,10 @@ bool Flow::isTCPFlagSet(u_int8_t tcp_flags, int flag_to_check) {
 /* **************************************************** */
 
 bool Flow::checkS1ConnState() {
-  return(current_c_state == S1 || ((isTCPFlagSet(tcp.src2dst_tcp_flags,TCP_3WH_MASK)) &&
-				   (isTCPFlagSet(tcp.dst2src_tcp_flags,TCP_3WH_MASK))&&                                   /* 3WH OK */
-				   !((isTCPFlagSet(tcp.src2dst_tcp_flags,TH_FIN)) && (isTCPFlagSet(tcp.src2dst_tcp_flags,TH_ACK))) &&  /* NO FIN ACK in src2dst */
-				   !(isTCPFlagSet(tcp.src2dst_tcp_flags,TH_RST)) && !(isTCPFlagSet(tcp.dst2src_tcp_flags,TH_RST))     /* NO RST */
+  return(current_c_state == S1 || ((isTCPFlagSet(tcp->src2dst_tcp_flags,TCP_3WH_MASK)) &&
+				   (isTCPFlagSet(tcp->dst2src_tcp_flags,TCP_3WH_MASK))&&                                   /* 3WH OK */
+				   !((isTCPFlagSet(tcp->src2dst_tcp_flags,TH_FIN)) && (isTCPFlagSet(tcp->src2dst_tcp_flags,TH_ACK))) &&  /* NO FIN ACK in src2dst */
+				   !(isTCPFlagSet(tcp->src2dst_tcp_flags,TH_RST)) && !(isTCPFlagSet(tcp->dst2src_tcp_flags,TH_RST))     /* NO RST */
 				   ));
 }
 
@@ -8864,13 +8861,13 @@ MinorConnectionStates Flow::calculateConnectionState(bool is_cumulative) {
     return(setCurrentConnectionState(MINOR_NO_STATE));
 
   /* Check S0 or RSTOS0 or REJ or SH */
-  if((isTCPFlagSet(tcp.src2dst_tcp_flags,TH_SYN)) &&
-      !(isTCPFlagSet(tcp.dst2src_tcp_flags,TH_SYN))) {
-    if(!(isTCPFlagSet(tcp.dst2src_tcp_flags,TH_RST))) {
-      if((isTCPFlagSet(tcp.src2dst_tcp_flags,TH_RST))) {
+  if((isTCPFlagSet(tcp->src2dst_tcp_flags,TH_SYN)) &&
+      !(isTCPFlagSet(tcp->dst2src_tcp_flags,TH_SYN))) {
+    if(!(isTCPFlagSet(tcp->dst2src_tcp_flags,TH_RST))) {
+      if((isTCPFlagSet(tcp->src2dst_tcp_flags,TH_RST))) {
         return(setCurrentConnectionState(RSTOS0));
       } else {
-        if((isTCPFlagSet(tcp.src2dst_tcp_flags,TH_FIN))) {
+        if((isTCPFlagSet(tcp->src2dst_tcp_flags,TH_FIN))) {
           return(setCurrentConnectionState(SH));
         } else {
           return(setCurrentConnectionState(S0));
@@ -8882,22 +8879,22 @@ MinorConnectionStates Flow::calculateConnectionState(bool is_cumulative) {
   }
 
   /* Check RSTRH */
-  if((isTCPFlagSet(tcp.dst2src_tcp_flags,TH_SYN)) &&
-      (isTCPFlagSet(tcp.dst2src_tcp_flags,TH_ACK)) &&
-      (isTCPFlagSet(tcp.dst2src_tcp_flags,TH_RST)) &&
-      !(isTCPFlagSet(tcp.src2dst_tcp_flags,TH_SYN)))
+  if((isTCPFlagSet(tcp->dst2src_tcp_flags,TH_SYN)) &&
+      (isTCPFlagSet(tcp->dst2src_tcp_flags,TH_ACK)) &&
+      (isTCPFlagSet(tcp->dst2src_tcp_flags,TH_RST)) &&
+      !(isTCPFlagSet(tcp->src2dst_tcp_flags,TH_SYN)))
     return(setCurrentConnectionState(RSTRH));
 
   /* Check SHR */
-  if((isTCPFlagSet(tcp.dst2src_tcp_flags,TH_SYN)) &&
-      (isTCPFlagSet(tcp.dst2src_tcp_flags,TH_ACK)) &&
-      (isTCPFlagSet(tcp.dst2src_tcp_flags,TH_FIN)) &&
-      !(isTCPFlagSet(tcp.src2dst_tcp_flags,TH_SYN)))
+  if((isTCPFlagSet(tcp->dst2src_tcp_flags,TH_SYN)) &&
+      (isTCPFlagSet(tcp->dst2src_tcp_flags,TH_ACK)) &&
+      (isTCPFlagSet(tcp->dst2src_tcp_flags,TH_FIN)) &&
+      !(isTCPFlagSet(tcp->src2dst_tcp_flags,TH_SYN)))
     return(setCurrentConnectionState(SHR));
 
   /* Check OTH */
-  if(!isTCPFlagSet(tcp.src2dst_tcp_flags,TH_SYN) &&
-      !isTCPFlagSet(tcp.dst2src_tcp_flags,TH_SYN))
+  if(!isTCPFlagSet(tcp->src2dst_tcp_flags,TH_SYN) &&
+      !isTCPFlagSet(tcp->dst2src_tcp_flags,TH_SYN))
     return(setCurrentConnectionState(OTH));
 
   bool is_s1 = (current_c_state == S1) || is_cumulative;
@@ -8906,30 +8903,30 @@ MinorConnectionStates Flow::calculateConnectionState(bool is_cumulative) {
 
   /* Check SF */
   if(((is_s1) || (is_s2) || (is_s3)) &&
-      isTCPFlagSet(tcp.src2dst_tcp_flags,TH_FIN) &&
-      isTCPFlagSet(tcp.dst2src_tcp_flags,TH_FIN))
+      isTCPFlagSet(tcp->src2dst_tcp_flags,TH_FIN) &&
+      isTCPFlagSet(tcp->dst2src_tcp_flags,TH_FIN))
     return(setCurrentConnectionState(SF));
 
   /* Check S2 */
   if((is_s1) &&
-      isTCPFlagSet(tcp.src2dst_tcp_flags,TH_FIN) &&
-      !isTCPFlagSet(tcp.dst2src_tcp_flags,TH_FIN))
+      isTCPFlagSet(tcp->src2dst_tcp_flags,TH_FIN) &&
+      !isTCPFlagSet(tcp->dst2src_tcp_flags,TH_FIN))
     return(setCurrentConnectionState(S2));
 
   /* Check S3 */
   if((is_s1) &&
-      !isTCPFlagSet(tcp.src2dst_tcp_flags,TH_FIN) &&
-      isTCPFlagSet(tcp.dst2src_tcp_flags,TH_FIN))
+      !isTCPFlagSet(tcp->src2dst_tcp_flags,TH_FIN) &&
+      isTCPFlagSet(tcp->dst2src_tcp_flags,TH_FIN))
     return(setCurrentConnectionState(S3));
 
   /* Check RSTO */
   if((is_s1) &&
-      isTCPFlagSet(tcp.src2dst_tcp_flags,TH_RST))
+      isTCPFlagSet(tcp->src2dst_tcp_flags,TH_RST))
     return(setCurrentConnectionState(RSTO));
 
   /* Check RSTR */
   if((is_s1) &&
-      isTCPFlagSet(tcp.dst2src_tcp_flags,TH_RST))
+      isTCPFlagSet(tcp->dst2src_tcp_flags,TH_RST))
     return(setCurrentConnectionState(RSTR));
 
   /* Check S1 */
