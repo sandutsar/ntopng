@@ -1470,8 +1470,8 @@ else
                   -- Alert produced by ntopng
                   alert_src = "ntopng"
                   alert_risk = score_alert.alert_id
-                  if not isEmptyString(flow.json_protocol_info) then
-                     local alert_json = json.decode(flow.json_protocol_info)
+                  if not isEmptyString(flow.json_alert) then
+                     local alert_json = json.decode(flow.json_alert)
                      riskLabel = alert_utils.formatAlertMessage(ifid, { alert_id = alert_risk, entity_id = alert_entities.flow.entity_id }, alert_json)
                   end
                end

@@ -103,6 +103,7 @@ class Flow : public GenericHashEntry {
   std::map<FlowAlertTypeEnum, u_int16_t /* score */> alert_score;
   FlowAlertType predominant_alert;   /* This is the predominant alert */
   u_int16_t predominant_alert_score; /* The score associated to the predominant alert */
+  ndpi_serializer *protocol_info_json_serializer;
   ndpi_serializer *alert_json_serializer;
   FlowSource flow_source;
 
@@ -110,7 +111,7 @@ class Flow : public GenericHashEntry {
     u_int8_t is_cli_attacker : 1, is_cli_victim : 1, is_srv_attacker : 1, is_srv_victim : 1, auto_acknowledge : 1;
   } predominant_alert_info;
 
-  char *json_protocol_info, *riskInfo, *end_reason;
+  char *json_protocol_info, *json_alert, *riskInfo, *end_reason;
 
   /* Calculate the entropy on the first MAX_ENTROPY_BYTES bytes */
   struct {
@@ -466,6 +467,7 @@ class Flow : public GenericHashEntry {
     return predominant_alert_info.is_srv_victim;
   };
   inline char *getProtocolInfo() { return json_protocol_info; };
+  inline char *getAlertJSON() { return json_alert; };
   const char* getDomainName();
 
   void setProtocolJSONInfo();

@@ -71,6 +71,7 @@ Flow::Flow(NetworkInterface *_iface,
   category_list_name_shared_pointer = NULL;
   ndpiAddressFamilyProtocol = NULL;
   ndpi_confidence = NDPI_CONFIDENCE_UNKNOWN;
+  protocol_info_json_serializer = NULL;
   alert_json_serializer = NULL;
   clearRisks();
   /* Note is_periodic_flow is updated by the updateFlowPeriodicity() call */
@@ -108,7 +109,8 @@ Flow::Flow(NetworkInterface *_iface,
   trigger_immediate_periodic_update = false;
   next_call_periodic_update = 0;
 
-  riskInfo = NULL, json_protocol_info = NULL, end_reason = NULL;
+  riskInfo = NULL, json_protocol_info = NULL, json_alert = NULL;
+  end_reason = NULL;
   ndpiFlowRiskName = NULL;
   viewFlowStats = NULL, suspicious_dga_domain = NULL;
   flow_payload = NULL, flow_payload_len = 0;
@@ -490,6 +492,11 @@ Flow::~Flow() {
     Finish deleting other flow data structures
   */
 
+  if(protocol_info_json_serializer) {
+    ndpi_term_serializer(protocol_info_json_serializer);
+    free(protocol_info_json_serializer);
+  }
+
   if(alert_json_serializer) {
     ndpi_term_serializer(alert_json_serializer);
     free(alert_json_serializer);
@@ -589,6 +596,7 @@ Flow::~Flow() {
 
   if(icmp_info) delete (icmp_info);
   if(json_protocol_info) free(json_protocol_info);
+  if(json_alert) free(json_alert);
   if(external_alert.json) json_object_put(external_alert.json);
   if(external_alert.source) free(external_alert.source);
 
@@ -2905,6 +2913,9 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
   if (json_protocol_info)
     lua_push_str_table_entry(vm, "json_protocol_info", json_protocol_info);
 
+  if (json_alert)
+    lua_push_str_table_entry(vm, "json_alert", json_alert);
+
   if(details_level >= details_high) {
     if(tcp && tcp->tcp_fingerprint)
       lua_push_str_table_entry(vm, "tcp_fingerprint", tcp->tcp_fingerprint);
@@ -4418,6 +4429,7 @@ u_char *Flow::getCommunityId(u_char *community_id, u_int community_id_len) {
 /* Create a JSON in the alerts format
  * Using the nDPI json serializer instead of jsonc for faster speed (~2.5x) */
 void Flow::alert2JSON(FlowAlert *alert, ndpi_serializer *s) {
+  ndpi_serializer *alert_serializer;
   char *alert_json = NULL;
   u_int32_t alert_json_len;
   char buf[128];
@@ -4544,16 +4556,16 @@ void Flow::alert2JSON(FlowAlert *alert, ndpi_serializer *s) {
 
   ndpi_serialize_string_string(s, "info", getFlowInfo(false).c_str());
 
-  ndpi_serializer *s1 = alert->getSerializedAlert();
+  alert_serializer = alert->getSerializedAlert();
   
-  if(s1) 
-    alert_json = ndpi_serializer_get_buffer(s1, &alert_json_len);
+  if(alert_serializer) 
+    alert_json = ndpi_serializer_get_buffer(alert_serializer, &alert_json_len);
 
   ndpi_serialize_string_string(s, "json", alert_json ? alert_json : "");
   
-  if (s1) {
-    ndpi_term_serializer(s1);
-    free(s1);
+  if (alert_serializer) {
+    ndpi_term_serializer(alert_serializer);
+    free(alert_serializer);
   }
 }
 
@@ -7960,29 +7972,27 @@ void Flow::setProtocolJSONInfo() {
   char *json = NULL;
   u_int32_t json_len = 0;
 
-  if(alert_json_serializer == NULL) {
-    alert_json_serializer = (ndpi_serializer *)malloc(sizeof(ndpi_serializer));
+  if(protocol_info_json_serializer == NULL) {
+    protocol_info_json_serializer = (ndpi_serializer *)malloc(sizeof(ndpi_serializer));
 
-    if(alert_json_serializer == NULL) return;
+    if(protocol_info_json_serializer == NULL) return;
     
-    if(ndpi_init_serializer(alert_json_serializer, ndpi_serialization_format_json) == -1) {
-      free(alert_json_serializer);
-      alert_json_serializer = NULL;
+    if(ndpi_init_serializer(protocol_info_json_serializer, ndpi_serialization_format_json) == -1) {
+      free(protocol_info_json_serializer);
+      protocol_info_json_serializer = NULL;
       return;
     }
   }
   
-  /* Serialize alert JSON
-    * Note: this is called by setPredominantAlertInfo in case of alerts */
-  getProtocolJSONInfo(alert_json_serializer);
-  getCustomFieldsInfo(alert_json_serializer);
-  getJSONRiskInfo(alert_json_serializer);
+  getProtocolJSONInfo(protocol_info_json_serializer);
+  getCustomFieldsInfo(protocol_info_json_serializer);
+  getJSONRiskInfo(protocol_info_json_serializer);
 
-  if(alert_json_serializer)
-    json = ndpi_serializer_get_buffer(alert_json_serializer, &json_len);
+  json = ndpi_serializer_get_buffer(protocol_info_json_serializer, &json_len);
 
   if(json_protocol_info) {
     free(json_protocol_info);
+    json_protocol_info = NULL;
   }
 
   json_protocol_info = strdup(json ? json : "");
@@ -8166,11 +8176,7 @@ void Flow::setPredominantAlertInfo(FlowAlert *alert) {
   predominant_alert_info.is_srv_victim = alert->isSrvVictim();
   predominant_alert_info.auto_acknowledge = alert->autoAck();
 
-  /* Serialize alert JSON
-   * Note: this will also add protocol information by calling
-   * flow->getProtocolJSONInfo */
-  /* Free the serializer, because the getSerializedAlert is going to allocate an other serializer 
-   * so a leak might appear otherwise */
+  /* Serialize alert JSON */
   if (alert_json_serializer) {
     ndpi_term_serializer(alert_json_serializer);
     free(alert_json_serializer);
@@ -8182,8 +8188,8 @@ void Flow::setPredominantAlertInfo(FlowAlert *alert) {
   if(alert_json_serializer)
     alert_json = ndpi_serializer_get_buffer(alert_json_serializer, &alert_json_len);
 
-  if(json_protocol_info) free(json_protocol_info);
-  json_protocol_info = strdup(alert_json ? alert_json : "");
+  if(json_alert) free(json_alert);
+  json_alert = strdup(alert_json ? alert_json : "");
 }
 
 /* ***************************************************** */
@@ -8484,7 +8490,6 @@ void Flow::setWLANInfo(char *_wlan_ssid, u_int8_t *_wtp_mac_address) {
     if(_wlan_ssid) {
       if(collection->wifi.wlan_ssid)
 	free(collection->wifi.wlan_ssid);
-      
       collection->wifi.wlan_ssid = strdup(_wlan_ssid);
     }
     
