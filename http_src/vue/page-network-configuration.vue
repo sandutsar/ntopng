@@ -1,5 +1,8 @@
 <template>
     <div class="m-3">
+        <div class="alert alert-info alert-dismissable">
+            <span v-html="alert_note"></span>
+        </div>
         <div class="m-4 card card-shadow">
             <div class="card-body">
                 <table class="table table-striped table-bordered col-sm-12">
@@ -9,7 +12,7 @@
                                 <div class="mb-2">
                                     <b>{{ _i18n(value.i18n_title) }}</b>
                                 </div>
-                                <div>
+                                <div class="ms-4 me-4">
                                     <textarea v-model="ipAddresses[key]" class="form-control rounded"
                                         :placeholder="`Enter ${value.device_type} IPs (Comma Separated)`"
                                         @input="markAsModified(key)" rows="2"></textarea>
@@ -23,7 +26,7 @@
                     </tbody>
                 </table>
                 <div class="d-flex justify-content-end me-1">
-                    <button class="btn btn-primary" :disabled="disable_save" @click="reload_page">
+                    <button class="btn btn-primary" :disabled="disable_save" @click="reloadIp">
                         {{ _i18n('save_settings') }}
                     </button>
                 </div>
@@ -34,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ntopng_utility } from "../services/context/ntopng_globals_services.js";
 import { default as NoteList } from "./note-list.vue";
 import regexValidation from "../utilities/regex-validation.js";
@@ -55,7 +58,9 @@ const validationErrors = reactive({});
 const set_config_url = `${http_prefix}/lua/rest/v2/set/network/config.lua`
 const get_config_url = `${http_prefix}/lua/rest/v2/get/network/config.lua?ifid=${props.context.ifid}`
 const modifiedInputs = ref([]);
+const disable_save = ref(true)
 
+const alert_note = ref(_i18n('network_configuration.alert_note'))
 const isSaving = ref(false);
 const saveSuccess = ref(false);
 
@@ -100,12 +105,17 @@ const getConfig = async () => {
     })
 };
 
+/* ************************************** */
+
 // Used to mark a text area as modified so that only modified text areas are sent to the backend to be stored in redis
 const markAsModified = (key) => {
     if (!modifiedInputs.value.includes(key)) {
         modifiedInputs.value.push(key);
     }
+    disable_save.value = false
 };
+
+/* ************************************** */
 
 // Function to validate IP addresses inserted in text area
 const validateIpAddresses = () => {
@@ -124,46 +134,34 @@ const validateIpAddresses = () => {
     return isValid;
 };
 
+const reloadIp = function () {
+    saveConfig()
+    getConfig();
+}
+
 // Function used to post data to the backend and save the values in
 const saveConfig = async () => {
     if (validateIpAddresses()) {
         isSaving.value = true;
-        let data = { csrf: props.context.csrf, config: [] };
+        let data = { csrf: props.context.csrf };
 
-        let headers = {
-            'Content-Type': 'application/json'
-        };
-
-        try {
-            for (const key of modifiedInputs.value) {
-                const value = ipAddresses[key];
-
-                let requestData = {
-                    key: check_name[key].reques_param,
-                    value: value
-                };
-
-                data.config.push(requestData)
+        for (const server of modifiedInputs.value) {
+            const value = ipAddresses[server];
+            const key = check_name[server].reques_param
+            data = {
+                [key]: value,
+                ...data
             }
-
-            // console.log(data)
-            //await ntopng_utility.http_post_request(set_config_url, data);
-
-            await ntopng_utility.http_request(set_config_url, { method: 'post', headers, body: JSON.stringify(data) })
-            modifiedInputs.value = [];
-
-            // Show success when saved
-            saveSuccess.value = true;
-            setTimeout(() => {
-                saveSuccess.value = false;
-            }, 1500);
-
-        } catch (error) {
-            console.error('Save failed:', error);
-
-        } finally {
-            isSaving.value = false;
         }
+
+        await ntopng_utility.http_post_request(set_config_url, data)
+        modifiedInputs.value = [];
+
+        // Show success when saved
+        saveSuccess.value = true;
+        setTimeout(() => {
+            saveSuccess.value = false;
+        }, 1500);
     }
 };
 </script>
