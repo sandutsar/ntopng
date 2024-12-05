@@ -6281,8 +6281,13 @@ local lang = {
     ["trigger_network_alerts"] = "Trigger Network Alerts",
   },
   ["network_configuration"] = {
+    ["alert_note"] = "These configurations are used by the Unexpected DNS/NTP/DHCP/SMTP/Gateway Server alerts. So in order to be effective please enable the corresponding alerts (triggering an alert when a new Server not listed below appear in the network).",
     ["dhcp_servers_title"] = "DHCP Servers",
     ["dns_servers_title"] = "DNS Servers",
+    ["local_devices_title"] = "Local Devices",
+    ["corporate_devices_title"] = "Corporate Devices",
+    ["whitelisted_networks_title"] = "Whitelisted Networks",
+    ["network_policy"] = "Policies",
     ["gateway_servers_title"] = "Network Gateways",
     ["allowed_servers_description"] = "Each list needs a comma separated list of allowed IPs. Example: 173.194.76.109,52.97.232.242",
     ["uses_of_servers"] = "The list of IPs is going to be used for specific alerts (e.g. Unexpected NTP server, is going to trigger an alert when an NTP server is found and is not in the above list)",

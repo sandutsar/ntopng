@@ -65,6 +65,7 @@ import { default as PageExporters } from "./page-exporters.vue"
 import { default as PageExportersDetails } from "./page-exporters-details.vue"
 import { default as PageExportersInterfaces } from "./page-exporters-interfaces.vue"
 import { default as PageNetworkConfiguration } from "./page-network-configuration.vue"
+import { default as PageNetworkPolicy } from "./page-network-policy.vue"
 import { default as PageLimits } from "./page-limits.vue"
 import { default as PageLocalHostsReport } from "./page-local-hosts-report.vue"
 import { default as PageInactiveHostsList } from "./page-inactive-hosts.vue"
@@ -202,6 +203,7 @@ let ntopVue = {
     PageHistoricalFlow: PageHistoricalFlow,
     PageExportersInterfaces: PageExportersInterfaces,
     PageNetworkConfiguration: PageNetworkConfiguration,
+    PageNetworkPolicy: PageNetworkPolicy,
     //PageSankeyTest: PageSankeyTest,
     
     // components
