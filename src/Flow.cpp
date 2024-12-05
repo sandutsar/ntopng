@@ -510,7 +510,11 @@ Flow::~Flow() {
   if(riskInfo) free(riskInfo);
   if(end_reason) free(end_reason);
 
-  if(collection && collection->wifi.wlan_ssid) free(collection->wifi.wlan_ssid);
+  if(collection) {
+    if(collection->wifi.wlan_ssid) free(collection->wifi.wlan_ssid);
+    free(collection);
+  }
+  
   if(viewFlowStats) delete (viewFlowStats);
   if(periodic_stats_update_partial) delete (periodic_stats_update_partial);
   if(last_db_dump.partial) delete (last_db_dump.partial);
