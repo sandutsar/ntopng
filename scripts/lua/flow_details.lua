@@ -614,8 +614,9 @@ else
          print(" [" .. i18n("network") .. ": " .. flow["proto.ndpi_address_family"] .. "]")
       end
 
-      if ((flow["proto.ndpi_confidence"] ~= nil)) then
+      if((flow["proto.ndpi_confidence"] ~= nil) and (flow["proto.ndpi_confidence"] ~= "Unknown")) then
          local badge_type = 'success'
+
          if ((flow.confidence and (flow.confidence == 0 or flow.confidence == -1)) or
                 (flow["proto.ndpi_confidence"] == 'Unknown')) then
             badge_type = 'warning'
