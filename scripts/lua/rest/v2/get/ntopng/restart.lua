@@ -18,6 +18,9 @@ if not isAdministratorOrPrintErr() then
     return
 end
 
-ntop.serviceRestart()
+if not ntop.serviceRestart() then
+    rest_utils.answer(rest_utils.consts.err.internal_error)
+    return
+end
 
 rest_utils.answer(rc)
