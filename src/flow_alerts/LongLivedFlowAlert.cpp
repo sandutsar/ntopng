@@ -23,7 +23,6 @@
 
 ndpi_serializer* LongLivedFlowAlert::getAlertJSON(
     ndpi_serializer* serializer) {
-  Flow *f = getFlow();
 
   if (serializer) {
     ndpi_serialize_string_uint64(serializer, "longlived.threshold", longlived_th);

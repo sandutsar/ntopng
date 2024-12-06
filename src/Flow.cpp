@@ -71,8 +71,6 @@ Flow::Flow(NetworkInterface *_iface,
   category_list_name_shared_pointer = NULL;
   ndpiAddressFamilyProtocol = NULL;
   ndpi_confidence = NDPI_CONFIDENCE_UNKNOWN;
-  protocol_info_json_serializer = NULL;
-  alert_json_serializer = NULL;
   clearRisks();
   /* Note is_periodic_flow is updated by the updateFlowPeriodicity() call */
   detection_completed = 0, non_zero_payload_observed = 0, is_periodic_flow = 0,
@@ -485,16 +483,6 @@ Flow::~Flow() {
   /*
     Finish deleting other flow data structures
   */
-
-  if(protocol_info_json_serializer) {
-    ndpi_term_serializer(protocol_info_json_serializer);
-    free(protocol_info_json_serializer);
-  }
-
-  if(alert_json_serializer) {
-    ndpi_term_serializer(alert_json_serializer);
-    free(alert_json_serializer);
-  }
 
   freeDPIMemory();
 
@@ -7967,33 +7955,23 @@ void Flow::setNormalToAlertedCounters() {
 /* ***************************************************** */
 
 void Flow::setProtocolJSONInfo() {
+  ndpi_serializer s;
   char *json = NULL;
   u_int32_t json_len = 0;
 
-  if(protocol_info_json_serializer == NULL) {
-    protocol_info_json_serializer = (ndpi_serializer *)malloc(sizeof(ndpi_serializer));
-
-    if(protocol_info_json_serializer == NULL) return;
-    
-    if(ndpi_init_serializer(protocol_info_json_serializer, ndpi_serialization_format_json) == -1) {
-      free(protocol_info_json_serializer);
-      protocol_info_json_serializer = NULL;
-      return;
-    }
-  }
+  if(ndpi_init_serializer(&s, ndpi_serialization_format_json) == -1)
+    return;
   
-  getProtocolJSONInfo(protocol_info_json_serializer);
-  getCustomFieldsInfo(protocol_info_json_serializer);
-  getJSONRiskInfo(protocol_info_json_serializer);
+  getProtocolJSONInfo(&s);
+  getCustomFieldsInfo(&s);
+  getJSONRiskInfo(&s);
 
-  json = ndpi_serializer_get_buffer(protocol_info_json_serializer, &json_len);
+  json = ndpi_serializer_get_buffer(&s, &json_len);
 
-  if(json_protocol_info) {
-    free(json_protocol_info);
-    json_protocol_info = NULL;
-  }
-
+  if(json_protocol_info) free(json_protocol_info);
   json_protocol_info = strdup(json ? json : "");
+
+  ndpi_term_serializer(&s);
 }
 
 /* ***************************************************** */
@@ -8163,6 +8141,7 @@ void Flow::getProtocolJSONInfo(ndpi_serializer *serializer) {
 /* ***************************************************** */
 
 void Flow::setPredominantAlertInfo(FlowAlert *alert) {
+  ndpi_serializer *s;
   char *alert_json = NULL;
   u_int32_t alert_json_len = 0;
 
@@ -8175,19 +8154,18 @@ void Flow::setPredominantAlertInfo(FlowAlert *alert) {
   predominant_alert_info.auto_acknowledge = alert->autoAck();
 
   /* Serialize alert JSON */
-  if (alert_json_serializer) {
-    ndpi_term_serializer(alert_json_serializer);
-    free(alert_json_serializer);
-    alert_json_serializer = NULL;
-  }
-  
-  alert_json_serializer = alert->getSerializedAlert();
+  s = alert->getSerializedAlert();
 
-  if(alert_json_serializer)
-    alert_json = ndpi_serializer_get_buffer(alert_json_serializer, &alert_json_len);
+  if(s)
+    alert_json = ndpi_serializer_get_buffer(s, &alert_json_len);
 
   if(json_alert) free(json_alert);
   json_alert = strdup(alert_json ? alert_json : "");
+
+  if (s) {
+    ndpi_term_serializer(s);
+    free(s);
+  }
 }
 
 /* ***************************************************** */

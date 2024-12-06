@@ -23,7 +23,6 @@
 
 ndpi_serializer* CustomFlowLuaScriptAlert::getAlertJSON(
     ndpi_serializer* serializer) {
-  Flow *f = getFlow();
 
   if (serializer) {
     if (msg.size() > 0)
