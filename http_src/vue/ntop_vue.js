@@ -71,6 +71,8 @@ import { default as PageLocalHostsReport } from "./page-local-hosts-report.vue"
 import { default as PageInactiveHostsList } from "./page-inactive-hosts.vue"
 import { default as PageInactiveHostDetails } from "./page-inactive-host-details.vue"
 import { default as PageAccessControlList } from "./page-access-control-list.vue"
+import { default as PageTopInterfaceApplications } from "./page-top-interface-applications.vue"
+import { default as PageTopInterfaceCategories } from "./page-top-interface-categories.vue"
 
 /* Config pages */
 import { default as PageSNMPConfig } from "./page-snmp-config.vue"
@@ -163,6 +165,8 @@ let ntopVue = {
     PageInactiveHostsList: PageInactiveHostsList,
     PageInactiveHostDetails: PageInactiveHostDetails,
     PageAccessControlList: PageAccessControlList,
+    PageTopInterfaceApplications: PageTopInterfaceApplications,
+    PageTopInterfaceCategories: PageTopInterfaceCategories,
     
     /* SNMP */
     PageSNMPDevices: PageSNMPDevices,
