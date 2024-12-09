@@ -291,8 +291,7 @@ void IEC104Stats::processPacket(Flow *f, bool tx_direction,
                                                         last_type_i, type_id);
 
                 if (alert) {
-                  f->setPredominantAlertInfo(alert);
-                  f->triggerAlertSync(alert, c_score, s_score);
+                  f->triggerAlert(alert, c_score, s_score);
                 }
 
                 type_i_transitions[transition] = 2; /* Post Learning */
@@ -332,8 +331,7 @@ void IEC104Stats::processPacket(Flow *f, bool tx_direction,
 							     transitions.c_to_m, transitions.c_to_c);
 
               if (alert) {
-                f->setPredominantAlertInfo(alert);
-                f->triggerAlertSync(alert, c_score, s_score);
+                f->triggerAlert(alert, c_score, s_score);
               }
 
               // ntop->getTrace()->traceEvent(TRACE_WARNING, "*** INVALID
@@ -377,8 +375,7 @@ void IEC104Stats::processPacket(Flow *f, bool tx_direction,
                                                    cause_tx, negative);
 
             if (alert) {
-              f->setPredominantAlertInfo(alert);
-              f->triggerAlertSync(alert, c_score, s_score);
+              f->triggerAlert(alert, c_score, s_score);
             }
           } /* unexpected_typeid_alerted */
           /* Discard typeIds 127..255 */

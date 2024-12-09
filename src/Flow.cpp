@@ -8197,9 +8197,8 @@ bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
                            u_int16_t srv_inc, bool async) {
   ScoreCategory score_category = Utils::mapAlertToScoreCategory(alert_type.category);
   u_int16_t flow_inc;
-  Host *cli_h = get_cli_host(), *srv_h = get_srv_host();
 
-  /* Safety checks */
+  /* Score safety checks */
   cli_inc = min_val(cli_inc, SCORE_MAX_VALUE);
   srv_inc = min_val(srv_inc, SCORE_MAX_VALUE);
   if(cli_inc + srv_inc > SCORE_MAX_VALUE) srv_inc = SCORE_MAX_VALUE - cli_inc;
@@ -8212,6 +8211,7 @@ bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
                                flow_inc, cli_inc, srv_inc, SCORE_MAX_VALUE);
 #endif
 
+  /* Alert type safety checks */
   if(alert_type.id == flow_alert_normal) {
 #ifdef DEBUG_SCORE
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "Discarding alert (normal)");
@@ -8230,14 +8230,13 @@ bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
     return false;
   }
 
-  /*
-    Check host filter and if such alert needs to be disabled
-    due to alert exclusions
-  */
-  Mac *srcMac = NULL, *dstMac = NULL;
+  /* Check host filter and if such alert needs to be discarded
+   * due to alert exclusions */
+  Host *cli_h = get_cli_host(), *srv_h = get_srv_host();
   ViewInterface *viewedBy = getInterface()->viewedBy();
-  Host *cli_host, *srv_host;
   if(viewedBy) {
+    Mac *srcMac = NULL, *dstMac = NULL;
+    Host *cli_host, *srv_host;
     viewedBy->findFlowHosts(getInterfaceIndex(),
 			    get_vlan_id(), get_observation_point_id(),
 			    getPrivateFlowId(), srcMac,
@@ -8263,7 +8262,10 @@ bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
      * and now becomes alerted. */
     setNormalToAlertedCounters();
 
+  /* Set alerts bitmap */
   alerts_map.setBit(alert_type.id);
+
+  /* Update score */
   alert_score[alert_type.id] = flow_inc;
   flow_score += flow_inc;
 
@@ -8271,14 +8273,14 @@ bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
   stats.incScore(srv_inc, score_category, false /* as server */);
 
   if(!getInterface()->isView()) {
-    /* For views, score increments are done periodically */
+    /* Note: For views, score increments are done periodically */
     if(cli_h)
       cli_h->incScoreValue(cli_inc, score_category, true /* as client */);
     if(srv_h)
       srv_h->incScoreValue(srv_inc, score_category, false /* as server */);
   }
 
-  /* Check if also the predominant alert_type should be updated */
+  /* Check if predominant alert should be updated */
   if(!isFlowAlerted() /* Flow is not yet alerted */
      || getPredominantAlertScore() < flow_inc /* The score of the current alerted alert_type is less than the score of this alert_type */) {
 #ifdef DEBUG_SCORE
@@ -8299,33 +8301,41 @@ bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
 
 /* *************************************** */
 
-bool Flow::triggerAlertAsync(FlowAlertType alert_type, u_int16_t cli_inc,
-                             u_int16_t srv_inc) {
+bool Flow::triggerAlert(FlowAlert *alert, u_int16_t cli_inc,
+                        u_int16_t srv_inc) {
+  FlowAlertType predominant_alert = getPredominantAlert();
   bool res;
 
-  res = setAlertsBitmap(alert_type, cli_inc, srv_inc, true);
+  if (alert == NULL) return false;
 
-  return res;
-}
-
-/* *************************************** */
-
-bool Flow::triggerAlertSync(FlowAlert *alert, u_int16_t cli_inc,
-                            u_int16_t srv_inc) {
-  bool res;
+  /* TODO
+   * - Store all triggered alerts in a map or similar to keep (json) info from all of them
+   *   - If there is already an alert with same type, replace it (e.g. periodic checks with updated counters)
+   *   - Optimization: allocating an alert with the same type should be avoided by the Check
+   * - Optimization: defer enqueueFlowAlert in case of multiple alerts created in the same FlowChecksExecutor iteration 
+   *                 (a flag should be used to enable this as some alerts should be emitted directly)
+   */
 
   res = setAlertsBitmap(alert->getAlertType(), cli_inc, srv_inc, false);
 
-  /* Synchronous, this alert must be sent straight to the recipients now. Let's
-   * put it into the recipient queues. */
-  if(alert) {
-    if(ntop->getPrefs()->dontEmitFlowAlerts())
-      /* Nothing to enqueue, can dispose the memory */
-      delete alert;
-    else if(res)
-      /* enqueue the alert (memory is disposed automatically upon failing
-       * enqueues) */
-      iface->enqueueFlowAlert(alert);
+  if(ntop->getPrefs()->dontEmitFlowAlerts()) {
+    /* Nothing to enqueue, can dispose the memory */
+    delete alert;
+    return res;
+  }
+
+  if (res) {
+    /* enqueue the alert (memory is disposed automatically upon failing
+     * enqueues) */
+    iface->enqueueFlowAlert(alert);
+
+    if (getPredominantAlert().id != predominant_alert.id) {
+      /* this is the new predominant alet for this flow */
+      setPredominantAlertInfo(alert);
+    }
+
+  } else {
+    delete alert;
   }
 
   return res;

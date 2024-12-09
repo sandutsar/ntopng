@@ -41,7 +41,8 @@ void BlacklistedServerContact::protocolDetected(Flow *f) {
     
     computeCliSrvScore(score, cli_score_pctg, &c_score, &s_score);
     
-    f->triggerAlertAsync(alert_type, c_score, s_score);
+    FlowAlert *alert = buildAlert(f);
+    f->triggerAlert(alert, c_score, s_score);
   }
 }
 

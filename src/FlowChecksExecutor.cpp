@@ -51,12 +51,8 @@ void FlowChecksExecutor::loadFlowChecks(FlowChecksLoader *fcl) {
 
 /* **************************************************** */
 
-FlowAlert *FlowChecksExecutor::execChecks(Flow *f, FlowChecks c) {
-  FlowAlertType predominant_alert = f->getPredominantAlert();
-  FlowCheck *predominant_check = NULL;
-  bool new_predominant_alert = false;
+void FlowChecksExecutor::execChecks(Flow *f, FlowChecks c) {
   std::list<FlowCheck *> *checks = NULL;
-  FlowAlert *alert = NULL;
 #ifdef CHECKS_PROFILING
   u_int64_t t1, t2;
 #endif
@@ -75,7 +71,7 @@ FlowAlert *FlowChecksExecutor::execChecks(Flow *f, FlowChecks c) {
       checks = flow_end;
       break;
     default:
-      return NULL;
+      return;
   }
 
   for (list<FlowCheck *>::iterator it = checks->begin(); it != checks->end();
@@ -111,28 +107,7 @@ FlowAlert *FlowChecksExecutor::execChecks(Flow *f, FlowChecks c) {
 
     fc->incStats(t2 - t1);
 #endif
-
-    /* Check if the check triggered a predominant alert */
-    if (f->getPredominantAlert().id != predominant_alert.id) {
-      new_predominant_alert = true;
-      predominant_alert = f->getPredominantAlert();
-      predominant_check = fc;
-    }
   }
-
-  /* Do NOT allocate any alert, there is nothing left to do as flow alerts don't
-   * have to be emitted */
-  if (ntop->getPrefs()->dontEmitFlowAlerts())
-    return (NULL);
-
-  if (new_predominant_alert) {
-    /* Allocate the alert */
-    alert = predominant_check->buildAlert(f);
-
-    f->setPredominantAlertInfo(alert);
-  }
-
-  return alert;
 }
 
 /* **************************************************** */

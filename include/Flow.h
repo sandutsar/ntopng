@@ -405,21 +405,12 @@ class Flow : public GenericHashEntry {
   bool enqueueAlertToRecipients(FlowAlert *alert);
 
   /*
-    Called by FlowCheck subclasses to trigger a flow alert. This is an
-    asynchronous call, faster, but can cause the alert JSON to be generated
-    after the call. The FlowCheck should implement the buildAlert() method which
-    is called in the predominant check to actually build the FlowAlert object.
-   */
-  bool triggerAlertAsync(FlowAlertType alert_type, u_int16_t cli_score_inc,
-                         u_int16_t srv_score_inc);
-
-  /*
      Called by FlowCheck subclasses to trigger a flow alert. This is a
-     syncrhonous call, more expensive, but causes the alert (FlowAlert) to be
-     immediately enqueued to all recipients.
+     syncrhonous call that causes the alert (FlowAlert) to be
+     enqueued to all recipients.
    */
-  bool triggerAlertSync(FlowAlert *alert, u_int16_t cli_score_inc,
-                        u_int16_t srv_score_inc);
+  bool triggerAlert(FlowAlert *alert, u_int16_t cli_score_inc,
+                    u_int16_t srv_score_inc);
 
   /*
     Enqueues the predominant alert of the flow to all available flow recipients.
