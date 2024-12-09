@@ -366,17 +366,7 @@ class Flow : public GenericHashEntry {
   void luaScore(lua_State *vm);
   void luaIEC104(lua_State *vm);
   void callFlowUpdate(time_t t);
-  /*
-    Method to trigger alerts, synchronous or asynchronous, depending on the last
-    argument.
-    - Asynchronous: The alerts bitmap is updated and the predominant alert is
-    possibly updated. Recipients enqueue is not performed.
-    - Synchronous:  The alerts bitmap is updated and the predominant alert is
-    possibly updated. Immediate alert JSON generation and enqueue to the
-    recipients are performed as well.
-   */
-  bool setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
-                       u_int16_t srv_inc, bool async);
+  bool setAlertsMap(FlowAlert *alert);
   void setNormalToAlertedCounters();
   /* Decreases scores on both client and server hosts when the flow is being
    * destructed */
@@ -409,8 +399,7 @@ class Flow : public GenericHashEntry {
      syncrhonous call that causes the alert (FlowAlert) to be
      enqueued to all recipients.
    */
-  bool triggerAlert(FlowAlert *alert, u_int16_t cli_score_inc,
-                    u_int16_t srv_score_inc);
+  bool triggerAlert(FlowAlert *alert);
 
   /*
     Enqueues the predominant alert of the flow to all available flow recipients.

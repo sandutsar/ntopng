@@ -35,7 +35,8 @@ void UnexpectedServer::protocolDetected(Flow *f) {
     computeCliSrvScore(ntop->getFlowAlertScore(alert_type.id), cli_score_pctg, &c_score, &s_score);
 
     FlowAlert *alert = buildAlert(f);
-    f->triggerAlert(alert, c_score, s_score);
+    alert->setCliSrvScores(c_score, s_score);
+    f->triggerAlert(alert);
   }
 }
 

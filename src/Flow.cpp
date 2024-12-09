@@ -8193,17 +8193,12 @@ void Flow::setPredominantAlert(FlowAlertType alert_type, u_int16_t score) {
 
   Return true if the activities are completed successfully, of false otherwise
 */
-bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
-                           u_int16_t srv_inc, bool async) {
+bool Flow::setAlertsMap(FlowAlert *alert) {
+  FlowAlertType alert_type = alert->getAlertType();
   ScoreCategory score_category = Utils::mapAlertToScoreCategory(alert_type.category);
-  u_int16_t flow_inc;
-
-  /* Score safety checks */
-  cli_inc = min_val(cli_inc, SCORE_MAX_VALUE);
-  srv_inc = min_val(srv_inc, SCORE_MAX_VALUE);
-  if(cli_inc + srv_inc > SCORE_MAX_VALUE) srv_inc = SCORE_MAX_VALUE - cli_inc;
-
-  flow_inc = cli_inc + srv_inc;
+  u_int16_t cli_inc = alert->getCliScore();
+  u_int16_t srv_inc = alert->getSrvScore();
+  u_int16_t flow_inc = cli_inc + srv_inc;
 
 #ifdef DEBUG_SCORE
   ntop->getTrace()->traceEvent(TRACE_NORMAL,
@@ -8220,8 +8215,8 @@ bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
   }
 
   /* Check if the same alert has been already triggered and
-   * accounted in the score, unless this is a "sync" alert */
-  if(async && alerts_map.isSetBit(alert_type.id)) {
+   * accounted in the score */
+  if(alerts_map.isSetBit(alert_type.id)) {
 #ifdef DEBUG_SCORE
     ntop->getTrace()->traceEvent(TRACE_NORMAL,
 				 "[%s] Discarding alert type %u (already set)",
@@ -8301,8 +8296,7 @@ bool Flow::setAlertsBitmap(FlowAlertType alert_type, u_int16_t cli_inc,
 
 /* *************************************** */
 
-bool Flow::triggerAlert(FlowAlert *alert, u_int16_t cli_inc,
-                        u_int16_t srv_inc) {
+bool Flow::triggerAlert(FlowAlert *alert) {
   FlowAlertType predominant_alert = getPredominantAlert();
   bool res;
 
@@ -8316,7 +8310,7 @@ bool Flow::triggerAlert(FlowAlert *alert, u_int16_t cli_inc,
    *                 (a flag should be used to enable this as some alerts should be emitted directly)
    */
 
-  res = setAlertsBitmap(alert->getAlertType(), cli_inc, srv_inc, false);
+  res = setAlertsMap(alert);
 
   if(ntop->getPrefs()->dontEmitFlowAlerts()) {
     /* Nothing to enqueue, can dispose the memory */

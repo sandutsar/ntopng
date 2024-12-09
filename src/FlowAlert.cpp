@@ -28,6 +28,7 @@ FlowAlert::FlowAlert(FlowCheck *c, Flow *f) {
   flow = f;
   cli_attacker = srv_attacker = false;
   cli_victim = srv_victim = false;
+  cli_score = srv_score = 0;
   if (c) check_name = c->getName();
   alert_score = SCORE_LEVEL_INFO;
 }

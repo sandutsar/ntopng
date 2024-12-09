@@ -30,6 +30,7 @@ class FlowAlert {
   std::string check_name;
   bool cli_attacker, srv_attacker;
   bool cli_victim, srv_victim;
+  u_int8_t cli_score, srv_score;
   u_int8_t alert_score;
   
   /*
@@ -55,9 +56,17 @@ class FlowAlert {
   inline bool isSrvAttacker() { return srv_attacker; }
   inline bool isSrvVictim() { return srv_victim; }
 
+  inline void setCliSrvScores(u_int8_t c, u_int8_t s) {
+    cli_score = min_val(c, SCORE_MAX_VALUE); 
+    srv_score = min_val(s, SCORE_MAX_VALUE);
+    if (cli_score + srv_score > SCORE_MAX_VALUE) srv_score = SCORE_MAX_VALUE - cli_score;
+  };
+  inline u_int8_t getCliScore() { return cli_score; };
+  inline u_int8_t getSrvScore() { return srv_score; };
+
   virtual FlowAlertType getAlertType() const = 0;
-  u_int8_t getAlertScore() const { return alert_score; };
-  void setAlertScore(u_int8_t value)     { alert_score = value;     };
+  inline u_int8_t getAlertScore() const { return alert_score; };
+  inline void setAlertScore(u_int8_t value) { alert_score = value; };
   
   /* false = alert that requires attention, true = not important (auto ack) */
   virtual bool autoAck() const { return true; };

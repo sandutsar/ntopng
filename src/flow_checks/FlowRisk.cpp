@@ -74,7 +74,8 @@ void FlowRisk::checkRisk(Flow *f) {
     ndpi_risk2score(risk_bitmap, &c_score, &s_score);
 
     FlowAlert *alert = buildAlert(f);
-    f->triggerAlert(alert, c_score, s_score);
+    alert->setCliSrvScores(c_score, s_score);
+    f->triggerAlert(alert);
   }
 }
 
