@@ -8998,7 +8998,8 @@ void Flow::accountFlowTraffic() {
     */
     iface->incnDPIStats(iface->getTimeLastPktRcvd(),
 			getStatsProtocol(), get_protocol_category(),
-			get_bytes(), get_packets());
+			get_bytes_cli2srv(), get_bytes_srv2cli(), 
+      get_packets_cli2srv(), get_packets_srv2cli());
   }
 }
 
