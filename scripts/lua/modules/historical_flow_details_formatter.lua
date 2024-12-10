@@ -9,6 +9,7 @@ require "lua_utils"
 local json = require "dkjson"
 local dscp_consts = require "dscp_consts"
 local flow_risk_utils = require "flow_risk_utils"
+local alert_utils = require "alert_utils"
 
 local historical_flow_details_formatter = {}
 
@@ -229,7 +230,7 @@ end
 
 -- a###############################################
 
-local function format_historical_issue_description(alert_id, score, title, msg, info, alert_scores, add_remediation, riskInfo)
+local function format_historical_issue_description(alert, alert_id, score, title, msg, info, alert_scores, add_remediation, riskInfo, alert_info)
     local alert_consts = require "alert_consts"
     local alert_entities = require "alert_entities"
 
@@ -248,6 +249,14 @@ local function format_historical_issue_description(alert_id, score, title, msg, 
     if (tonumber(alert_risk) == 0) then
         alert_src = "ntopng"
         alert_risk = alert_id
+        if isEmptyString(msg) and not isEmptyString(info) then
+            msg = info
+        end
+        -- Adapting to the new alerts format
+        if alert_info and alert then
+            alert.alert_id = alert_id
+            info = alert_utils.formatFlowAlertMessage(interface.getId(), alert, alert_info, false, true, true)
+        end
     else
         alert_src = "nDPI"
     end
@@ -271,7 +280,7 @@ local function format_historical_issue_description(alert_id, score, title, msg, 
     local html = "<tr><td>" .. (msg or "") .. alert_source .. "</td>" .. '<td align=center><span style="color:' ..
         severity.color .. '">' .. score .. '</span></td>'
 
-    if riskLabel then
+    if not isEmptyString(riskLabel) then
         info = riskLabel
     end
     if (add_remediation) then
@@ -340,6 +349,8 @@ local function format_historical_issues(flow_details, flow)
 
     if alert_json and alert_json.flow_risk_info then
         riskInfo = alert_json.flow_risk_info
+    elseif alert_json and alert_json.alert_generation and alert_json.alert_generation.flow_risk_info then
+        riskInfo = alert_json.alert_generation.flow_risk_info
     end
 
     -- Check if there is a custom score
@@ -367,11 +378,10 @@ local function format_historical_issues(flow_details, flow)
             html .. "<tr><th>" .. i18n("description") .. "</th><th>" .. i18n("score") .. "</th><th>" .. i18n("info") ..
             " / " .. i18n("remediation") .. "</th><th>" .. i18n("mitre_id") .. "</th></tr>\n"
         html = html ..
-            format_historical_issue_description(tostring(alert_id), tonumber(main_alert_score),
+            format_historical_issue_description(alert, tostring(alert_id), tonumber(main_alert_score),
                 i18n("issues_score"), alert_label, details, alert_scores, true, riskInfo)
     end
 
-    local alert_utils = require "alert_utils"
     local _, other_issues = alert_utils.format_other_alerts(flow['ALERTS_MAP'], flow['STATUS'], alert_json, false, nil,
         true)
 
@@ -387,9 +397,13 @@ local function format_historical_issues(flow_details, flow)
                 msg = issue.msg
                 info = ""
             end
+            local alert_info = nil
+            if alert_json and alert_json.alerts then
+                alert_info = alert_json.alerts[tostring(issue.alert_id)]
+            end
             html = html ..
-                format_historical_issue_description(tostring(issue.alert_id), tonumber(issue.score), '', msg,
-                    info, alert_scores, true, riskInfo)
+                format_historical_issue_description(alert, tostring(issue.alert_id), tonumber(issue.score), '', msg,
+                    info, alert_scores, true, riskInfo, alert_info)
         end
     end
 
