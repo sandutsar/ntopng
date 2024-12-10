@@ -252,8 +252,14 @@ local function format_historical_issue_description(alert_id, score, title, msg, 
         alert_src = "nDPI"
     end
 
-    if riskInfo and table.len(riskInfo) > 0 then
-        riskLabel = riskInfo[tostring(alert_risk)]
+    if riskInfo then
+        if type(riskInfo) == "string" then -- backward compatibility
+           riskInfo = json.decode(riskInfo)
+        end
+
+        if riskInfo and riskInfo[tostring(alert_risk)] then
+           riskLabel = riskInfo[tostring(alert_risk)]
+        end
     end
 
     local alert_source = " <span class='badge bg-info'>" .. alert_src .. "</span>"
