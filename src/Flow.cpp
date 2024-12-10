@@ -68,6 +68,7 @@ Flow::Flow(NetworkInterface *_iface,
     alert_info.is_srv_attacker =
     alert_info.is_srv_victim = 0;
   alert_info.auto_acknowledge = 1;
+  pending_alerts = false;
   category_list_name_shared_pointer = NULL;
   ndpiAddressFamilyProtocol = NULL;
   ndpi_confidence = NDPI_CONFIDENCE_UNKNOWN;
@@ -8133,10 +8134,6 @@ void Flow::getProtocolJSONInfo(ndpi_serializer *serializer) {
 /* ***************************************************** */
 
 void Flow::setAlertInfo(FlowAlert *alert) {
-  ndpi_serializer serializer;
-  char *json = NULL;
-  u_int32_t json_len = 0;
-
   if(!alert) return;
 
   alert_info.is_cli_attacker |= alert->isCliAttacker();
@@ -8146,6 +8143,14 @@ void Flow::setAlertInfo(FlowAlert *alert) {
 
   if (!alert->autoAck())
     alert_info.auto_acknowledge = 0;
+}
+
+/* ***************************************************** */
+
+void Flow::updateJSONAlert() {
+  ndpi_serializer serializer;
+  char *json = NULL;
+  u_int32_t json_len = 0;
 
   if (ndpi_init_serializer(&serializer, ndpi_serialization_format_json) == -1)
     return;
@@ -8316,14 +8321,10 @@ bool Flow::setAlertsMap(FlowAlert *alert) {
 
 /* *************************************** */
 
-bool Flow::triggerAlert(FlowAlert *alert) {
+bool Flow::triggerAlert(FlowAlert *alert, bool sync) {
   bool res;
 
   if (alert == NULL) return false;
-
-  /* TODO Optimization: defer enqueueFlowAlert in case of multiple alerts created in the same
-   * FlowChecksExecutor iteration. Also add a flag as some alerts should be emitted directly
-   * (even if they have been already triggered) */
 
   res = setAlertsMap(alert);
 
@@ -8334,18 +8335,36 @@ bool Flow::triggerAlert(FlowAlert *alert) {
   }
 
   if (res) {
-    /* enqueue the alert (memory is disposed automatically upon failing
-     * enqueues) */
-    iface->enqueueFlowAlert(alert);
 
-    /* Update JSON */
     setAlertInfo(alert);
+
+    pending_alerts = true;
+
+    if (sync) flushAlerts();
 
   } else {
     delete alert;
   }
 
   return res;
+}
+
+/* *************************************** */
+
+void Flow::flushAlerts() {
+  if (!pending_alerts) return;
+
+  /* Always enqueue the predominant alert, with json info for all alerts */
+  FlowAlert *alert = triggered_alerts[predominant_alert.id];
+
+  /* Update JSON */
+  updateJSONAlert();
+
+  /* Enqueue the alert (memory is disposed automatically upon failing
+   * enqueues) */
+  iface->enqueueFlowAlert(alert);
+
+  pending_alerts = false;
 }
 
 /* *************************************** */

@@ -103,6 +103,7 @@ class Flow : public GenericHashEntry {
   std::map<FlowAlertTypeEnum, FlowAlert *> triggered_alerts;
   FlowAlertType predominant_alert;   /* This is the predominant alert */
   u_int16_t predominant_alert_score; /* The score associated to the predominant alert */
+  bool pending_alerts; /* alerts triggered with triggerAlert but waiting to be enqueued */
   FlowSource flow_source;
 
   struct {
@@ -395,11 +396,16 @@ class Flow : public GenericHashEntry {
   bool enqueueAlertToRecipients(FlowAlert *alert);
 
   /*
-     Called by FlowCheck subclasses to trigger a flow alert. This is a
-     syncrhonous call that causes the alert (FlowAlert) to be
-     enqueued to all recipients.
+     Called by FlowCheck subclasses to trigger a flow alert. Setting sync
+     will causes the alert (FlowAlert) to be immediatly enqueued to recipients.
    */
-  bool triggerAlert(FlowAlert *alert);
+  bool triggerAlert(FlowAlert *alert, bool sync = false);
+  /*
+     Alerts are not flushed immediatly as optimization (unless sync is set in
+     triggerAlert). If pending_alerts, they are enqueued to recipients, in a single
+     notification for the predominant one.
+   */
+  void flushAlerts();
 
   /*
     Enqueues the predominant alert of the flow to all available flow recipients.
@@ -445,6 +451,7 @@ class Flow : public GenericHashEntry {
     return alert_info.is_srv_victim;
   };
   inline char *getProtocolInfo() { return json_protocol_info; };
+  void updateJSONAlert();
   inline char *getAlertJSON() { return json_alert; };
   const char* getDomainName();
 

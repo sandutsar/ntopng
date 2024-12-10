@@ -108,6 +108,8 @@ void FlowChecksExecutor::execChecks(Flow *f, FlowChecks c) {
     fc->incStats(t2 - t1);
 #endif
   }
+
+  f->flushAlerts();
 }
 
 /* **************************************************** */
