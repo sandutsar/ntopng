@@ -32,6 +32,7 @@ class FlowAlert {
   bool cli_victim, srv_victim;
   u_int8_t cli_score, srv_score;
   u_int8_t alert_score;
+  char *json_alert;
   
   /*
      Adds to the passed `serializer` (generated with `getAlertSerializer`)
@@ -76,10 +77,11 @@ class FlowAlert {
 
   /*
      Generates the JSON alert serializer with base information and per-check
-     information gathered with `getAlertJSON`. NOTE: memory must be freed by the
-     caller.
+     information gathered with `getAlertJSON`. The returned string should not
+     be freed by the caller as it is a reference to an internal string released
+     with the alert.
   */
-  ndpi_serializer *getSerializedAlert();
+  const char *getSerializedAlert();
 };
 
 #endif /* _FLOW_ALERT_H_ */

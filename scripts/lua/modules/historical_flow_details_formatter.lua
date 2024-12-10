@@ -332,11 +332,8 @@ local function format_historical_issues(flow_details, flow)
     local alert_id = tonumber(flow["STATUS"] or 0)
     local main_alert_score = ntop.getFlowAlertScore(tonumber(alert_id))
 
-    if alert_json.alert_generation and alert_json.alert_generation.flow_risk_info then
-        riskInfo = json.decode(alert_json.alert_generation.flow_risk_info, 1, nil)
-    elseif not isEmptyString(alert_json.flow_risk_info) then
-        -- backward compatibility (old ALERT_JSON containing also PROTOCOL_INFO_JSON)
-        riskInfo = json.decode(alert_json.flow_risk_info, 1, nil)
+    if alert_json and alert_json.flow_risk_info then
+        riskInfo = alert_json.flow_risk_info
     end
 
     -- Check if there is a custom score
@@ -705,6 +702,7 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
         if tonumber(flow["SERVER_NW_LATENCY_US"]) ~= 0 then
             flow_details[#flow_details + 1] = format_historical_latency(flow, "SERVER_NW_LATENCY_US", "srv")
         end
+
         local protocol_info_json = json.decode(flow["PROTOCOL_INFO_JSON"] or '') or {}
 
         if (protocol_info_json["appl_latency"]) then

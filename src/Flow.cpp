@@ -63,11 +63,11 @@ Flow::Flow(NetworkInterface *_iface,
   predominant_alert.id = flow_alert_normal,
     predominant_alert.category = alert_category_other,
     predominant_alert_score = 0;
-  predominant_alert_info.is_cli_attacker =
-    predominant_alert_info.is_cli_victim =
-    predominant_alert_info.is_srv_attacker =
-    predominant_alert_info.is_srv_victim = 0;
-  predominant_alert_info.auto_acknowledge = 0;
+  alert_info.is_cli_attacker =
+    alert_info.is_cli_victim =
+    alert_info.is_srv_attacker =
+    alert_info.is_srv_victim = 0;
+  alert_info.auto_acknowledge = 1;
   category_list_name_shared_pointer = NULL;
   ndpiAddressFamilyProtocol = NULL;
   ndpi_confidence = NDPI_CONFIDENCE_UNKNOWN;
@@ -419,6 +419,10 @@ Flow::~Flow() {
   if(getUses() != 0 && !ntop->getGlobals()->isShutdown())
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "[%s] Deleting flow [%u]",
                                  __FUNCTION__, getUses());
+
+  /* Delete triggered alerts for the flow */
+  for (std::map<FlowAlertTypeEnum, FlowAlert *>::iterator it = triggered_alerts.begin(); it != triggered_alerts.end(); it++)
+    delete it->second;
 
   accountFlowTraffic();
 
@@ -2847,12 +2851,13 @@ void Flow::luaScore(lua_State *vm) {
   /* Individual alerts score */
 
   lua_newtable(vm);
-  for (std::map<FlowAlertTypeEnum,u_int16_t>::iterator it = alert_score.begin(); it != alert_score.end(); it++) {
+  for (std::map<FlowAlertTypeEnum, FlowAlert *>::iterator it = triggered_alerts.begin(); it != triggered_alerts.end(); it++) {
     char tmp[8];
+    FlowAlert *alert = it->second;
 
     snprintf(tmp, sizeof(tmp), "%u", it->first);
 
-    lua_push_int32_table_entry(vm, tmp, it->second);
+    lua_push_int32_table_entry(vm, tmp, alert->getCliScore() + alert->getSrvScore());
   }
 
   lua_pushstring(vm, "alert_score");
@@ -3194,8 +3199,8 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
     lua_get_risk_info(vm);
     lua_entropy(vm);
 
-    if(getJSONRiskInfo())
-      lua_push_str_table_entry(vm, "riskInfo", getJSONRiskInfo());
+    if(riskInfo)
+      lua_push_str_table_entry(vm, "riskInfo", riskInfo);
   }
 
   lua_get_status(vm);
@@ -4415,9 +4420,6 @@ u_char *Flow::getCommunityId(u_char *community_id, u_int community_id_len) {
 /* Create a JSON in the alerts format
  * Using the nDPI json serializer instead of jsonc for faster speed (~2.5x) */
 void Flow::alert2JSON(FlowAlert *alert, ndpi_serializer *s) {
-  ndpi_serializer *alert_serializer;
-  char *alert_json = NULL;
-  u_int32_t alert_json_len;
   char buf[128];
   u_char community_id[200];
   time_t now = time(NULL);
@@ -4542,17 +4544,7 @@ void Flow::alert2JSON(FlowAlert *alert, ndpi_serializer *s) {
 
   ndpi_serialize_string_string(s, "info", getFlowInfo(false).c_str());
 
-  alert_serializer = alert->getSerializedAlert();
-  
-  if(alert_serializer) 
-    alert_json = ndpi_serializer_get_buffer(alert_serializer, &alert_json_len);
-
-  ndpi_serialize_string_string(s, "json", alert_json ? alert_json : "");
-  
-  if (alert_serializer) {
-    ndpi_term_serializer(alert_serializer);
-    free(alert_serializer);
-  }
+  ndpi_serialize_string_string(s, "json", json_alert ? json_alert : "");
 }
 
 /* *************************************** */
@@ -5017,8 +5009,6 @@ bool Flow::enqueueAlertToRecipients(FlowAlert *alert) {
     getInterface()->incNumDroppedAlerts(alert_entity_flow);
 
   ndpi_term_serializer(&flow_json);
-
-  delete alert;
 
   return rv;
 }
@@ -7978,7 +7968,7 @@ void Flow::setProtocolJSONInfo() {
 
 void Flow::getJSONRiskInfo(ndpi_serializer *serializer) {
   if(serializer && riskInfo) {
-    ndpi_serialize_string_string(serializer, "flow_risk_info", riskInfo);
+    ndpi_serialize_string_raw(serializer, "flow_risk_info", riskInfo, strlen(riskInfo));
   }
 }
 
@@ -8128,11 +8118,13 @@ void Flow::getProtocolJSONInfo(ndpi_serializer *serializer) {
   if(protocol == IPPROTO_TCP && applLatencyMsec > 0)
       ndpi_serialize_string_float(serializer, "appl_latency", applLatencyMsec, "%.2f");
 
-  if(alert_score.size() > 0) {
+  if(triggered_alerts.size() > 0) {
     ndpi_serialize_start_of_block(serializer, "alert_score");
 
-    for (std::map<FlowAlertTypeEnum,u_int16_t>::iterator it = alert_score.begin(); it != alert_score.end(); it++)
-      ndpi_serialize_uint32_uint32(serializer, it->first, it->second);
+    for (std::map<FlowAlertTypeEnum, FlowAlert *>::iterator it = triggered_alerts.begin(); it != triggered_alerts.end(); it++) {
+      FlowAlert *alert = it->second;
+      ndpi_serialize_uint32_uint32(serializer, it->first, alert->getCliScore() + alert->getSrvScore());
+    }
 
     ndpi_serialize_end_of_block(serializer);
   }
@@ -8140,32 +8132,58 @@ void Flow::getProtocolJSONInfo(ndpi_serializer *serializer) {
 
 /* ***************************************************** */
 
-void Flow::setPredominantAlertInfo(FlowAlert *alert) {
-  ndpi_serializer *s;
-  char *alert_json = NULL;
-  u_int32_t alert_json_len = 0;
+void Flow::setAlertInfo(FlowAlert *alert) {
+  ndpi_serializer serializer;
+  char *json = NULL;
+  u_int32_t json_len = 0;
 
   if(!alert) return;
 
-  predominant_alert_info.is_cli_attacker = alert->isCliAttacker();
-  predominant_alert_info.is_cli_victim = alert->isCliVictim();
-  predominant_alert_info.is_srv_attacker = alert->isSrvAttacker();
-  predominant_alert_info.is_srv_victim = alert->isSrvVictim();
-  predominant_alert_info.auto_acknowledge = alert->autoAck();
+  alert_info.is_cli_attacker |= alert->isCliAttacker();
+  alert_info.is_cli_victim   |= alert->isCliVictim();
+  alert_info.is_srv_attacker |= alert->isSrvAttacker();
+  alert_info.is_srv_victim   |= alert->isSrvVictim();
 
-  /* Serialize alert JSON */
-  s = alert->getSerializedAlert();
+  if (!alert->autoAck())
+    alert_info.auto_acknowledge = 0;
 
-  if(s)
-    alert_json = ndpi_serializer_get_buffer(s, &alert_json_len);
+  if (ndpi_init_serializer(&serializer, ndpi_serialization_format_json) == -1)
+    return;
+
+  /* Global info */
+  ndpi_serialize_string_uint64(&serializer, "ntopng.key", key());
+  ndpi_serialize_string_uint64(&serializer, "hash_entry_id",
+                               get_hash_entry_id());
+
+  getJSONRiskInfo(&serializer);
+
+  if (isBlacklistedFlow())
+    ndpi_serialize_string_string(&serializer, "blacklist", 
+      get_custom_category_file() ? get_custom_category_file() : "");
+
+  /* Serialize alerts JSON */
+
+  std::string json_map = "{";
+  bool first = true;
+  for (std::map<FlowAlertTypeEnum, FlowAlert *>::iterator it = triggered_alerts.begin(); it != triggered_alerts.end(); it++) {
+    FlowAlert *a = it->second;
+    const char *j = a->getSerializedAlert();
+    if (j) {
+      if (!first) json_map += ","; 
+      json_map += "\"" + std::to_string(it->first) + "\": " + j;
+      first = false;
+    }
+  }
+  json_map += "}";
+
+  ndpi_serialize_string_raw(&serializer, "alerts", json_map.c_str(), json_map.size());
+
+  json = ndpi_serializer_get_buffer(&serializer, &json_len);
 
   if(json_alert) free(json_alert);
-  json_alert = strdup(alert_json ? alert_json : "");
+  json_alert = strdup(json ? json : "");
 
-  if (s) {
-    ndpi_term_serializer(s);
-    free(s);
-  }
+  ndpi_term_serializer(&serializer);
 }
 
 /* ***************************************************** */
@@ -8217,6 +8235,8 @@ bool Flow::setAlertsMap(FlowAlert *alert) {
   /* Check if the same alert has been already triggered and
    * accounted in the score */
   if(alerts_map.isSetBit(alert_type.id)) {
+    /* TODO replace alert rather then skipping it as it may contain updated values 
+     * or (optimization) let the check update the alert content */
 #ifdef DEBUG_SCORE
     ntop->getTrace()->traceEvent(TRACE_NORMAL,
 				 "[%s] Discarding alert type %u (already set)",
@@ -8259,9 +8279,9 @@ bool Flow::setAlertsMap(FlowAlert *alert) {
 
   /* Set alerts bitmap */
   alerts_map.setBit(alert_type.id);
+  triggered_alerts[alert_type.id] = alert;
 
   /* Update score */
-  alert_score[alert_type.id] = flow_inc;
   flow_score += flow_inc;
 
   stats.incScore(cli_inc, score_category, true /* as client */);
@@ -8297,18 +8317,13 @@ bool Flow::setAlertsMap(FlowAlert *alert) {
 /* *************************************** */
 
 bool Flow::triggerAlert(FlowAlert *alert) {
-  FlowAlertType predominant_alert = getPredominantAlert();
   bool res;
 
   if (alert == NULL) return false;
 
-  /* TODO
-   * - Store all triggered alerts in a map or similar to keep (json) info from all of them
-   *   - If there is already an alert with same type, replace it (e.g. periodic checks with updated counters)
-   *   - Optimization: allocating an alert with the same type should be avoided by the Check
-   * - Optimization: defer enqueueFlowAlert in case of multiple alerts created in the same FlowChecksExecutor iteration 
-   *                 (a flag should be used to enable this as some alerts should be emitted directly)
-   */
+  /* TODO Optimization: defer enqueueFlowAlert in case of multiple alerts created in the same
+   * FlowChecksExecutor iteration. Also add a flag as some alerts should be emitted directly
+   * (even if they have been already triggered) */
 
   res = setAlertsMap(alert);
 
@@ -8323,10 +8338,8 @@ bool Flow::triggerAlert(FlowAlert *alert) {
      * enqueues) */
     iface->enqueueFlowAlert(alert);
 
-    if (getPredominantAlert().id != predominant_alert.id) {
-      /* this is the new predominant alet for this flow */
-      setPredominantAlertInfo(alert);
-    }
+    /* Update JSON */
+    setAlertInfo(alert);
 
   } else {
     delete alert;
@@ -8443,10 +8456,6 @@ void Flow::setJSONRiskInfo(char *r) {
 
 /* *************************************** */
 
-char *Flow::getJSONRiskInfo() { return (riskInfo); }
-
-/* *************************************** */
-
 void Flow::setEndReason(char *r) {
   if(!r) return;
 
@@ -8543,8 +8552,8 @@ void Flow::triggerCustomFlowAlert(u_int8_t score, char *msg) {
 void Flow::swap() {
   IpAddress *i = cli_ip_addr;
   u_int8_t m[6];
-  u_int8_t f1 = predominant_alert_info.is_cli_attacker;
-  u_int8_t f2 = predominant_alert_info.is_cli_victim;
+  u_int8_t f1 = alert_info.is_cli_attacker;
+  u_int8_t f2 = alert_info.is_cli_victim;
   struct ndpi_analyze_struct *s = initial_bytes_entropy.c2s;
   TCPSeqNum ts;
   InterarrivalStats *is = cli2srvPktTime;
@@ -8590,10 +8599,10 @@ void Flow::swap() {
   memcpy(view_cli_mac, view_srv_mac, 6);
   memcpy(view_srv_mac, m, 6);
 
-  predominant_alert_info.is_cli_attacker = predominant_alert_info.is_srv_attacker,
-    predominant_alert_info.is_cli_victim = predominant_alert_info.is_srv_victim;
-  predominant_alert_info.is_srv_attacker = f1,
-    predominant_alert_info.is_srv_victim = f2;
+  alert_info.is_cli_attacker = alert_info.is_srv_attacker,
+    alert_info.is_cli_victim = alert_info.is_srv_victim;
+  alert_info.is_srv_attacker = f1,
+    alert_info.is_srv_victim = f2;
 
   if(tcp != NULL) {
     memcpy(&ts, &tcp->tcp_seq_s2d, sizeof(TCPSeqNum));

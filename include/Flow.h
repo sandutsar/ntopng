@@ -100,14 +100,14 @@ class Flow : public GenericHashEntry {
      predominant of a flow, which is written into `predominant_alert`.
   */
   Bitmap128 alerts_map;
-  std::map<FlowAlertTypeEnum, u_int16_t /* score */> alert_score;
+  std::map<FlowAlertTypeEnum, FlowAlert *> triggered_alerts;
   FlowAlertType predominant_alert;   /* This is the predominant alert */
   u_int16_t predominant_alert_score; /* The score associated to the predominant alert */
   FlowSource flow_source;
 
   struct {
     u_int8_t is_cli_attacker : 1, is_cli_victim : 1, is_srv_attacker : 1, is_srv_victim : 1, auto_acknowledge : 1;
-  } predominant_alert_info;
+  } alert_info;
 
   char *json_protocol_info, *json_alert, *riskInfo, *end_reason;
 
@@ -428,21 +428,21 @@ class Flow : public GenericHashEntry {
   bool isFlowAllowed(bool *is_allowed);
 #endif
 
-  void setPredominantAlertInfo(FlowAlert *alert);
-  inline bool isPredominantAlertAutoAck() {
-    return !!predominant_alert_info.auto_acknowledge;
+  void setAlertInfo(FlowAlert *alert);
+  inline bool isAlertAutoAck() {
+    return !!alert_info.auto_acknowledge;
   };
   inline u_int8_t isClientAttacker() {
-    return predominant_alert_info.is_cli_attacker;
+    return alert_info.is_cli_attacker;
   };
   inline u_int8_t isClientVictim() {
-    return predominant_alert_info.is_cli_victim;
+    return alert_info.is_cli_victim;
   };
   inline u_int8_t isServerAttacker() {
-    return predominant_alert_info.is_srv_attacker;
+    return alert_info.is_srv_attacker;
   };
   inline u_int8_t isServerVictim() {
-    return predominant_alert_info.is_srv_victim;
+    return alert_info.is_srv_victim;
   };
   inline char *getProtocolInfo() { return json_protocol_info; };
   inline char *getAlertJSON() { return json_alert; };
@@ -1361,7 +1361,6 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
 
   u_char *getCommunityId(u_char *community_id, u_int community_id_len);
   void setJSONRiskInfo(char *r);
-  char *getJSONRiskInfo();
   void setEndReason(char *r);
   char *getEndReason();
   void setSMTPMailFrom(char *r);
