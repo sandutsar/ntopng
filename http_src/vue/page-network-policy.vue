@@ -13,6 +13,7 @@
                                     <textarea v-model="networks[key]" class="form-control rounded"
                                         :placeholder="`Enter ${value.device_type} Networks (Comma Separated)`"
                                         @input="markAsModified(key)" rows="2"></textarea>
+                                    <small>{{ _i18n(value.i18n_description) }}</small>
                                     <div v-if="validationErrors[key]" class="text-danger mt-1">
                                         {{ validationErrors[key] }}
                                     </div>
@@ -78,9 +79,9 @@ const reloadNetworks = function () {
 }
 
 const check_name = {
-    "local_devices": { "i18n_title": "network_configuration.local_devices_title", "device_type": "Local Devices", "reques_param": "local_devices" },
-    "corporate_devices": { "i18n_title": "network_configuration.corporate_devices_title", "device_type": "Corporate Devices", "reques_param": "corporate_devices" },
-    "whitelisted_networks": { "i18n_title": "network_configuration.whitelisted_networks_title", "device_type": "Whitelisted", "reques_param": "whitelisted_networks" },
+    "local_devices": { "i18n_title": "network_configuration.local_devices_title", "device_type": "Local Devices", "reques_param": "local_devices", "i18n_description": "network_configuration.local_devices_description" },
+    "corporate_devices": { "i18n_title": "network_configuration.corporate_devices_title", "device_type": "Corporate Devices", "reques_param": "corporate_devices", "i18n_description": "network_configuration.corporate_devices_description" },
+    "whitelisted_networks": { "i18n_title": "network_configuration.whitelisted_networks_title", "device_type": "Whitelisted", "reques_param": "whitelisted_networks", "i18n_description": "network_configuration.whitelisted_networks_description" },
 }
 
 Object.keys(check_name).forEach(key => {

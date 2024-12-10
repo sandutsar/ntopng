@@ -16,6 +16,7 @@
                                     <textarea v-model="ipAddresses[key]" class="form-control rounded"
                                         :placeholder="`Enter ${value.device_type} IPs (Comma Separated)`"
                                         @input="markAsModified(key)" rows="2"></textarea>
+                                    <small>{{ _i18n(value.i18n_description) }}</small>
                                     <div v-if="validationErrors[key]" class="text-danger mt-1">
                                         {{ validationErrors[key] }}
                                     </div>
@@ -76,11 +77,11 @@ const saveButtonClass = computed(() => {
 });
 
 const check_name = {
-    "dns_list": { "i18n_title": "network_configuration.dns_servers_title", "device_type": "DNS Server", "reques_param": "dns_list" },
-    "ntp_list": { "i18n_title": "network_configuration.ntp_servers_title", "device_type": "NTP Server", "reques_param": "ntp_list" },
-    "dhcp_list": { "i18n_title": "network_configuration.dhcp_servers_title", "device_type": "DHCP Server", "reques_param": "dhcp_list" },
-    "smtp_list": { "i18n_title": "network_configuration.smtp_servers_title", "device_type": "SMTP Server", "reques_param": "smtp_list" },
-    "gateway_list": { "i18n_title": "network_configuration.gateway_servers_title", "device_type": "Gateway", "reques_param": "gateway_list" },
+    "dns_list": { "i18n_title": "network_configuration.dns_servers_title", "device_type": "DNS Server", "reques_param": "dns_list", "i18n_description": "network_configuration.dns_servers_description" },
+    "ntp_list": { "i18n_title": "network_configuration.ntp_servers_title", "device_type": "NTP Server", "reques_param": "ntp_list", "i18n_description": "network_configuration.ntp_servers_description" },
+    "dhcp_list": { "i18n_title": "network_configuration.dhcp_servers_title", "device_type": "DHCP Server", "reques_param": "dhcp_list", "i18n_description": "network_configuration.dhcp_servers_description" },
+    "smtp_list": { "i18n_title": "network_configuration.smtp_servers_title", "device_type": "SMTP Server", "reques_param": "smtp_list", "i18n_description": "network_configuration.smtp_servers_description" },
+    "gateway_list": { "i18n_title": "network_configuration.gateway_servers_title", "device_type": "Gateway", "reques_param": "gateway_list", "i18n_description": "network_configuration.gateway_servers_description" },
 }
 
 Object.keys(check_name).forEach(key => {
