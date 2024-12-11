@@ -106,9 +106,7 @@ end
 -- @brief Deletes all stored alerts matching a certificate
 -- @return nil
 function alert_utils.deleteFlowAlertsMatchingCertificate(certificate, alert_id)
-
     -- TODO
-
 end
 
 -- #################################
@@ -189,7 +187,7 @@ local function getAlertTypeInfo(record, alert_info)
             }))
         else
             res = string.format("[%s]",
-                icmp_utils.get_icmp_label(4 --[[ ipv4 --]] , type_code["type"], type_code["code"]))
+                icmp_utils.get_icmp_label(4 --[[ ipv4 --]], type_code["type"], type_code["code"]))
         end
     end
 
@@ -273,7 +271,7 @@ end
 
 -- #################################
 
-function alert_utils.getConfigsetAlertLink(alert_json, alert --[[ optional --]] , alert_entity)
+function alert_utils.getConfigsetAlertLink(alert_json, alert --[[ optional --]], alert_entity)
     if isAdministrator() then
         local info = alert_json.alert_generation or (alert_json.alert_info and alert_json.alert_info.alert_generation)
         if alert_entity and alert_entity == alert_entities.am_host.entity_id then
@@ -283,25 +281,25 @@ function alert_utils.getConfigsetAlertLink(alert_json, alert --[[ optional --]] 
                 if measurement then
                     return
                         ' <a href="' .. ntop.getHttpPrefix() .. '/lua/monitor/active_monitoring_monitor.lua?am_host=' ..
-                            host .. '&measurement=' .. measurement .. '&page=overview"><i class="fas fa-cog" title="' ..
-                            i18n("edit_configuration") .. '"></i></a>'
+                        host .. '&measurement=' .. measurement .. '&page=overview"><i class="fas fa-cog" title="' ..
+                        i18n("edit_configuration") .. '"></i></a>'
                 else
                     return
                         ' <a href="' .. ntop.getHttpPrefix() .. '/lua/monitor/active_monitoring_monitor.lua?am_host=' ..
-                            host .. '&page=overview"><i class="fas fa-cog" title="' .. i18n("edit_configuration") ..
-                            '"></i></a>'
+                        host .. '&page=overview"><i class="fas fa-cog" title="' .. i18n("edit_configuration") ..
+                        '"></i></a>'
                 end
             else
                 return ' <a href="' .. ntop.getHttpPrefix() ..
-                           '/lua/monitor/active_monitoring_monitor.lua?page=overview"><i class="fas fa-cog" title="' ..
-                           i18n("edit_configuration") .. '"></i></a>'
+                    '/lua/monitor/active_monitoring_monitor.lua?page=overview"><i class="fas fa-cog" title="' ..
+                    i18n("edit_configuration") .. '"></i></a>'
             end
         elseif info then
             return (' <a href="' .. alert_utils.getConfigsetURL(info.script_key, info.subdir) .. '">' ..
-                       '<i class="fas fa-cog" title="' .. i18n("edit_configuration") .. '"></i></a>')
+                '<i class="fas fa-cog" title="' .. i18n("edit_configuration") .. '"></i></a>')
         else
             return (' <a href="' .. ntop.getHttpPrefix() .. '/lua/admin/edit_configset.lua?subdir=interface#all">' ..
-                       '<i class="fas fa-cog" title="' .. i18n("edit_configuration") .. '"></i></a>')
+                '<i class="fas fa-cog" title="' .. i18n("edit_configuration") .. '"></i></a>')
         end
     end
 
@@ -346,7 +344,7 @@ function alert_utils.formatAlertMessage(ifid, alert, alert_json, local_explorer)
     end
 
     if isEmptyString(msg) then
-        msg = alert_consts.alertTypeLabel(tonumber(alert.alert_id), true --[[ no_html --]] , alert.entity_id)
+        msg = alert_consts.alertTypeLabel(tonumber(alert.alert_id), true --[[ no_html --]], alert.entity_id)
     end
 
     if not isEmptyString(alert["user_label"]) then
@@ -382,13 +380,13 @@ end
 -- #################################
 
 function alert_utils.formatFlowAlertMessage(ifid, alert, alert_json, add_score, local_explorer, exclude_remediation_link)
-   local msg
-   local alert_risk
+    local msg
+    local alert_risk
 
-   if tonumber(alert.alert_id) then
+    if tonumber(alert.alert_id) then
         alert_risk = ntop.getFlowAlertRisk(tonumber(alert.alert_id))
-        
-        if (tonumber(alert_risk) == 0) then 
+
+        if (tonumber(alert_risk) == 0) then
             alert_src = "ntopng"
             alert_risk = tonumber(alert.alert_id)
         else
@@ -396,53 +394,53 @@ function alert_utils.formatFlowAlertMessage(ifid, alert, alert_json, add_score, 
         end
     end
 
-   if not alert_json then
-      alert_json = alert_utils.getAlertInfo(alert)
-   end
+    if not alert_json then
+        alert_json = alert_utils.getAlertInfo(alert)
+    end
 
-   local description = alertTypeDescription(alert.alert_id, alert_entities.flow.entity_id)
+    local description = alertTypeDescription(alert.alert_id, alert_entities.flow.entity_id)
 
-   if (type(description) == "string") then
-      -- localization string
-      msg = i18n(description, alert_json)
-   elseif (type(description) == "function") then
-      msg = description(ifid, alert, alert_json, local_explorer)
-   end
+    if (type(description) == "string") then
+        -- localization string
+        msg = i18n(description, alert_json)
+    elseif (type(description) == "function") then
+        msg = description(ifid, alert, alert_json, local_explorer)
+    end
 
-   if isEmptyString(msg) then
-      if alert_json and alert_json.alert_generation and alert_risk and alert_risk > 0 then
-	 -- Flow risks most of the times already have a default description, use this in case of emtpy descr
-	 msg = alert_utils.get_flow_risk_info(alert_risk, alert_json)
-      else
-	 -- Normal alerts
-	 msg = alert_consts.alertTypeLabel(tonumber(alert.alert_id), true --[[ no_html --]] , alert.entity_id)
-      end
-   end
+    if isEmptyString(msg) then
+        if alert_json and alert_json.alert_generation and alert_risk and alert_risk > 0 then
+            -- Flow risks most of the times already have a default description, use this in case of emtpy descr
+            msg = alert_utils.get_flow_risk_info(alert_risk, alert_json)
+        else
+            -- Normal alerts
+            msg = alert_consts.alertTypeLabel(tonumber(alert.alert_id), true --[[ no_html --]], alert.entity_id)
+        end
+    end
 
-   if not isEmptyString(alert["user_label"]) then
-      msg = string.format('%s <small><span class="text-muted">%s</span></small>', msg, alert["user_label"])
-   end
+    if not isEmptyString(alert["user_label"]) then
+        msg = string.format('%s <small><span class="text-muted">%s</span></small>', msg, alert["user_label"])
+    end
 
-   if add_score then
-      if tonumber(alert.alert_id) then
-	 local alert_score = ntop.getFlowAlertScore(tonumber(alert.alert_id))
-	 msg = alert_utils.format_score(msg, alert_score)
-      end
-   end
-   
-   -- Add the link to the documentation
-   if alert_risk and alert_risk > 0 and not exclude_remediation_link then
-      msg = string.format("%s %s",
-			  msg, flow_risk_utils.get_remediation_documentation_link(alert_risk, alert_src))
-      local info_msg = alert_utils.get_flow_risk_info(alert_risk, alert_json)
+    if add_score then
+        if tonumber(alert.alert_id) then
+            local alert_score = ntop.getFlowAlertScore(tonumber(alert.alert_id))
+            msg = alert_utils.format_score(msg, alert_score)
+        end
+    end
 
-      -- Add check info_msg ~= alert.info to avoid duplicated in description msg
-      --[[if (not isEmptyString(info_msg) and info_msg ~= alert.info) then
+    -- Add the link to the documentation
+    if alert_risk and alert_risk > 0 and not exclude_remediation_link then
+        msg = string.format("%s %s",
+            msg, flow_risk_utils.get_remediation_documentation_link(alert_risk, alert_src))
+        local info_msg = alert_utils.get_flow_risk_info(alert_risk, alert_json)
+
+        -- Add check info_msg ~= alert.info to avoid duplicated in description msg
+        --[[if (not isEmptyString(info_msg) and info_msg ~= alert.info) then
          msg = string.format("%s", msg, info_msg)
 	 end--]]
-   end
+    end
 
-   return msg or ""
+    return msg or ""
 end
 
 -- #################################
@@ -552,8 +550,8 @@ function alert_utils.formatAlertNotification(notif, options)
         severity = ""
     else
         severity = " [Severity: " ..
-                       alert_consts.alertSeverityLabel(notif.score, options.nohtml or options.nolabelhtml, options.emoji) ..
-                       "]"
+            alert_consts.alertSeverityLabel(notif.score, options.nohtml or options.nolabelhtml, options.emoji) ..
+            "]"
     end
 
     if (options.nodate == true) then
@@ -596,18 +594,15 @@ function alert_utils.formatAlertNotification(notif, options)
 
         if notif.entity_id == alert_entities.flow.entity_id then
             ev = noHtml(alert_utils.formatRawFlow(notif, options.nohtml))
-
         elseif notif.entity_id == alert_entities.host.entity_id then
             -- suppress @0 when the vlan is zero
             ev = hostinfo2hostkey(hostkey2hostinfo(notif.entity_val))
-
         elseif notif.entity_id == alert_entities.am_host.entity_id then
             -- show host only, hiding measurement id (e.g. vs@)
             local parts = split(notif.entity_val, "@")
             if #parts == 2 then
                 ev = parts[2]
             end
-
         end
         msg = msg .. " [" .. (ev or '') .. "]"
     end
@@ -690,7 +685,6 @@ local function notify_ntopng_status(started)
     local event
 
     if (started) then
-
         -- reading current version and last version to check if it has been updated
         local last_version_key = "ntopng.updates.last_version"
         local last_version = ntop.getCache(last_version_key)
@@ -742,8 +736,8 @@ end
 
 local function addDayEpoch(res, day_epoch)
     res[day_epoch] =
-        {0, --[[ Counter for alerts between 00:00 and 00:59 UTC --]] 0, --[[ Counter for alerts between 01:00 and 01:59 UTC --]]
-         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 --[[ Counter for alerts in other hours, until 23:00 to 23:59 --]] }
+    { 0, --[[ Counter for alerts between 00:00 and 00:59 UTC --]] 0, --[[ Counter for alerts between 01:00 and 01:59 UTC --]]
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 --[[ Counter for alerts in other hours, until 23:00 to 23:59 --]] }
 
     return res
 end
@@ -754,7 +748,7 @@ end
 function alert_utils.formatOldTimeseries(q_res, _epoch_begin, _epoch_end)
     local hour_secs = 60 * 60
     local day_secs = 60 * 60 * 24
-    local epoch_begin = _epoch_begin - (_epoch_begin % day_secs) -- Round begin to start of day
+    local epoch_begin = _epoch_begin - (_epoch_begin % day_secs)      -- Round begin to start of day
     local epoch_end = _epoch_end - (_epoch_end % day_secs) + day_secs -- Round end to end of day
     local res = {}
 
@@ -773,7 +767,7 @@ function alert_utils.formatOldTimeseries(q_res, _epoch_begin, _epoch_end)
         end
 
         -- This is done for both, enganged and historical alert, historical have v.hour and v.count, instead engaged
-        -- There is one entry per engaged, reporting the starting time (tstamp), so just add +1 to the hour having that alert 
+        -- There is one entry per engaged, reporting the starting time (tstamp), so just add +1 to the hour having that alert
         res[day_epoch][hour + 1] = tonumber( --[[ Historical ]]
             v.count or --[[ Engaged ]] ((res[day_epoch][hour + 1] or 0) + 1))
     end -- for
@@ -784,68 +778,88 @@ end
 -- ##############################################
 
 function alert_utils.format_other_alerts(alert_bitmap, predominant_alert, alert_json, add_score, no_html, json_format)
-    -- Unpack all flow alerts, iterating the alerts_map. The alerts_map is stored as an HEX.
     local other_alerts_by_score = {} -- Table used to keep messages ordered by score
     local additional_alerts = {}
-    local nibble_num = 0 -- Current nibble being processed
-    for alerts_map_nibble_id = #alert_bitmap, 1, -1 do
-        -- Extract the nibble
-        local alerts_map_hex_nibble = alert_bitmap:sub(alerts_map_nibble_id, alerts_map_nibble_id)
-        -- Convert the HEX nibble into a decimal value
-        local alerts_map_nibble = tonumber(alerts_map_hex_nibble, 16)
+    -- This is for old data, so keep it like this
+    if not (alert_json) and (alert_json.alerts) then
+        -- Unpack all flow alerts, iterating the alerts_map. The alerts_map is stored as an HEX.
+        local nibble_num = 0 -- Current nibble being processed
+        for alerts_map_nibble_id = #alert_bitmap, 1, -1 do
+            -- Extract the nibble
+            local alerts_map_hex_nibble = alert_bitmap:sub(alerts_map_nibble_id, alerts_map_nibble_id)
+            -- Convert the HEX nibble into a decimal value
+            local alerts_map_nibble = tonumber(alerts_map_hex_nibble, 16)
 
-        if alerts_map_nibble > 0 then
-            for bit_num = 0, 7 do
-                -- Checks the bits set in this current nibble
-                local has_bit = alerts_map_nibble & (1 << bit_num) == (1 << bit_num)
-                
-                if has_bit then -- The bit is set
-                    -- The actual alert id is the bit number times the current byte multiplied by 8
-                    local alert_id = math.floor(8 * nibble_num / 2) + bit_num
+            if alerts_map_nibble > 0 then
+                for bit_num = 0, 7 do
+                    -- Checks the bits set in this current nibble
+                    local has_bit = alerts_map_nibble & (1 << bit_num) == (1 << bit_num)
 
-                    if alert_id ~= tonumber(predominant_alert) then -- Do not add the predominant alert to the list of additional alerts
-                        local message = alert_consts.alertTypeLabel(alert_id, true, alert_entities.flow.entity_id)
-                        message = message .. " " .. alert_consts.addExtraInfo(alert_id, alert_entities.flow.entity_id, alert_json)
-                        local alert_score = ntop.getFlowAlertScore(alert_id)
+                    if has_bit then -- The bit is set
+                        -- The actual alert id is the bit number times the current byte multiplied by 8
+                        local alert_id = math.floor(8 * nibble_num / 2) + bit_num
 
-                        if add_score then
-                            message = alert_utils.format_score(message, alert_score)
-                        end
+                        if alert_id ~= tonumber(predominant_alert) then -- Do not add the predominant alert to the list of additional alerts
+                            local message = alert_consts.alertTypeLabel(alert_id, true, alert_entities.flow.entity_id)
+                            message = message ..
+                            " " .. alert_consts.addExtraInfo(alert_id, alert_entities.flow.entity_id, alert_json)
+                            local alert_score = ntop.getFlowAlertScore(alert_id)
 
-                        local alert_risk = ntop.getFlowAlertRisk(tonumber(alert_id))
-
-                        if alert_risk > 0 then -- source is nDPI
-                            if not no_html then
-                                message = string.format("%s %s", message,
-                                    flow_risk_utils.get_remediation_documentation_link(alert_risk, "nDPI"))
+                            if add_score then
+                                message = alert_utils.format_score(message, alert_score)
                             end
-                            local info_msg = alert_utils.get_flow_risk_info(alert_risk, alert_json)
-                            if not isEmptyString(info_msg) then
-                                message = string.format("%s [%s]", message, info_msg)
+
+                            local alert_risk = ntop.getFlowAlertRisk(tonumber(alert_id))
+
+                            if alert_risk > 0 then -- source is nDPI
+                                if not no_html then
+                                    message = string.format("%s %s", message,
+                                        flow_risk_utils.get_remediation_documentation_link(alert_risk, "nDPI"))
+                                end
+                                local info_msg = alert_utils.get_flow_risk_info(alert_risk, alert_json)
+                                if not isEmptyString(info_msg) then
+                                    message = string.format("%s [%s]", message, info_msg)
+                                end
                             end
-                        end
 
-                        if not other_alerts_by_score[alert_score] then
-                            other_alerts_by_score[alert_score] = {}
-                        end
+                            if not other_alerts_by_score[alert_score] then
+                                other_alerts_by_score[alert_score] = {}
+                            end
 
-                        other_alerts_by_score[alert_score][#other_alerts_by_score[alert_score] + 1] = message
-                        if json_format then
-                            additional_alerts[#additional_alerts + 1] = {
-                                msg = message,
-                                score = alert_score,
-                                alert_id = alert_id
-                            }                            
-                        else
-                            additional_alerts[#additional_alerts + 1] = message
+                            other_alerts_by_score[alert_score][#other_alerts_by_score[alert_score] + 1] = message
+                            if json_format then
+                                additional_alerts[#additional_alerts + 1] = {
+                                    msg = message,
+                                    score = alert_score,
+                                    alert_id = alert_id
+                                }
+                            else
+                                additional_alerts[#additional_alerts + 1] = message
+                            end
                         end
                     end
                 end
             end
-        end
 
-        -- Increment the nibble
-        nibble_num = nibble_num + 1
+            -- Increment the nibble
+            nibble_num = nibble_num + 1
+        end
+    else
+        -- This is for new code, where all the alerts can be found
+        -- in the alert_json
+        for alert_id, alert in pairs(alert_json.alerts or {}) do
+            local message = alert_consts.alertTypeLabel(alert_id, true, alert_entities.flow.entity_id)
+            message = message .. " " .. alert_consts.addExtraInfo(alert_id, alert_entities.flow.entity_id, alert_json)
+            if json_format then
+                additional_alerts[#additional_alerts + 1] = {
+                    msg = message,
+                    score = alert.score,
+                    alert_id = alert_id
+                }
+            else
+                additional_alerts[#additional_alerts + 1] = message
+            end
+        end
     end
 
     return other_alerts_by_score, additional_alerts

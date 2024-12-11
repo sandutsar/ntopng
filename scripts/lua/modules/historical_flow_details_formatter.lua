@@ -230,7 +230,8 @@ end
 
 -- a###############################################
 
-local function format_historical_issue_description(alert, alert_id, score, title, msg, info, alert_scores, add_remediation, riskInfo, alert_info)
+local function format_historical_issue_description(alert, alert_id, score, title, msg, info, alert_scores,
+                                                   add_remediation, riskInfo, alert_info)
     local alert_consts = require "alert_consts"
     local alert_entities = require "alert_entities"
 
@@ -245,7 +246,7 @@ local function format_historical_issue_description(alert, alert_id, score, title
     local alert_risk = ntop.getFlowAlertRisk(tonumber(alert_id))
     local alert_src
     local riskLabel = ""
-    
+
     if (tonumber(alert_risk) == 0) then
         alert_src = "ntopng"
         alert_risk = alert_id
@@ -263,11 +264,11 @@ local function format_historical_issue_description(alert, alert_id, score, title
 
     if riskInfo then
         if type(riskInfo) == "string" then -- backward compatibility
-           riskInfo = json.decode(riskInfo)
+            riskInfo = json.decode(riskInfo)
         end
 
         if riskInfo and riskInfo[tostring(alert_risk)] then
-           riskLabel = riskInfo[tostring(alert_risk)]
+            riskLabel = riskInfo[tostring(alert_risk)]
         end
     end
 
@@ -324,14 +325,20 @@ local function format_historical_issues(flow_details, flow)
     local alert_store_utils = require "alert_store_utils"
     local alert_entities = require "alert_entities"
     local format_utils = require "format_utils"
-    local alert_store_instances = alert_store_utils.all_instances_factory()
+    local alert_consts = require "alert_consts"
     local alert_utils = require "alert_utils"
+    local alert_store_instances = alert_store_utils.all_instances_factory()
     local alert_json = json.decode(flow["ALERT_JSON"] or '') or {}
     local details = ""
     local alert
     local riskInfo = {}
-
+    local alert_scores = {}
+    local alert_id = tonumber(flow["STATUS"] or 0)
+    local html = "<table class=\"table table-bordered table-striped\" width=100%>\n" ..
+        "<tr><th>" .. i18n("description") .. "</th><th>" .. i18n("score") .. "</th><th>" .. i18n("info") ..
+        " / " .. i18n("remediation") .. "</th><th>" .. i18n("mitre_id") .. "</th></tr>\n"
     local alert_store_instance = alert_store_instances[alert_entities["flow"].alert_store_name]
+    local main_alert_score
 
     if alert_store_instance then
         local alerts, _ = alert_store_instance:select_request(nil, "*")
@@ -341,33 +348,41 @@ local function format_historical_issues(flow_details, flow)
         end
     end
 
-    local alert_scores = {}
+    if alert_json and alert_json.flow_risk_info then
+        riskInfo = alert_json.flow_risk_info
+    elseif alert_json and alert_json.alert_generation and alert_json.alert_generation.flow_risk_info then
+        -- Keep the code divided due to optimizations
+        riskInfo = alert_json.alert_generation.flow_risk_info
+    end
+
     if alert_json and alert_json.alerts then
         for alert_id, values in pairs(alert_json.alerts or {}) do
             alert_scores[alert_id] = values.score
         end
     else
+        local alert_label = i18n("flow_details.normal")
         alert_scores = alert_json.alert_score
-    end
+        main_alert_score = ntop.getFlowAlertScore(tonumber(alert_id))
 
-
-    local alert_consts = require "alert_consts"
-    local alert_label = i18n("flow_details.normal")
-    local alert_id = tonumber(flow["STATUS"] or 0)
-    local main_alert_score = ntop.getFlowAlertScore(tonumber(alert_id))
-
-    if alert_json and alert_json.flow_risk_info then
-        riskInfo = alert_json.flow_risk_info
-    elseif alert_json and alert_json.alert_generation and alert_json.alert_generation.flow_risk_info then
-        riskInfo = alert_json.alert_generation.flow_risk_info
+        -- No status set
+        if (alert_id ~= 0) then
+            alert_label = alert_consts.alertTypeLabel(alert_id, true)
+            html = html ..
+                format_historical_issue_description(alert, tostring(alert_id), tonumber(main_alert_score),
+                    i18n("issues_score"), alert_label, details, alert_scores, true, riskInfo)
+        end
     end
 
     -- Check if there is a custom score
     if alert_scores and alert_scores[tostring(alert_id)] then
         main_alert_score = alert_scores[tostring(alert_id)]
     end
+
     local severity_id = map_score_to_severity(main_alert_score)
     local severity = alert_consts.alertSeverityById(severity_id)
+    local _, other_issues = alert_utils.format_other_alerts(flow['ALERTS_MAP'], flow['STATUS'], alert_json, false,
+        nil,
+        true)
 
     flow_details[#flow_details + 1] = {
         name = i18n('total_flow_score'),
@@ -376,26 +391,8 @@ local function format_historical_issues(flow_details, flow)
         '</span>', '' }
     }
 
-    local html = ""
-
-    -- No status set
-    if (alert_id ~= 0) then
-        alert_label = alert_consts.alertTypeLabel(alert_id, true)
-
-        html = "<table class=\"table table-bordered table-striped\" width=100%>\n"
-        html =
-            html .. "<tr><th>" .. i18n("description") .. "</th><th>" .. i18n("score") .. "</th><th>" .. i18n("info") ..
-            " / " .. i18n("remediation") .. "</th><th>" .. i18n("mitre_id") .. "</th></tr>\n"
-        html = html ..
-            format_historical_issue_description(alert, tostring(alert_id), tonumber(main_alert_score),
-                i18n("issues_score"), alert_label, details, alert_scores, true, riskInfo)
-    end
-
-    local _, other_issues = alert_utils.format_other_alerts(flow['ALERTS_MAP'], flow['STATUS'], alert_json, false, nil,
-        true)
-
     if table.len(other_issues) > 0 then
-        for _, issue in pairs(other_issues or {}) do
+        for _, issue in pairsByField(other_issues or {}, "score", rev) do
             local msg, info
             local pieces = string.split(issue.msg, "%[")
 
@@ -554,7 +551,7 @@ end
 local function format_historical_application_latency(latency)
     return {
         name = i18n("flow_details.application_latency"),
-        values = {(tonumber(latency)) .. " ms"}
+        values = { (tonumber(latency)) .. " ms" }
     }
 end
 
@@ -755,10 +752,12 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
                 rowspan = rowspan + 1
             end
             flow_details = table.merge(flow_details,
-                format_historical_flow_traffic_stats(rowspan, protocol_info_json["traffic_stats"]["cli2srv_retransmissions"],
+                format_historical_flow_traffic_stats(rowspan,
+                    protocol_info_json["traffic_stats"]["cli2srv_retransmissions"],
                     protocol_info_json["traffic_stats"]["srv2cli_retransmissions"],
                     protocol_info_json["traffic_stats"]["cli2srv_out_of_order"],
-                    protocol_info_json["traffic_stats"]["srv2cli_out_of_order"], protocol_info_json["traffic_stats"]["cli2srv_lost"],
+                    protocol_info_json["traffic_stats"]["srv2cli_out_of_order"],
+                    protocol_info_json["traffic_stats"]["cli2srv_lost"],
                     protocol_info_json["traffic_stats"]["srv2cli_lost"]))
         end
 
