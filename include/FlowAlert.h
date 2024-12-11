@@ -67,7 +67,10 @@ class FlowAlert {
 
   virtual FlowAlertType getAlertType() const = 0;
   inline u_int8_t getAlertScore() const { return alert_score; };
-  inline void setAlertScore(u_int8_t value) { alert_score = value; };
+  inline void setAlertScore(u_int8_t value) {
+    if (value > SCORE_MAX_VALUE) value = SCORE_MAX_VALUE;
+    alert_score = value; 
+  };
   
   /* false = alert that requires attention, true = not important (auto ack) */
   virtual bool autoAck() const { return true; };
