@@ -31,7 +31,7 @@ class DNSDataExfiltrationAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_WARNING; };
 
-  DNSDataExfiltrationAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  DNSDataExfiltrationAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~DNSDataExfiltrationAlert(){};
 
   bool autoAck() const { return false; };

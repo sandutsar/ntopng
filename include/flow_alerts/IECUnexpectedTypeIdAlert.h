@@ -52,6 +52,7 @@ class IECUnexpectedTypeIdAlert : public FlowAlert {
     asdu = _asdu;
     cause_tx = _cause_tx;
     negative = _negative;
+    setAlertScore(getDefaultScore());
   };
   ~IECUnexpectedTypeIdAlert(){};
 

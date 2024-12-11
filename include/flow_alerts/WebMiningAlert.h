@@ -32,7 +32,7 @@ class WebMiningAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_WARNING; };
 
-  WebMiningAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  WebMiningAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~WebMiningAlert(){};
 
   bool autoAck() const { return false; };

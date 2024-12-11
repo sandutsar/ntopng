@@ -38,6 +38,7 @@ class ModbusTooManyExceptionsAlert : public FlowAlert {
 
   ModbusTooManyExceptionsAlert(FlowCheck* c, Flow* f, u_int32_t _num_exceptions) : FlowAlert(c, f) {
     num_exceptions = _num_exceptions;
+    setAlertScore(getDefaultScore());
   };
   ~ModbusTooManyExceptionsAlert(){};
 

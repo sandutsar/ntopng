@@ -40,6 +40,7 @@ class ModbusUnexpectedFunctionCodeAlert : public FlowAlert {
 
   ModbusUnexpectedFunctionCodeAlert(FlowCheck* c, Flow* f, u_int8_t _function_code) : FlowAlert(c, f) {
     function_code = _function_code;
+    setAlertScore(getDefaultScore());
   };
   ~ModbusUnexpectedFunctionCodeAlert(){};
 

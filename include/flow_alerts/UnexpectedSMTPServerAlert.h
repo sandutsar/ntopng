@@ -33,7 +33,7 @@ class UnexpectedSMTPServerAlert : public UnexpectedServerAlert {
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
   UnexpectedSMTPServerAlert(FlowCheck *c, Flow *f)
-      : UnexpectedServerAlert(c, f){};
+      : UnexpectedServerAlert(c, f){setAlertScore(getDefaultScore());};
   ~UnexpectedSMTPServerAlert(){};
 
   bool autoAck() const { return false; };

@@ -32,7 +32,7 @@ class VLANBidirectionalTrafficAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
-  VLANBidirectionalTrafficAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){};
+  VLANBidirectionalTrafficAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~VLANBidirectionalTrafficAlert(){};
   FlowAlertType getAlertType() const { return getClassType(); }
 };

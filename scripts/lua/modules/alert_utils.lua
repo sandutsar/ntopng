@@ -781,7 +781,7 @@ function alert_utils.format_other_alerts(alert_bitmap, predominant_alert, alert_
     local other_alerts_by_score = {} -- Table used to keep messages ordered by score
     local additional_alerts = {}
     -- This is for old data, so keep it like this
-    if not (alert_json) and (alert_json.alerts) then
+    if not (alert_json) or (aler_json and not alert_json.alerts) then
         -- Unpack all flow alerts, iterating the alerts_map. The alerts_map is stored as an HEX.
         local nibble_num = 0 -- Current nibble being processed
         for alerts_map_nibble_id = #alert_bitmap, 1, -1 do

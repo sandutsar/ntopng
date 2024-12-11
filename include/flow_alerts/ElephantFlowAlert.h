@@ -43,6 +43,7 @@ class ElephantFlowAlert : public FlowAlert {
       : FlowAlert(c, f) {
     l2r_th = _l2r_th;
     r2l_th = _r2l_th;
+    setAlertScore(getDefaultScore());
   };
   ~ElephantFlowAlert(){};
 

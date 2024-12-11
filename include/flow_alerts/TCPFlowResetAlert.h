@@ -31,7 +31,7 @@ class TCPFlowResetAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_NOTICE; };
 
-  TCPFlowResetAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){};
+  TCPFlowResetAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~TCPFlowResetAlert(){};
   
   FlowAlertType getAlertType() const { return getClassType(); }

@@ -32,7 +32,7 @@ class TCPZeroWindowAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_NOTICE; };
 
-  TCPZeroWindowAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  TCPZeroWindowAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~TCPZeroWindowAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }

@@ -34,7 +34,7 @@ class BroadcastNonUDPTrafficAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
-  BroadcastNonUDPTrafficAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){};
+  BroadcastNonUDPTrafficAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~BroadcastNonUDPTrafficAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }

@@ -34,7 +34,7 @@ class RemoteToLocalInsecureFlowAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
-  RemoteToLocalInsecureFlowAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){};
+  RemoteToLocalInsecureFlowAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~RemoteToLocalInsecureFlowAlert(){};
 
   bool autoAck() const { return false; };

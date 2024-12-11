@@ -34,7 +34,7 @@ class LowGoodputFlowAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_NOTICE; };
 
-  LowGoodputFlowAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  LowGoodputFlowAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~LowGoodputFlowAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }

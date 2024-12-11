@@ -36,7 +36,7 @@ class UnexpectedDNSServerAlert : public UnexpectedServerAlert {
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
   UnexpectedDNSServerAlert(FlowCheck *c, Flow *f)
-      : UnexpectedServerAlert(c, f){};
+      : UnexpectedServerAlert(c, f){setAlertScore(getDefaultScore());};
   ~UnexpectedDNSServerAlert(){};
 
   bool autoAck() const { return false; };

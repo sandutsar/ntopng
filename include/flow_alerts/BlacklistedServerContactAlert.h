@@ -34,7 +34,7 @@ class BlacklistedServerContactAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_CRITICAL; };
 
-  BlacklistedServerContactAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f) {};
+  BlacklistedServerContactAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f) {setAlertScore(getDefaultScore());};
   ~BlacklistedServerContactAlert(){};
 
   bool autoAck() const { return false; };

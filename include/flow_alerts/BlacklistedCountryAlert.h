@@ -41,6 +41,7 @@ class BlacklistedCountryAlert : public FlowAlert {
   BlacklistedCountryAlert(FlowCheck* c, Flow* f, bool _is_server)
       : FlowAlert(c, f) {
     is_server = _is_server;
+    setAlertScore(getDefaultScore());
   };
   ~BlacklistedCountryAlert(){};
 

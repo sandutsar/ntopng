@@ -34,7 +34,7 @@ class PeriodicityChangedAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_NOTICE; };
 
-  PeriodicityChangedAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  PeriodicityChangedAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~PeriodicityChangedAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }

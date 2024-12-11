@@ -51,6 +51,7 @@ class IECInvalidCommandTransitionAlert : public FlowAlert {
     transitions_c_to_m = _transitions_c_to_m;
     transitions_c_to_c = _transitions_c_to_c;
     packet_epoch = _time->tv_sec;
+    setAlertScore(getDefaultScore());
   };
   ~IECInvalidCommandTransitionAlert(){};
 

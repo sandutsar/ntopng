@@ -34,7 +34,7 @@ class DeviceProtocolNotAllowedAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
-  DeviceProtocolNotAllowedAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){};
+  DeviceProtocolNotAllowedAlert(FlowCheck* c, Flow* f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~DeviceProtocolNotAllowedAlert(){};
 
   bool autoAck() const { return false; };

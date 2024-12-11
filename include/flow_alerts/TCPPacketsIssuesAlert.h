@@ -42,6 +42,7 @@ class TCPPacketsIssuesAlert : public FlowAlert {
     retransmission = _retransmission;
     out_of_order = _out_of_order;
     lost = _lost;
+    setAlertScore(getDefaultScore());
   };
   ~TCPPacketsIssuesAlert(){};
 

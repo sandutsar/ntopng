@@ -29,7 +29,7 @@ class TCPNoDataExchangedAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_NOTICE; };
 
-  TCPNoDataExchangedAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  TCPNoDataExchangedAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~TCPNoDataExchangedAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }

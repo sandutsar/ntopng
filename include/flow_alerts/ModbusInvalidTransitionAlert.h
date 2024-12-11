@@ -47,6 +47,7 @@ class ModbusInvalidTransitionAlert : public FlowAlert {
     type_i = _type_i;
     type_id = _type_id;
     packet_epoch = _time->tv_sec;
+    setAlertScore(getDefaultScore());
   };
   ~ModbusInvalidTransitionAlert(){};
 

@@ -33,7 +33,7 @@ class UnexpectedNTPServerAlert : public UnexpectedServerAlert {
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
   UnexpectedNTPServerAlert(FlowCheck *c, Flow *f)
-      : UnexpectedServerAlert(c, f){};
+      : UnexpectedServerAlert(c, f){setAlertScore(getDefaultScore());};
   ~UnexpectedNTPServerAlert(){};
 
   bool autoAck() const { return false; };

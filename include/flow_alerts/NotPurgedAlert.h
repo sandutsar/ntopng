@@ -32,7 +32,7 @@ class NotPurgedAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_WARNING; };
 
-  NotPurgedAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  NotPurgedAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
   ~NotPurgedAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }

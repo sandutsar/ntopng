@@ -41,6 +41,7 @@ class LongLivedFlowAlert : public FlowAlert {
   LongLivedFlowAlert(FlowCheck *c, Flow *f, u_int64_t _longlived_th)
       : FlowAlert(c, f) {
     longlived_th = _longlived_th;
+    setAlertScore(getDefaultScore());
   };
   ~LongLivedFlowAlert(){};
 
