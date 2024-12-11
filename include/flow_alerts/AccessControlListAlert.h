@@ -31,7 +31,7 @@ class AccessControlListAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_ERROR; };
 
-  AccessControlListAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){};
+  AccessControlListAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){ setAlertScore(getDefaultScore()); };
   ~AccessControlListAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }

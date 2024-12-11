@@ -341,7 +341,16 @@ local function format_historical_issues(flow_details, flow)
         end
     end
 
-    local alert_scores = alert_json.alert_score
+    local alert_scores = {}
+    if alert_json and alert_json.alerts then
+        for alert_id, values in pairs(alert_json.alerts or {}) do
+            alert_scores[alert_id] = values.score
+        end
+    else
+        alert_scores = alert_json.alert_score
+    end
+
+
     local alert_consts = require "alert_consts"
     local alert_label = i18n("flow_details.normal")
     local alert_id = tonumber(flow["STATUS"] or 0)
