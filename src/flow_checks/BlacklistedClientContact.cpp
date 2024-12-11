@@ -26,15 +26,16 @@
 
 void BlacklistedClientContact::protocolDetected(Flow *f) {
   if (f->isBlacklistedClient() && f->isRemoteToLocal()) {
-    FlowAlertType alert_type = BlacklistedClientContactAlert::getClassType();
     u_int8_t c_score, s_score;
     risk_percentage cli_score_pctg = CLIENT_FAIR_RISK_PERCENTAGE;
     
-    computeCliSrvScore(ntop->getFlowAlertScore(alert_type.id), cli_score_pctg, &c_score, &s_score);
-    
     FlowAlert *alert = buildAlert(f);
-    alert->setCliSrvScores(c_score, s_score);
-    f->triggerAlert(alert);
+
+    if (alert) {
+      computeCliSrvScore(alert->getAlertScore(), cli_score_pctg, &c_score, &s_score);
+      alert->setCliSrvScores(c_score, s_score);
+      f->triggerAlert(alert);
+    }
   }
 }
 

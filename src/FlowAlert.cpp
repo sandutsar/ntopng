@@ -59,6 +59,8 @@ const char *FlowAlert::getSerializedAlert() {
   ndpi_serialize_string_string(&serializer, "subdir", "flow");
   ndpi_serialize_end_of_block(&serializer);
 
+  ndpi_serialize_string_uint32(&serializer, "score", getAlertScore());
+
   getAlertJSON(&serializer);
 
   json = ndpi_serializer_get_buffer(&serializer, &json_len);
