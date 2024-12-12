@@ -54,7 +54,7 @@ local function countHosts()
         hosts = 0
     }
 
-    for host, info in callback_utils.getHostsIterator(false --[[no details]] ) do
+    for host, info in callback_utils.getHostsIterator(false --[[no details]]) do
         if info.localhost then
             res.local_hosts = res.local_hosts + 1
         end
@@ -115,18 +115,18 @@ function dumpInterfaceStats(ifid)
         res["bytes"] = ifstats.stats_since_reset.bytes
         res["drops"] = drops
 
-	local tot_pkt = 0
-	local tot_pkt_drops = 0
+        local tot_pkt = 0
+        local tot_pkt_drops = 0
 
-	for interface_id, probes_list in pairs(ifstats.probes or {}) do
-	   for source_id, probe_info in pairs(probes_list or {}) do
-	      tot_pkt = tot_pkt + probe_info["packets.total"]
-	      tot_pkt_drops = tot_pkt_drops + probe_info["packets.drops"]
-	   end
-	end
+        for interface_id, probes_list in pairs(ifstats.probes or {}) do
+            for source_id, probe_info in pairs(probes_list or {}) do
+                tot_pkt = tot_pkt + probe_info["packets.total"]
+                tot_pkt_drops = tot_pkt_drops + probe_info["packets.drops"]
+            end
+        end
 
-	res["tot_nprobe_pkts"] = tot_pkt
-	res["tot_pkt_drops"]   = tot_pkt_drops
+        res["tot_nprobe_pkts"] = tot_pkt
+        res["tot_pkt_drops"]   = tot_pkt_drops
 
         if ifstats.stats_since_reset.discarded_probing_packets then
             res["discarded_probing_packets"] = ifstats.stats_since_reset.discarded_probing_packets
@@ -246,7 +246,6 @@ function dumpInterfaceStats(ifid)
         end
 
         if (ifstats.zmqRecvStats ~= nil) then
-
             if ifstats.zmqRecvStats_since_reset then
                 -- override stats with the values calculated from the latest user reset
                 -- for consistency with if_stats.lua
@@ -263,7 +262,7 @@ function dumpInterfaceStats(ifid)
             res["zmqRecvStats"]["zmq_msg_rcvd"] = ifstats.zmqRecvStats.zmq_msg_rcvd
             res["zmqRecvStats"]["zmq_msg_drops"] = ifstats.zmqRecvStats.zmq_msg_drops
             res["zmqRecvStats"]["zmq_avg_msg_flows"] = math.max(1, (ifstats.zmqRecvStats.flows or 0) /
-								((ifstats.zmqRecvStats.zmq_msg_rcvd or 0) + 1))
+                ((ifstats.zmqRecvStats.zmq_msg_rcvd or 0) + 1))
 
             res["zmq.num_flow_exports"] = ifstats["zmq.num_flow_exports"] or 0
             res["zmq.num_exporters"] = ifstats["zmq.num_exporters"] or 0
@@ -316,7 +315,7 @@ function dumpInterfaceStats(ifid)
 
         -- Adding a preference if active discovery is enabled
         res["active_discovery_active"] = ntop.getPref("ntopng.prefs.is_periodic_network_discovery_running.ifid_" ..
-                                                          interface.getId()) == "1"
+            interface.getId()) == "1"
     end
 
     return res
@@ -378,6 +377,11 @@ function dumpBriefInterfaceStats(ifid)
             res["num_local_hosts"] = countHosts().local_hosts
         end
 
+        if ifstats.zmqRecvStats_since_reset then
+            res["dropped_zmq_msg"] = ifstats.zmqRecvStats_since_reset.zmq_msg_drops
+            res["dropped_flows"] = ifstats.zmqRecvStats_since_reset.dropped_flows
+        end
+
         res["localtime"] = os.date("%H:%M:%S %z", res["epoch"])
         res["uptime"] = secondsToTime(uptime)
         if ntop.isPro() then
@@ -430,7 +434,7 @@ function dumpBriefInterfaceStats(ifid)
 
         -- Adding a preference if active discovery is enabled
         res["active_discovery_active"] = ntop.getPref("ntopng.prefs.is_periodic_network_discovery_running.ifid_" ..
-                                                          interface.getId()) == "1"
+            interface.getId()) == "1"
 
         res["is_loading"] = ifstats.isLoading
     end

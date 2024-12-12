@@ -388,7 +388,12 @@ print[[
 							msg += "</span></a>";
 						}
 					}
-
+					if (rsp.dropped_zmq_msg > 0) {
+						msg += "<a href=']] print (ntop.getHttpPrefix()) print [[/lua/if_stats.lua'><span class=\"badge bg-warning\"><i class=\"fas fa-tint\" style=\"color: #FFFFFF;\"></i> "+NtopUtils.formatValue(rsp.dropped_zmq_msg, 1)+" ZMQ Drops</span></a>";
+					}
+					if (rsp.dropped_flows > 0) {
+						msg += "<a href=']] print (ntop.getHttpPrefix()) print [[/lua/if_stats.lua'><span class=\"badge bg-warning\"><i class=\"fas fa-tint\" style=\"color: #FFFFFF;\"></i> "+NtopUtils.formatValue(rsp.dropped_flows, 1)+" Flows Drops</span></a>";
+					}
 				}
 
 				if ((rsp.num_live_captures != undefined) && (rsp.num_live_captures > 0) && (!systemInterfaceEnabled)) {
