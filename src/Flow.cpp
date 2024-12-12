@@ -8248,9 +8248,8 @@ bool Flow::setAlertsMap(FlowAlert *alert) {
   /* Check if the same alert has been already triggered and
    * accounted in the score */
   if(alerts_map.isSetBit(alert_type.id)) {
-    /* TODO replace the alert rather then skipping it as it may contain updated values
-     * or let the check update the alert content rather than triggering a new alert.
-     * In any case, should we also send out a new notitication? */
+    /* In case of the same alert triggered multiple times, we keep the
+     * first one only, and send out a single notificaiton. */ 
 #ifdef DEBUG_SCORE
     ntop->getTrace()->traceEvent(TRACE_NORMAL,
 				 "[%s] Discarding alert type %u (already set)",
