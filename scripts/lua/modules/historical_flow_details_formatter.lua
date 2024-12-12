@@ -240,7 +240,7 @@ local function format_historical_issue_description(alert, alert_id, score, title
     end
 
     if alert_scores and alert_scores[alert_id] then
-        score = alert_scores[alert_id]
+        score = alert_scores[alert_id] or 0
     end
     -- If alert risk is 0 then it comes from ntonpg, else nDPI
     local alert_risk = ntop.getFlowAlertRisk(tonumber(alert_id))
