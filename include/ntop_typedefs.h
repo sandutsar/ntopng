@@ -570,7 +570,7 @@ typedef enum {
   host_alert_dangerous_host = 14,
   host_alert_notused_3 = 15,
   host_alert_countries_contacts = 16,
-  host_alert_score_threshold = 17,
+  host_alert_notused_5 = 17,
   host_alert_icmp_flood = 18,
   host_alert_notused_4 = 19,
   host_alert_scan_detected = 20,

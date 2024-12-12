@@ -76,7 +76,6 @@ void HostChecksLoader::registerChecks() {
   if ((fcb = new UnexpectedGateway()))   registerCheck(fcb);
   if ((fcb = new DangerousHost()))       registerCheck(fcb);
   if ((fcb = new DomainNamesContacts())) registerCheck(fcb);
-  if ((fcb = new ScoreThreshold()))      registerCheck(fcb);
   if ((fcb = new ICMPFlood()))           registerCheck(fcb);
   if ((fcb = new ScanDetection()))       registerCheck(fcb);
 

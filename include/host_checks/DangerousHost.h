@@ -26,12 +26,12 @@
 
 class DangerousHost : public HostCheck {
  private:
-  u_int64_t score_threshold;
+  u_int32_t score_threshold;
 
   HostAlert *allocAlert(HostCheck *c, Host *h, risk_percentage cli_pctg,
-                        u_int64_t _score, u_int64_t _consecutive_high_score) {
+                        u_int32_t _score, u_int32_t _consecutive_high_score, u_int32_t score_threshold) {
     DangerousHostAlert *alert =
-        new DangerousHostAlert(c, h, cli_pctg, _score, _consecutive_high_score);
+        new DangerousHostAlert(c, h, cli_pctg, _score, _consecutive_high_score, score_threshold);
 
     if (cli_pctg != CLIENT_NO_RISK_PERCENTAGE) alert->setAttacker();
 

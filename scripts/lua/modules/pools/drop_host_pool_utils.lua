@@ -24,8 +24,9 @@ drop_host_pool_utils.max_ids_ips_log_queue_len = 256
 
 -- ############################################
 
-local DROP_HOST_POOL_HOST_IN_JAIL = "ntopng.cache.jail.time.%s" -- Sync with ntop_defines.h DROP_HOST_POOL_PRE_JAIL_POOL
-local DROP_HOST_POOL_PRE_JAIL_POOL = "ntopng.prefs.jail.pre_jail_pool.%s" -- Sync with ntop_defines.h DROP_HOST_POOL_PRE_JAIL_POOL
+local DROP_HOST_POOL_HOST_IN_JAIL = "ntopng.cache.jail.time.%s"           -- Sync with ntop_defines.h DROP_HOST_POOL_PRE_JAIL_POOL
+local DROP_HOST_POOL_PRE_JAIL_POOL =
+"ntopng.prefs.jail.pre_jail_pool.%s"                                      -- Sync with ntop_defines.h DROP_HOST_POOL_PRE_JAIL_POOL
 
 -- ############################################
 
@@ -40,14 +41,14 @@ function drop_host_pool_utils.check_pre_banned_hosts_to_add()
       local elem = ntop.lpopCache(queue_name)
 
       if not host_pool then
-	 -- Lazily initialize the jailed pool
-	 host_pool = host_pools:create()
-	 jailed_pool = host_pool:get_pool_by_name(host_pools.DROP_HOST_POOL_NAME)
+         -- Lazily initialize the jailed pool
+         host_pool = host_pools:create()
+         jailed_pool = host_pool:get_pool_by_name(host_pools.DROP_HOST_POOL_NAME)
 
-	 if not jailed_pool then
-	    -- Jailed pool cannot be found, unable to continue
-	    return
-	 end
+         if not jailed_pool then
+            -- Jailed pool cannot be found, unable to continue
+            return
+         end
       end
 
       -- Add elem to the jailed host pool
@@ -58,7 +59,7 @@ function drop_host_pool_utils.check_pre_banned_hosts_to_add()
       end
 
       if not changed then
-	 changed = true
+         changed = true
       end
 
       num_pending = num_pending - 1
@@ -66,15 +67,15 @@ function drop_host_pool_utils.check_pre_banned_hosts_to_add()
 
    -- Read rules from configured pools and policies
    -- and push rules to the nProbe listeners
-   if(changed) then
+   if (changed) then
       if ntop.isPro() then
-	 package.path = dirs.installdir .. "/pro/scripts/lua/modules/?.lua;" .. package.path
-	 local policy_utils = require "policy_utils"
+         package.path = dirs.installdir .. "/pro/scripts/lua/modules/?.lua;" .. package.path
+         local policy_utils = require "policy_utils"
 
-	 local rsp = policy_utils.get_ips_rules()
-	 if(rsp ~= nil) then
-	    ntop.broadcastIPSMessage(rsp)
-	 end
+         local rsp = policy_utils.get_ips_rules()
+         if (rsp ~= nil) then
+            ntop.broadcastIPSMessage(rsp)
+         end
       end
    end
 end
@@ -101,43 +102,44 @@ function drop_host_pool_utils.check_periodic_hosts_list()
 
       -- If the key is nil, it means the TTL has expired and it is time to remove the host from the jail
       if isEmptyString(still_jailed) then
-	 -- Check if there's a key indicating the host pool before the jail
-	 local pre_jail_pool_key = string.format(DROP_HOST_POOL_PRE_JAIL_POOL, member)
-	 local pre_jail_pool = ntop.getCache(pre_jail_pool_key)
+         -- Check if there's a key indicating the host pool before the jail
+         local pre_jail_pool_key = string.format(DROP_HOST_POOL_PRE_JAIL_POOL, member)
+         local pre_jail_pool = ntop.getCache(pre_jail_pool_key)
 
-	 local ret = false
-	 if not isEmptyString(pre_jail_pool) then
-	    -- Bind to the old pool. If bind is successful, i.e., pool still exists,
-	    -- then ret becomes true.
-	    ret = host_pool:bind_member(member, pre_jail_pool)
-	 end
+         local ret = false
+         if not isEmptyString(pre_jail_pool) then
+            -- Bind to the old pool. If bind is successful, i.e., pool still exists,
+            -- then ret becomes true.
+            ret = host_pool:bind_member(member, pre_jail_pool)
+         end
 
-	 if not ret then
-	    -- Bind to the default pool
-	    ret = host_pool:bind_member(member, pools.DEFAULT_POOL_ID)
-	 end
+         if not ret then
+            -- Bind to the default pool
+            ret = host_pool:bind_member(member, pools.DEFAULT_POOL_ID)
+         end
 
-	 if ret then
-	    if is_ids_ips_log_enabled then
-	       ntop.rpushCache(drop_host_pool_utils.ids_ips_jail_remove_key, member, drop_host_pool_utils.max_ids_ips_log_queue_len)
-	    end
+         if ret then
+            if is_ids_ips_log_enabled then
+               ntop.rpushCache(drop_host_pool_utils.ids_ips_jail_remove_key, member,
+                  drop_host_pool_utils.max_ids_ips_log_queue_len)
+            end
 
-	    changed = true
-	 end
+            changed = true
+         end
       end
    end
 
    -- Read rules from configured pools and policies
    -- and push rules to the nProbe listeners
-   if(changed) then
+   if (changed) then
       if ntop.isPro() then
-	 package.path = dirs.installdir .. "/pro/scripts/lua/modules/?.lua;" .. package.path
-	 local policy_utils = require "policy_utils"
+         package.path = dirs.installdir .. "/pro/scripts/lua/modules/?.lua;" .. package.path
+         local policy_utils = require "policy_utils"
 
-	 local rsp = policy_utils.get_ips_rules()
-	 if(rsp ~= nil) then
-	    ntop.broadcastIPSMessage(rsp)
-	 end
+         local rsp = policy_utils.get_ips_rules()
+         if (rsp ~= nil) then
+            ntop.broadcastIPSMessage(rsp)
+         end
       end
    end
 end
@@ -147,11 +149,11 @@ end
 function drop_host_pool_utils.clean_list()
    if is_ids_ips_log_enabled then
       local alert = ntop.lpopCache(drop_host_pool_utils.ids_ips_jail_add_key)
-      while(alert) do
+      while (alert) do
          alert = ntop.lpopCache(drop_host_pool_utils.ids_ips_jail_add_key)
-      end   
+      end
       alert = ntop.lpopCache(drop_host_pool_utils.ids_ips_jail_remove_key)
-      while(alert) do
+      while (alert) do
          alert = ntop.lpopCache(drop_host_pool_utils.ids_ips_jail_remove_key)
       end
    end

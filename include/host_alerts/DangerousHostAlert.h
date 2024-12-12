@@ -26,7 +26,7 @@
 
 class DangerousHostAlert : public HostAlert {
  private:
-  u_int64_t score, consecutive_high_score;
+  u_int32_t score, consecutive_high_score, threshold;
 
   ndpi_serializer* getAlertJSON(ndpi_serializer* serializer);
 
@@ -36,9 +36,11 @@ class DangerousHostAlert : public HostAlert {
   }
 
   DangerousHostAlert(HostCheck* c, Host* f, risk_percentage cli_pctg,
-                     u_int64_t _score, u_int8_t _consecutive_high_score);
+                     u_int32_t _score, u_int8_t _consecutive_high_score,
+                     u_int32_t threshold);
   ~DangerousHostAlert(){};
 
+  bool autoAck() const { return false; };
   HostAlertType getAlertType() const { return getClassType(); }
   u_int8_t getAlertScore() const { return SCORE_LEVEL_ERROR; };
 };

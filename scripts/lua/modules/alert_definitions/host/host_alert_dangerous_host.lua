@@ -61,6 +61,7 @@ function host_alert_dangerous_host.format(ifid, alert, alert_type_params)
     entity = entity,
     score = alert_type_params["score"],
     duration = alert_type_params["consecutive_high_score"],
+    threshold = alert_type_params["threshold"]
   })
 end
 
