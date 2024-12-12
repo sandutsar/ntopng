@@ -525,8 +525,8 @@ float Utils::timeval2ms(const struct timeval *tv) {
 
 /* ****************************************************** */
 
-u_int32_t Utils::timeval2usec(const struct timeval *tv) {
-  return (tv->tv_sec * 1000000 + tv->tv_usec);
+u_int64_t Utils::timeval2usec(const struct timeval *tv) {
+  return ((u_int64_t) tv->tv_sec * 1000000 + tv->tv_usec);
 }
 
 /* ****************************************************** */

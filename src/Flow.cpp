@@ -8334,6 +8334,8 @@ bool Flow::setAlertsMap(FlowAlert *alert) {
 
 /* *************************************** */
 
+/* Trigger an alert.
+ * alert is released then the flow is released * do NOT free on the caller * */
 bool Flow::triggerAlert(FlowAlert *alert, bool sync) {
   bool res;
 

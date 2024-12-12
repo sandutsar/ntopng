@@ -155,7 +155,7 @@ class Utils {
   static char *intoaV4(unsigned int addr, char *buf, u_short bufLen);
   static char *intoaV6(struct ndpi_in6_addr ipv6, u_int8_t bitmask, char *buf,
                        u_short bufLen);
-  static u_int32_t timeval2usec(const struct timeval *tv);
+  static u_int64_t timeval2usec(const struct timeval *tv);
   static void xor_encdec(u_char *data, int data_len, u_char *key);
   static bool isPrintableChar(u_char c);
   static char *formatMacAddress(const u_int8_t *const mac, char *buf, u_int buf_len);
