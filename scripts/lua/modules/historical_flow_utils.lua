@@ -1946,5 +1946,89 @@ function historical_flow_utils.getAvailableColumns()
   return data
 end
 
+-- #####################################
+
+-- Given a flow returned from clickhouse, transform into the flow_alert format
+function historical_flow_utils.convertFlowToAlert(flow)
+   local alert = {}
+   local alert_entities = require "alert_entities"
+
+   if flow and table.len(flow) > 0 then
+      local cli_ip = flow.IPV4_SRC_ADDR
+      local srv_ip = flow.IPV4_DST_ADDR
+      if cli_ip == '0.0.0.0' then
+         cli_ip = flow.IPV6_SRC_ADDR
+      end
+      if srv_ip == '0.0.0.0' then
+         srv_ip = flow.IPV4_DST_ADDR
+      end
+      alert = {
+         cli2srv_bytes = flow.SRC2DST_BYTES,
+         info = flow.INFO,
+         tstamp_end_epoch = flow.LAST_SEEN,
+         src2dst_tcp_flags = flow.SRC2DST_TCP_FLAGS,
+         src2dst_dscp = flow.SRC2DST_DSCP,
+         probe_ip = flow.PROBE_IP,
+         tstamp_epoch = flow.FIRST_SEEN,
+         cli_host_pool_id = flow.SRC_HOST_POOL_ID,
+         alerts_map = flow.ALERTS_MAP,
+         tstamp_end = flow.LAST_SEEN,
+         srv_port = flow.IP_DST_PORT,
+         cli_name = flow.SRC_LABEL,
+         require_attention = flow.REQUIRE_ATTENTION,
+         output_snmp = flow.OUTPUT_SNMP,
+         interface_id = flow.INTERFACE_ID,
+         first_seen = flow.FIRST_SEEN,
+         user_label = flow.USER_LABEL,
+         duration = flow.LAST_SEEN - flow.FIRST_SEEN,
+         user_label_tstamp = flow.USER_LABEL_TSTAMP,
+         minor_connection_state = flow.MINOR_CONNECTION_STATE,
+         l7_proto = flow.L7_PROTO,
+         major_connection_state = flow.MAJOR_CONNECTION_STATE,
+         src_asn = flow.SRC_ASN,
+         srv2cli_bytes = flow.DST2SRC_BYTES,
+         srv_ip = srv_ip,
+         ip_version = flow.IP_PROTOCOL_VERSION,
+         severity = flow.SEVERITY,
+         community_id = flow.COMMUNITY_ID,
+         srv_network = flow.DST_NETWORK_ID,
+         is_cli_victim = flow.IS_CLI_VICTIM,
+         l7_cat = flow.L7_CATEGORY,
+         flow_risk_bitmap = flow.FLOW_RISK,
+         is_srv_attacker = flow.IS_SRV_ATTACKER,
+         is_srv_victim = flow.IS_SRV_VICTIM,
+         score = flow.SCORE,
+         l7_master_proto = flow.L7_PROTO_MASTER,
+         vlan_id = flow.VLAN_ID,
+         srv_location = flow.SERVER_LOCATION,
+         srv_host_pool_id = flow.DST_HOST_POOL_ID,
+         dst2src_dscp = flow.DST2SRC_DSCP,
+         total_bytes = flow.TOTAL_BYTES,
+         cli_network = flow.SRC_NETWORK_ID,
+         is_cli_attacker = flow.IS_CLI_ATTACKER,
+         cli_location = flow.CLIENT_LOCATION,
+         srv_blacklisted = flow.IS_SRV_BLACKLISTED,
+         tstamp = flow.tstamp,
+         cli_port = flow.IP_SRC_PORT,
+         proto = flow.PROTOCOL,
+         cli_blacklisted = flow.IS_CLI_BLACKLISTED,
+         srv_name = flow.DST_LABEL,
+         packets = flow.PACKETS,
+         ["flow_alerts_view.total_bytes"] = flow.TOTAL_BYTES,
+         cli_ip = cli_ip,
+         ntopng_instance_name = flow.NTOPNG_INSTANCE_NAME,
+         alert_status = flow.ALERT_STATUS,
+         input_snmp = flow.INPUT_SNMP,
+         dst_asn = flow.DST_ASN,
+         alert_json = flow.ALERT_JSON,
+         dst2src_tcp_flags = flow.DST2SRC_TCP_FLAGS,
+         entity_id = alert_entities.flow.entity_id,
+      }
+   end
+
+   return alert
+end
+
+
 return historical_flow_utils
 
