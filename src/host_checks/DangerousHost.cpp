@@ -29,7 +29,7 @@
 DangerousHost::DangerousHost()
     : HostCheck(ntopng_edition_community, false /* All interfaces */,
                 false /* Exclude for nEdge */, false /* NOT only for nEdge */) {
-  score_threshold = (u_int64_t)-1;
+  score_threshold = UINT32_MAX;
 };
 
 /* ***************************************************** */
