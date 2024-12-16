@@ -73,6 +73,7 @@ class ZMQParserInterface : public ParserInterface {
   static bool parseContainerInfo(json_object *jo,
                                  ContainerInfo *const container_info);
   static void freeContainerInfo(ContainerInfo *const container_info);
+  void addMappingFromRedis();
   bool parseNProbeAgentField(ParsedFlow *const flow, const char *key,
                              ParsedValue *value,
                              json_object *const jvalue);
