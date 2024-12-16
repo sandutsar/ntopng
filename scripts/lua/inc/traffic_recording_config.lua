@@ -240,7 +240,7 @@ print [[
         <th>]] print(i18n("traffic_recording.snaplen")) print [[</th>
         <td colspan=2>
           <input type="number" style="width:127px;display:inline;" class="form-control" name="snaplen" placeholder="" min="14" step="1" max="16384" value="]] print(snaplen) print [["></input><span style="vertical-align: middle"> Bytes</span><br>
-          <small>]] print(i18n("traffic_recording.disk_space_note")) print[[</small>
+          <small>]] print(i18n("traffic_recording.snaplen_note")) print[[</small>
         </td>
       </tr>
 
