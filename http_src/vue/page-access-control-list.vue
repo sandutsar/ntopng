@@ -29,9 +29,13 @@
         </TableWithConfig>
       </div>
       <div class="card-footer mt-3">
-        <button type="button" ref="delete_all_rules" @click="delete_all_rules" class="btn btn-danger ms-1">
+        <button type="button" ref="delete_all_rules" @click="delete_all_rules" class="btn btn-danger">
           <i class="fas fa-trash"></i>
           {{ _i18n("acl_page.delete_all_rules") }}
+        </button>
+        <button type="button" ref="export_rules" @click="export_rules" class="btn btn-primary ms-1">
+          <i class="fas fa-file-export"></i>
+          {{ _i18n("acl_page.export_rules") }}
         </button>
       </div>
     </div>
@@ -290,6 +294,14 @@ function click_button_delete_rule(event) {
 
 function delete_all_rules() {
   modal_delete_all.value.show();
+}
+
+/* ************************************** */
+
+function export_rules() {
+  const url = `${http_prefix}/lua/pro/rest/v2/get/system/access_control_list.lua?`
+  const params = ntopng_url_manager.get_url_params()
+  window.open(url + params + '&download=true');
 }
 
 /* ************************************** */

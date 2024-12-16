@@ -899,6 +899,7 @@ local lang = {
       ["edit_arp_tcp_udp"] = "In case of TCP/UDP protocol, the Port/App. field is going to appear; click on one of the two choices <span class='btn-group align-items-center'><button class='btn btn-sm btn-primary' type='radio'>Port</button><button class='btn btn-sm btn-secondary' type='radio'>App.</button></span> to be able to add a Port or an Application Protocol",
       ["edit_save"] = "Click on the <button class='btn btn-sm btn-primary'>Edit</button> to save the changes",
       ["edit_acl_rule"] = "Edit Rule",
+      ["export_rules"] = "Export Rules",
       ["use_port"] = "Port",
       ["use_application"] = "App.",
       ["advanced_settings"] = "Advanced Settings",
