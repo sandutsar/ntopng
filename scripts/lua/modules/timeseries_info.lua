@@ -187,6 +187,32 @@ local community_timeseries = { {
         }
     }
 }, {
+    schema = "iface:remote2local",
+    id = timeseries_id.iface,
+    label = i18n("graphs.remote2local"),
+    priority = 0,
+    measure_unit = "bps",
+    scale = i18n('graphs.metric_labels.bytes'),
+    timeseries = {
+        bytes = {
+            label = i18n('graphs.metric_labels.bytes'),
+            color = timeseries_info.get_timeseries_color('bytes')
+        }
+    }
+}, {
+    schema = "iface:local2remote",
+    id = timeseries_id.iface,
+    label = i18n("graphs.local2remote"),
+    priority = 0,
+    measure_unit = "bps",
+    scale = i18n('graphs.metric_labels.bytes'),
+    timeseries = {
+        bytes = {
+            label = i18n('graphs.metric_labels.bytes'),
+            color = timeseries_info.get_timeseries_color('bytes')
+        }
+    }
+}, {
     schema = "iface:alerted_flows",
     id = timeseries_id.iface,
     label = i18n("graphs.total_alerted_flows"),
