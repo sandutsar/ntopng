@@ -67,6 +67,9 @@
 	
 
 			</div>
+			<small class="form-text text-muted">
+				{{_i18n("nedge.page_repeater_config.restricted_interfaces_note")}}
+			</small>
 		</div>
 
   </template>
