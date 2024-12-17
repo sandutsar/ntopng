@@ -264,7 +264,7 @@ function recipients.initialize()
 
         if recipient.checks and table.len(recipient.checks) > 0 then
             for family, alerts in pairs(recipient.checks) do
-                if #alerts > 0 then
+                if alerts and #alerts > 0 then
                     if family == "flow" then
                         flow_alert_types = table.concat(alerts, ",")
                     elseif family == "host" then
