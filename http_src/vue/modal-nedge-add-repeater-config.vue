@@ -136,7 +136,7 @@ const interface_array = ref([]);
 const button_text = ref("");
 
 const all_criteria = (item) => {
-	invalid_iface_number.value = item.length < 2;
+	invalid_iface_number.value = ((selected_interfaces.value.length + selected_restricted_interfaces.value.length) < 2);
 	disable_add.value = update_disable_add();
 }
 
