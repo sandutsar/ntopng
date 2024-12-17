@@ -68,7 +68,8 @@ function set_rule(rule, url) {
     refresh_table();    
 }
 
-const format_interfaces = function(data, rowData) { 
+const format_interfaces = function(data, rowData) {
+    if (!data) data = ""; 
     return data.split(",").join(", ");
 }
 

@@ -281,9 +281,9 @@ const apply = () => {
 		restricted_interfaces.push(i.value);
 		
 		if(i.value != i.label && !i.label.includes(i.value)) {
-			details.push(i.label+" ("+i.value+")");
+			restricted_details.push(i.label+" ("+i.value+")");
 		} else {
-			details.push(i.label);
+			restricted_details.push(i.label);
 		}
 	});
 	const tmp_restricted_interfaces = restricted_interfaces.join(",");
