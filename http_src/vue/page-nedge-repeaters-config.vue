@@ -123,7 +123,7 @@ function set_datatable_config() {
 		return format_interfaces(data, rowData)}
 	},
         {
-	    columnName: _i18n("nedge.page_repeater_config.restricted_interfaces"), targets: 0, name: 'restricted_interfaces', data: 'details', className: 'text-nowrap text-left', responsivePriority: 1, render: function (data,_,rowData)  {
+	    columnName: _i18n("nedge.page_repeater_config.restricted_interfaces"), targets: 0, name: 'restricted_interfaces', data: 'restricted_details', className: 'text-nowrap text-left', responsivePriority: 1, render: function (data,_,rowData)  {
 		return format_interfaces(data, rowData)}
 	},
     ];
