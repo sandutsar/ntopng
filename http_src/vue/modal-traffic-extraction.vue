@@ -132,7 +132,7 @@ export default defineComponent({
 		this.data_available = 0;
 	    }, 1000);
 	},
-	show: async function(bpf_filter, epoch_interval) {	    
+	show: async function(bpf_filter, epoch_interval) {
 	    if (epoch_interval == null) {
 		let status = ntopng_status_manager.get_status();
 		if (status.epoch_begin == null || status.epoch_end == null) {

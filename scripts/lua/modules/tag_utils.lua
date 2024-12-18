@@ -799,6 +799,10 @@ function tag_utils.get_tag_filters_from_request()
         end
     end
 
+    if _GET["host"] then -- from the host page
+        filters["ip"] = _GET["host"] -- convert to tag key
+    end
+
     for key, value in pairs(_GET or {}) do
         if key:starts('custom_fields') then
             filters[key] = value
