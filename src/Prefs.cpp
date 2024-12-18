@@ -227,8 +227,10 @@ Prefs::Prefs(Ntop *_ntop) {
   ntp_servers  = new (std::nothrow) ServerConfiguration();
   dhcp_servers = new (std::nothrow) ServerConfiguration();
   smtp_servers = new (std::nothrow) ServerConfiguration();
+#ifdef NTOPNG_PRO
   networks_policy_configuration = NULL;
   networks_policy_configuration_shadow = NULL;
+#endif
 
 #ifdef HAVE_NEDGE
   disable_dns_resolution();
@@ -329,8 +331,10 @@ Prefs::~Prefs() {
   if(ntp_servers)  delete ntp_servers;
   if(dhcp_servers) delete dhcp_servers;
   if(smtp_servers) delete smtp_servers;
+#ifdef NTOPNG_PRO
   if(networks_policy_configuration) delete networks_policy_configuration;
   if(networks_policy_configuration_shadow) delete networks_policy_configuration_shadow;
+#endif
 }
 
 /* ******************************************* */
@@ -3272,7 +3276,10 @@ bool Prefs::loadPolicyConfiguration(AddressTree *tree, char *key, const char* ty
 /* *************************************** */
 
 AddressTree *Prefs::getNetworksPolicyConfiguration(){
+#ifdef NTOPNG_PRO
   return networks_policy_configuration;
+#endif
+  return NULL;
 }
 
 /* *************************************** */
