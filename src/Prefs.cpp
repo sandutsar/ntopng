@@ -3275,12 +3275,11 @@ bool Prefs::loadPolicyConfiguration(AddressTree *tree, char *key, const char* ty
 
 /* *************************************** */
 
-AddressTree *Prefs::getNetworksPolicyConfiguration(){
 #ifdef NTOPNG_PRO
+AddressTree *Prefs::getNetworksPolicyConfiguration(){
   return networks_policy_configuration;
-#endif
-  return NULL;
 }
+#endif
 
 /* *************************************** */
 
