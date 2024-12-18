@@ -1175,6 +1175,66 @@ static int ntop_get_risk_list(lua_State *vm) {
 
 /* ****************************************** */
 
+bool test_function(char *ip, char* rsp) {
+  return true;
+}
+
+static int ntop_check_network_policy(lua_State *vm) {
+  char *local_devices, *corporate_devices, *whitelisted_networks;
+  char *rsp = NULL;
+  u_int16_t rsp_max_len = 512;
+
+  lua_newtable(vm);
+
+  if ((rsp = (char *)malloc(rsp_max_len)) == NULL) {
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  }
+  
+  ntop->getTrace()->traceEvent(TRACE_DEBUG, "%s() called", __FUNCTION__);
+
+  if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  if ((local_devices = (char *)lua_tostring(vm, 1)) == NULL)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_PARAM_ERROR));
+
+  if (ntop_lua_check(vm, __FUNCTION__, 2, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  if ((corporate_devices = (char *)lua_tostring(vm, 2)) == NULL)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_PARAM_ERROR));
+
+  if (ntop_lua_check(vm, __FUNCTION__, 3, LUA_TSTRING) != CONST_LUA_OK)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+  if ((whitelisted_networks = (char *)lua_tostring(vm, 3)) == NULL)
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_PARAM_ERROR));
+
+  if (!Utils::checkNetworkList(local_devices, rsp, test_function)) {
+    lua_push_bool_table_entry(vm, "error", true);
+    lua_push_str_table_entry(vm, "error_msg", rsp);
+    goto free;
+  }
+
+  if (!Utils::checkNetworkList(corporate_devices, rsp, test_function)) {
+    lua_push_bool_table_entry(vm, "error", true);
+    lua_push_str_table_entry(vm, "error_msg", rsp);
+    goto free;
+  }
+
+  if (!Utils::checkNetworkList(whitelisted_networks, rsp, test_function)) {
+    lua_push_bool_table_entry(vm, "error", true);
+    lua_push_str_table_entry(vm, "error_msg", rsp);
+    goto free;
+  }
+
+  lua_push_bool_table_entry(vm, "error", true);
+  lua_push_str_table_entry(vm, "error_msg", "");
+  
+free:
+  if(rsp) free(rsp);
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+}
+
+/* ****************************************** */
+
 static int ntop_get_risk_str(lua_State *vm) {
   ndpi_risk_enum risk_id;
 
@@ -8294,6 +8354,8 @@ static luaL_Reg _ntop_reg[] = {
     {"getLocalNetworkID", ntop_get_local_network_id},
     {"getRiskStr", ntop_get_risk_str},
     {"getRiskList", ntop_get_risk_list},
+
+    {"checkNetworkPolicy", ntop_check_network_policy},
 
     /* ASN */
     {"getASName", ntop_get_asn_name},

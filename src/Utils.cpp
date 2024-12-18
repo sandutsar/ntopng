@@ -7570,3 +7570,27 @@ const char* Utils::learningMode2str(OSLearningMode mode) {
 
   return("Unknown");
 }
+
+/* ******************************************* */
+
+bool Utils::checkNetworkList(char *network_list, char *rsp, bool (*callback)(char *, char *)) {
+  /* callback is a function that receive a network as argument and a pointer to rsp,
+   * used in case of errors, to give a feedback and return a boolean, if the callback worked or not
+   */
+  std::string cidr(network_list);
+
+  /* Remove the spaces between the IPs */
+  cidr.erase(std::remove(cidr.begin(), cidr.end(), ' '), cidr.end());
+
+  /* Iterate the list of networks */
+  std::stringstream ipList(cidr);
+  std::string ip;
+  while (std::getline(ipList, ip, ',')) {
+    /* Call the callback */
+    if (!callback((char *) ip.c_str(), rsp)) {
+      return false;
+    }
+  }
+
+  return true;
+}
