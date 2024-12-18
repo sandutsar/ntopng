@@ -354,13 +354,13 @@ void Flow::freeDPIMemory() {
           && (ndpi_strrstr(domain, ".local") == NULL)
           && (ndpi_strrstr(domain, ".arpa") == NULL)
           ) {
-      #ifdef DEBUG
+#ifdef DEBUG
           const char *ja4r = ndpiFlow->protos.tls_quic.ja4_client_raw ? ndpiFlow->protos.tls_quic.ja4_client_raw : "";
           char buf[64];
           char *client = get_cli_host()->get_ip()->printMask(buf, sizeof(buf), true);
 
           ntop->getTrace()->traceEvent(TRACE_INFO, "%s\t%s [%s] [%s]", client, domain, host_server_name, ja4r);
-      #endif
+#endif
 
           ntop->getRedis()->hashSet("ntopng.domains", domain, host_server_name);
         }
@@ -395,7 +395,7 @@ void Flow::freeDPIMemory() {
 		   h->get_ip()->print(buf, sizeof(buf)),
 		   Utils::OSType2Str(h->getOS()));
 
-	  ntop->getTrace()->traceEvent(TRACE_INFO, "** Unknown TCP fingerprint %s [%s]",
+	  ntop->getTrace()->traceEvent(TRACE_DEBUG, "** Unknown TCP fingerprint %s [%s]",
 				       ndpiFlow->tcp.fingerprint, log);
 
 	  ntop->getRedis()->hashSet(CONST_STR_UNKNOWN_TCP_FINGERPRINTS,
@@ -8456,9 +8456,6 @@ void Flow::setJSONRiskInfo(char *r) {
   if(!r) return;
 
   if(riskInfo) free(riskInfo);
-
-  // ntop->getTrace()->traceEvent(TRACE_INFO, "[%s]", r);
-
   riskInfo = strdup(r);
 }
 
@@ -8468,9 +8465,6 @@ void Flow::setEndReason(char *r) {
   if(!r) return;
 
   if(end_reason) free(end_reason);
-
-  // ntop->getTrace()->traceEvent(TRACE_INFO, "[%s]", r);
-
   end_reason = strdup(r);
 }
 
@@ -8500,9 +8494,6 @@ void Flow::setSMTPMailFrom(char *r) {
   if(!r) return;
 
   if(protos.smtp.mail_from) free(protos.smtp.mail_from);
-
-  // ntop->getTrace()->traceEvent(TRACE_INFO, "[%s]", r);
-
   protos.smtp.mail_from = strdup(r);
 }
 
@@ -8516,9 +8507,6 @@ void Flow::setSMTPRcptTo(char *r) {
   if(!r) return;
 
   if(protos.smtp.rcpt_to) free(protos.smtp.rcpt_to);
-
-  // ntop->getTrace()->traceEvent(TRACE_INFO, "[%s]", r);
-
   protos.smtp.rcpt_to = strdup(r);
 }
 
@@ -8532,9 +8520,6 @@ void Flow::setFlowRiskName(char *r) {
   if(!r) return;
 
   if(ndpiFlowRiskName) free(ndpiFlowRiskName);
-
-  // ntop->getTrace()->traceEvent(TRACE_INFO, "[%s]", r);
-
   ndpiFlowRiskName = strdup(r);
 }
 
