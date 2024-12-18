@@ -133,8 +133,10 @@ FlowAlertsLoader::FlowAlertsLoader() {
                 BlacklistedServerContactAlert::getDefaultScore());
   registerAlert(TCPFlowResetAlert::getClassType(), 
                 TCPFlowResetAlert::getDefaultScore());
+#if defined(NTOPNG_PRO)
   registerAlert(LocalToInternetConnectionAlert::getClassType(),
                 LocalToInternetConnectionAlert::getDefaultScore());
+#endif
 }
 
 /* **************************************************** */
