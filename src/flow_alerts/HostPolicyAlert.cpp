@@ -19,25 +19,12 @@
  *
  */
 
-#ifndef _LOCAL_TO_INTERNET_CONNECTION_FLOW_ALERT_H_
-#define _LOCAL_TO_INTERNET_CONNECTION_FLOW_ALERT_H_
+#include "flow_alerts_includes.h"
 
-#include "ntop_includes.h"
-
-class LocalToInternetConnectionAlert : public FlowAlert {
- private:
-  ndpi_serializer *getAlertJSON(ndpi_serializer *serializer);
-
- public:
-  static FlowAlertType getClassType() {
-    return {flow_alert_local_to_internet_connection, alert_category_network};
-  }
-  static u_int8_t getDefaultScore() { return SCORE_LEVEL_WARNING; };
-
-  LocalToInternetConnectionAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
-  ~LocalToInternetConnectionAlert(){};
-
-  FlowAlertType getAlertType() const { return getClassType(); }
-};
-
-#endif /* _LOCAL_TO_INTERNET_CONNECTION_FLOW_ALERT_H_ */
+ndpi_serializer* HostPolicyAlert::getAlertJSON(ndpi_serializer* serializer) {
+  Flow *f = getFlow();
+  
+  // TODO
+  
+  return serializer;
+}

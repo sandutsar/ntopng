@@ -3214,14 +3214,16 @@ void Prefs::reloadServersConfiguration() {
 bool Prefs::reloadNetworksPolicyConfiguration() {
   AddressTree *new_tree=NULL;
   new_tree = new (std::nothrow) AddressTree;
+  
   if(new_tree == NULL) {
     ntop->getTrace()->traceEvent(TRACE_ERROR, "Unable to Load Configuration");
     return false;
   }
 
+  /* NetworkPolicyCheck */
   bool res = loadPolicyConfiguration(new_tree, (char *) CONST_LOCAL_DEVICES_NETWORKS_CONFIGURATION_REDIS_KEY, CONST_LOCAL_DEVICES_NETWORKS)
-        && loadPolicyConfiguration(new_tree, (char *) CONST_CORPORATE_DEVICES_NETWORKS_CONFIGURATION_REDIS_KEY, CONST_CORPORATE_DEVICES_NETWORKS)
-        && loadPolicyConfiguration(new_tree, (char *) CONST_WHITELISTED_NETWORKS_CONFIGURATION_REDIS_KEY, CONST_WHITELISTED_NETWORKS);
+    && loadPolicyConfiguration(new_tree, (char *) CONST_CORPORATE_DEVICES_NETWORKS_CONFIGURATION_REDIS_KEY, CONST_CORPORATE_DEVICES_NETWORKS)
+    && loadPolicyConfiguration(new_tree, (char *) CONST_WHITELISTED_NETWORKS_CONFIGURATION_REDIS_KEY, CONST_WHITELISTED_NETWORKS);
 
   if (new_tree && res) {
     if (networks_policy_configuration) {
@@ -3256,14 +3258,21 @@ bool Prefs::loadPolicyConfiguration(AddressTree *tree, char *key, const char* ty
     /* Now iterate the string */
     std::stringstream ipList(ipStr);
     std::string ip;
+    
     while (std::getline(ipList, ip, ',')) {
       // add the address and its type
-      if (!tree->addUniqueAddressAndData(ip.c_str(), strdup(type))) {
-        ntop->getTrace()->traceEvent(
-            TRACE_WARNING, "Unable to add tree node in Policy Configuration [Network: %s]", (char *) ip.c_str());
-        return false;
-      }
-      ntop->getTrace()->traceEvent(TRACE_DEBUG, "Added [Network: %s] to Redis %s list", (char *) ip.c_str(),key);
+      char* dup_type = strdup(type);
+
+      if(dup_type) {
+	if(!tree->addAddressAndData(ip.c_str(), dup_type)) {
+	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Unable to add tree node in Policy Configuration [Network: %s]", (char *) ip.c_str());
+	  free(dup_type);
+	  return false;
+	}
+	
+	ntop->getTrace()->traceEvent(TRACE_DEBUG, "Added [Network: %s] to Redis %s list", (char *) ip.c_str(),key);
+      } else
+	ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory");
     }
 
     if (rsp) free(rsp);

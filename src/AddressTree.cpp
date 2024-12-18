@@ -195,10 +195,15 @@ ndpi_patricia_node_t *AddressTree::addAddress(const IpAddress *const ipa,
 
 /* ******************************************* */
 
-bool AddressTree::addAddressAndData(const char *_what, void *user_data) {
+bool AddressTree::addAddressAndData(const char *_what, void *user_data,
+				    bool fail_if_already_present) {
   ndpi_patricia_node_t *node;
   bool ret;
   
+  if (fail_if_already_present && match((char *) _what)) {
+    return false;
+  }
+
   updateLock.wrlock(__FILE__, __LINE__);
   
   node = Utils::ptree_add_rule(strchr(_what, '.') ? ptree_v4 : ptree_v6, _what);
@@ -214,28 +219,6 @@ bool AddressTree::addAddressAndData(const char *_what, void *user_data) {
   return(ret);
 }
 
-/* ******************************************* */
-
-bool AddressTree::addUniqueAddressAndData(const char *_what, void *user_data) {
-  ndpi_patricia_node_t *node = NULL;
-
-  if (match((char *) _what)) {
-    return false;
-  }
-
-  updateLock.wrlock(__FILE__, __LINE__);
-  
-  node = Utils::ptree_add_rule(strchr(_what, '.') ? ptree_v4 : ptree_v6, _what);
-
-  if (node) {
-    ndpi_patricia_set_node_data(node, user_data);
-    numAddresses++;
-  }
-
-  updateLock.unlock(__FILE__, __LINE__);
-  
-  return true;
-}
 /* ******************************************* */
 
 bool AddressTree::addAddress(const char *_what, const int64_t user_data) {

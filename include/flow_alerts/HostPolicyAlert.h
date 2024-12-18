@@ -19,13 +19,25 @@
  *
  */
 
-#include "flow_alerts_includes.h"
+#ifndef _HOST_POLICY_ALERT_H_
+#define _HOST_POLICY_ALERT_H_
 
-ndpi_serializer* LocalToInternetConnectionAlert::getAlertJSON(
-    ndpi_serializer* serializer) {
-  Flow *f = getFlow();
+#include "ntop_includes.h"
 
-    // TODO
+class HostPolicyAlert : public FlowAlert {
+ private:
+  ndpi_serializer *getAlertJSON(ndpi_serializer *serializer);
 
-  return serializer;
-}
+ public:
+  static FlowAlertType getClassType() {
+    return {flow_alert_host_policy, alert_category_network};
+  }
+  static u_int8_t getDefaultScore() { return SCORE_LEVEL_WARNING; };
+
+  HostPolicyAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
+  ~HostPolicyAlert(){};
+
+  FlowAlertType getAlertType() const { return getClassType(); }
+};
+
+#endif /* _HOST_POLICY_ALERT_H_ */

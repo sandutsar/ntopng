@@ -60,8 +60,8 @@ class AddressTree {
   }
 
   bool addAddress(const char *_what, const int64_t user_data = -1);
-  bool addAddressAndData(const char *_what, void *user_data);
-  bool addUniqueAddressAndData(const char *_what, void *user_data);
+  bool addAddressAndData(const char *_what, void *user_data,
+			 bool fail_if_already_present = false);
   ndpi_patricia_node_t *addAddress(const IpAddress *const ipa);
   ndpi_patricia_node_t *addAddress(const IpAddress *const ipa, int network_bits,
                                    bool compact_after_add);
