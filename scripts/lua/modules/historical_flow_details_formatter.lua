@@ -138,31 +138,31 @@ end
 
 -- ###############################################
 
-local function format_historical_total_traffic(flow)
+function historical_flow_details_formatter.format_historical_total_traffic(flow)
     return {
         name = i18n("db_explorer.traffic_info"),
-        values = { formatPackets(flow['PACKETS']) .. ' / ' .. bytesToSize(flow['TOTAL_BYTES']) }
+        values = { formatPackets(flow['PACKETS'] or flow["packets"]) .. ' / ' .. bytesToSize(flow['TOTAL_BYTES'] or flow["total_bytes"]) }
     }
 end
 
 -- ###############################################
 
-local function format_historical_client_server_bytes(flow)
+function historical_flow_details_formatter.format_historical_client_server_bytes(flow)
     return {
         name = "",
         values = {
             [1] = i18n("client") .. " <i class=\"fas fa-long-arrow-alt-right\"></i> " .. i18n("server") .. ": " ..
-                bytesToSize(flow['SRC2DST_BYTES']),
+                bytesToSize(flow['SRC2DST_BYTES'] or flow["cli2srv_bytes"]),
             [2] = i18n("client") .. " <i class=\"fas fa-long-arrow-alt-left\"></i> " .. i18n("server") .. ": " ..
-                bytesToSize(flow['DST2SRC_BYTES'])
+                bytesToSize(flow['DST2SRC_BYTES'] or flow["srv2cli_bytes"])
         }
     }
 end
 
 -- ###############################################
 
-local function format_historical_bytes_progress_bar(flow, info)
-    local cli2srv = round(((flow["SRC2DST_BYTES"] or 0) * 100) / flow["TOTAL_BYTES"], 0)
+function historical_flow_details_formatter.format_historical_bytes_progress_bar(flow, info)
+    local cli2srv = round(((flow["SRC2DST_BYTES"] or flow["cli2srv_bytes"] or 0) * 100) / (flow["TOTAL_BYTES"] or flow["total_bytes"]), 0)
 
     return {
         name = "",
@@ -321,7 +321,7 @@ end
 
 -- ###############################################
 
-local function format_historical_issues(flow_details, flow)
+function historical_flow_details_formatter.format_historical_issues(flow_details, flow, is_alert)
     local historical_flow_utils = require "historical_flow_utils"
     local alert_store_utils = require "alert_store_utils"
     local alert_entities = require "alert_entities"
@@ -329,12 +329,14 @@ local function format_historical_issues(flow_details, flow)
     local alert_consts = require "alert_consts"
     local alert_utils = require "alert_utils"
     local alert_store_instances = alert_store_utils.all_instances_factory()
-    local alert_json = json.decode(flow["ALERT_JSON"] or '') or {}
+    local alert_json = json.decode(flow["ALERT_JSON"] or flow["json"] or '') or {}
     local details = ""
     local alert
     local riskInfo = {}
+    local alerts_map = flow['ALERTS_MAP'] or flow["alerts_map_l"] or ""
+    local score = tonumber(flow["SCORE"]) or tonumber(flow["score"]) or 0
     local alert_scores = {}
-    local alert_id = tonumber(flow["STATUS"] or 0)
+    local alert_id = tonumber(flow["STATUS"] or flow["alert_id"] or 0)
     local html = "<table class=\"table table-bordered table-striped\" width=100%>\n" ..
         "<tr><th>" .. i18n("description") .. "</th><th>" .. i18n("score") .. "</th><th>" .. i18n("info") ..
         " / " .. i18n("remediation") .. "</th><th>" .. i18n("mitre_id") .. "</th></tr>\n"
@@ -342,9 +344,13 @@ local function format_historical_issues(flow_details, flow)
     local main_alert_score
 
 
-    if tonumber(flow["SCORE"]) > 0 then
+    if not is_alert then
         alert = historical_flow_utils.convertFlowToAlert(flow)
-        details = alert_utils.formatFlowAlertMessage(interface.getId(), alert, alert_info, false, true, true)
+    else
+        alert = flow
+    end
+    if score > 0 then
+        details = alert_utils.formatFlowAlertMessage(interface.getId(), alert, nil, false, true, true)
     end
 
     if alert_json and alert_json.flow_risk_info then
@@ -379,14 +385,14 @@ local function format_historical_issues(flow_details, flow)
 
     local severity_id = map_score_to_severity(main_alert_score)
     local severity = alert_consts.alertSeverityById(severity_id)
-    local _, other_issues = alert_utils.format_other_alerts(flow['ALERTS_MAP'], flow['STATUS'], alert_json, false,
+    local _, other_issues = alert_utils.format_other_alerts(alerts_map, alert_id, alert_json, false,
         nil,
         true)
 
     flow_details[#flow_details + 1] = {
         name = i18n('total_flow_score'),
         values = { '<span style="color:' ..
-        severity.color .. '">' .. format_utils.formatValue(tonumber(flow["SCORE"])) ..
+        severity.color .. '">' .. format_utils.formatValue(score) ..
         '</span>', '' }
     }
 
@@ -667,9 +673,9 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
         flow_details[#flow_details + 1] = format_historical_flow_label(flow)
         flow_details[#flow_details + 1] = format_historical_protocol_label(flow)
         flow_details[#flow_details + 1] = format_historical_last_first_seen(flow, info)
-        flow_details[#flow_details + 1] = format_historical_total_traffic(flow)
-        flow_details[#flow_details + 1] = format_historical_client_server_bytes(flow)
-        flow_details[#flow_details + 1] = format_historical_bytes_progress_bar(flow, info)
+        flow_details[#flow_details + 1] = historical_flow_details_formatter.format_historical_total_traffic(flow)
+        flow_details[#flow_details + 1] = historical_flow_details_formatter.format_historical_client_server_bytes(flow)
+        flow_details[#flow_details + 1] = historical_flow_details_formatter.format_historical_bytes_progress_bar(flow, info)
 
         if ((tonumber(flow["SERVER_NW_LATENCY_US"]) > 0) or (tonumber(flow["CLIENT_NW_LATENCY_US"]) > 0)) then
             flow_details[#flow_details + 1] = format_historical_flow_rtt(tonumber(flow["SERVER_NW_LATENCY_US"]),
@@ -701,7 +707,7 @@ function historical_flow_details_formatter.formatHistoricalFlowDetails(flow)
         end
 
         if (info["score"]) and (info["score"]["value"] ~= 0) then
-            flow_details = format_historical_issues(flow_details, flow)
+            flow_details = historical_flow_details_formatter.format_historical_issues(flow_details, flow)
         end
 
         if (info['community_id']) and (not isEmptyString(info['community_id'])) then

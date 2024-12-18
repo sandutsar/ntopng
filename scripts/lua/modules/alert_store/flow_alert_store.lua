@@ -1620,76 +1620,52 @@ function flow_alert_store:get_alert_details(value)
    local add_hyperlink = true
    local json = json.decode(value["json"]) or {}
    local proto_info = json["proto"]
-   local traffic_info = {}
-
+   value["packets"] =  (value["cli2srv_pkts"] or 0) + (value["srv2cli_pkts"] or 0)
+   
    details[#details + 1] = {
-      label = i18n("alerts_dashboard.alert"),
-      content = get_label_link(fmt['alert_id']['label'], 'alert_id', fmt['alert_id']['value'], add_hyperlink)
+      name = i18n("alerts_dashboard.alert"),
+      values = {get_label_link(fmt['alert_id']['label'], 'alert_id', fmt['alert_id']['value'], add_hyperlink)}
    }
 
    details[#details + 1] = {
-      label = i18n("flow_details.flow_peers_client_server"),
-      content = add_historical_link(value, get_flow_link(fmt, add_hyperlink))
+      name = i18n("flow_details.flow_peers_client_server"),
+      values = {add_historical_link(value, get_flow_link(fmt, add_hyperlink))}
    }
 
    details[#details + 1] = {
-      label = i18n("protocol") .. " / " .. i18n("application"),
-      content = get_label_link(fmt['l7_proto']['l4_label'] .. ':' .. fmt['l7_proto']['l7_label'], 'l7proto', fmt['l7_proto']['value'], add_hyperlink)
+      name = i18n("protocol") .. " / " .. i18n("application"),
+      values = {get_label_link(fmt['l7_proto']['l4_label'] .. ':' .. fmt['l7_proto']['l7_label'], 'l7proto', fmt['l7_proto']['value'], add_hyperlink)}
    }
 
    details[#details + 1] = {
-      label = i18n("show_alerts.alert_datetime"),
-      content = fmt['tstamp']['label']
+      name = i18n("show_alerts.alert_datetime"),
+      values = {fmt['tstamp']['label']}
    }
 
-   details[#details + 1] = {
-      label = i18n("score"),
-      content = '<span style="color: ' .. fmt['score']['color'] .. '">' .. fmt['score']['label'] .. '</span>'
-   }
+   details[#details + 1] = historical_flow_details_formatter.format_historical_total_traffic(value)
+   details[#details + 1] = historical_flow_details_formatter.format_historical_client_server_bytes(value)
+   details[#details + 1] = historical_flow_details_formatter.format_historical_bytes_progress_bar(value, fmt)
 
-   details[#details + 1] = {
-      label = i18n("description"),
-      content = fmt['msg']['description']
-   }
 
-   details[#details + 1] = {
-      label = i18n("flow_details.additional_alert_type"),
-      content = fmt['additional_alerts']['descr']
-   }
-
+   details = historical_flow_details_formatter.format_historical_issues(details, value, true)
+   
    if (proto_info and (proto_info.l7_error_code ~= nil) and (proto_info.l7_error_code ~= 0)) then
       details[#details + 1] = {
-	 label = i18n("l7_error_code"),
-	 content = proto_info.l7_error_code
+	 name = i18n("l7_error_code"),
+	 values = {proto_info.l7_error_code}
       }
 
       proto_info.l7_error_code = nil -- Avoid to print it twice in the flow details section
    end
 
    proto_info = editProtoDetails(proto_info or {})
-   traffic_info = format_common_info(value, traffic_info)
-
-   details[#details + 1] = {
-      label = i18n("flow_details.traffic_info"),
-      content = traffic_info
-   }
 
    for k, info in pairs(proto_info or {}) do
       details[#details + 1] = {
-	 label = i18n("alerts_dashboard.flow_related_info"),
-	 content = info
+	 name = i18n("alerts_dashboard.flow_related_info"),
+	 values = {info}
       }
    end
-
-   --[[
-      details[#details + 1] = {
-      label = "Title",
-      content = {
-      [1] = "Content 1",
-      [2] = "Content 2",
-      }
-      }
-   --]]
 
    return details
 end

@@ -1288,22 +1288,6 @@ end
 
 -- ##############################################
 
-function format_common_info(flow_info, formatted_info)
-    local predominant_bytes = i18n("traffic_srv_to_cli")
-
-    if (tonumber(flow_info["cli2srv_bytes"] or 0)) > (tonumber(flow_info["srv2cli_bytes"] or 0)) then
-        predominant_bytes = i18n("traffic_cli_to_srv")
-    end
-
-    formatted_info["predominant_direction"] = predominant_bytes
-    formatted_info["server_traffic"] = bytesToSize(flow_info["srv2cli_bytes"] or 0)
-    formatted_info["client_traffic"] = bytesToSize(flow_info["cli2srv_bytes"] or 0)
-
-    return formatted_info
-end
-
--- ##############################################
-
 function format_proto_info(flow_details, proto_info)
     local proto_details = {}
 

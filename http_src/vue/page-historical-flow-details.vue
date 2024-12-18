@@ -20,11 +20,10 @@
 import { ref, onMounted } from "vue";
 import { default as BootstrapTable } from "./bootstrap-table.vue";
 
-const _i18n = (t) => i18n(t);
-
-const url = "/lua/pro/rest/v2/get/flow/historical/flow_details.lua";
 const table_id = ref('historical_flow_details');
-const props = defineProps({});
+const props = defineProps({
+  context: Object,
+});
 
 const stats_rows = ref([]);
 
@@ -39,7 +38,7 @@ const print_stats_row = function (value) {
 onMounted(async () => {
   const extra_params = ntopng_url_manager.get_url_object();
   const url_params = ntopng_url_manager.obj_to_url_params(extra_params);
-  const historical_flow_stats = await ntopng_utility.http_request(`${http_prefix}${url}?${url_params}`);
+  const historical_flow_stats = await ntopng_utility.http_request(`${http_prefix}${props.context.url}?${url_params}`);
   stats_rows.value = historical_flow_stats
 });
 
