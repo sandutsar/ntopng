@@ -1225,7 +1225,7 @@ static int ntop_check_network_policy(lua_State *vm) {
     goto free;
   }
 
-  lua_push_bool_table_entry(vm, "error", true);
+  lua_push_bool_table_entry(vm, "error", false);
   lua_push_str_table_entry(vm, "error_msg", "");
   
 free:
