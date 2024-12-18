@@ -95,7 +95,9 @@ Mac::~Mac() {
   /* Serialize Mac before shutdown */
   if ((!broadcast_mac) && (!special_mac)) dumpToRedis();
 
+#ifdef NTOPNG_PRO
   if (!special_mac && ntop->getRedis() && ntop->getPrefs()->is_pro_edition()) dumpAssetInfoToRedis();
+#endif
 
   if (model) free(model);
   if (ssid) free(ssid);
