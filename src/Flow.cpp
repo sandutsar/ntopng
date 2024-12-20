@@ -7796,7 +7796,7 @@ void Flow::getSIPInfo(ndpi_serializer *serializer) const {
 void Flow::lua_get_tcp_info(lua_State *vm) const {
   if(get_protocol() == IPPROTO_TCP) {
     lua_push_bool_table_entry(
-			      vm, "tcp->seq_problems",
+			      vm, "tcp.seq_problems",
 			      (stats.get_cli2srv_tcp_retr() || stats.get_cli2srv_tcp_ooo() ||
 			       stats.get_cli2srv_tcp_lost() || stats.get_cli2srv_tcp_keepalive() ||
 			       stats.get_srv2cli_tcp_retr() || stats.get_srv2cli_tcp_ooo() ||
@@ -7804,13 +7804,13 @@ void Flow::lua_get_tcp_info(lua_State *vm) const {
 			      ? true
 			      : false);
 
-    lua_push_float_table_entry(vm, "tcp->nw_latency.client",
+    lua_push_float_table_entry(vm, "tcp.nw_latency.client",
                                toMs(&tcp->clientNwLatency));
-    lua_push_float_table_entry(vm, "tcp->nw_latency.server",
+    lua_push_float_table_entry(vm, "tcp.nw_latency.server",
                                toMs(&tcp->serverNwLatency));
-    lua_push_float_table_entry(vm, "tcp->appl_latency", applLatencyMsec);
-    lua_push_float_table_entry(vm, "tcp->max_thpt.cli2srv", getCli2SrvMaxThpt());
-    lua_push_float_table_entry(vm, "tcp->max_thpt.srv2cli", getSrv2CliMaxThpt());
+    lua_push_float_table_entry(vm, "tcp.appl_latency", applLatencyMsec);
+    lua_push_float_table_entry(vm, "tcp.max_thpt.cli2srv", getCli2SrvMaxThpt());
+    lua_push_float_table_entry(vm, "tcp.max_thpt.srv2cli", getSrv2CliMaxThpt());
 
     lua_push_uint64_table_entry(vm, "cli2srv.retransmissions",
                                 stats.get_cli2srv_tcp_retr());
