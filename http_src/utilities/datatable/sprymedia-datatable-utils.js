@@ -662,6 +662,7 @@ export class DataTableRenders {
             cell = "";
         }
         if (obj.color) cell = `<span class='font-weight-bold' style='color: ${obj.color}'>${cell}</span>`;
+        if (obj.title) cell = `<span title='${obj.title}'>${cell}</span>`;
         return cell;
     }
 

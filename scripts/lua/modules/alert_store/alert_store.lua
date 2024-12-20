@@ -2278,9 +2278,18 @@ function alert_store:format_json_record_common(value, entity_id, no_html)
     local severity = alert_consts.alertSeverityById(severity_id)
 
     local tstamp = tonumber(value["alert_tstamp"] or value["tstamp"])
+    local tstamp_formatted = format_utils.formatPastEpochShort(tstamp)
+    local tstamp_title = tstamp_formatted
+
+    local tstamp_end = tonumber(value["tstamp_end"] or "0")
+    if tstamp_end ~= 0 then
+        tstamp_title = tstamp_title .. " - " .. format_utils.formatPastEpochShort(tstamp_end)
+    end
+    
     record[BASE_RNAME.TSTAMP.name] = {
         value = tstamp,
-        label = format_utils.formatPastEpochShort(tstamp),
+        label = tstamp_formatted,
+        title = tstamp_title,
         highlight = severity.color
     }
 
