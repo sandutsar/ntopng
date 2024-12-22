@@ -1639,14 +1639,11 @@ extern NtopngLuaContext* getUserdata(struct lua_State *vm);
 #define CONST_SMTP_SERVER_CONFIGURATION_REDIS_KEY "ntopng.prefs.nw_config_smtp_list"
 
 #ifdef NTOPNG_PRO
-#define CONST_LOCAL_DEVICES_NETWORKS_CONFIGURATION_REDIS_KEY "ntopng.prefs.nw_policy_local_devices"
+#define CONST_LOCAL_DEVICES_NETWORKS_CONFIGURATION_REDIS_KEY     "ntopng.prefs.nw_policy_local_devices"
 #define CONST_CORPORATE_DEVICES_NETWORKS_CONFIGURATION_REDIS_KEY "ntopng.prefs.nw_policy_corporate_devices"
-#define CONST_WHITELISTED_NETWORKS_CONFIGURATION_REDIS_KEY "ntopng.prefs.nw_policy_whitelisted_networks"
-
-#define CONST_LOCAL_DEVICES_NETWORKS "Local Devices Networks"
-#define CONST_CORPORATE_DEVICES_NETWORKS "Corporate Devices Networks"
-#define CONST_WHITELISTED_NETWORKS "Whitelisted Networks"
+#define CONST_WHITELISTED_NETWORKS_CONFIGURATION_REDIS_KEY       "ntopng.prefs.nw_policy_whitelisted_networks"
 #endif
+
 /******************************************************************************/
 
 #endif /* _NTOP_DEFINES_H_ */

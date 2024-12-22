@@ -8013,7 +8013,7 @@ static int reload_servers_configuration(lua_State *vm) {
 #ifdef NTOPNG_PRO
 
 static int reload_networks_policy_configuration(lua_State *vm) {
-  if (ntop->getPrefs()->reloadNetworksPolicyConfiguration()){
+  if (ntop->getPrefs()->reloadNetworksPolicyConfiguration()) {
     lua_pushboolean(vm, 1);
     return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
   }

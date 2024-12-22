@@ -1214,5 +1214,12 @@ typedef enum {
   ESTABLISHED,
   CLOSED = 3
 } MajorConnectionStates;
-  
+
+typedef enum {
+  unknown_network_id = 0,
+  restricted_host_network_id,
+  core_host_network_id,
+  whitelisted_host_network_id
+} NetworkConfiguationId;
+
 #endif /* _NTOP_TYPEDEFS_H_ */

@@ -6298,7 +6298,7 @@ local lang = {
     ["trigger_network_alerts"] = "Trigger Network Alerts",
   },
   ["network_configuration"] = {
-    ["alert_note"] = "These configurations are used by the Unexpected DNS/NTP/DHCP/SMTP/Gateway Server alerts. So in order to be effective please enable the corresponding alerts <a href='" .. ntop.getHttpPrefix() .. "/lua/admin/edit_configset.lua?subdir=all#all'><i class='fas fa-cog'></i></a>.",
+    ["alert_note"] = "The configurations below are used by the 'Unexpected DNS/NTP/DHCP/SMTP/Gateway Server' behavioural checks <a href='" .. ntop.getHttpPrefix() .. "/lua/admin/edit_configset.lua?subdir=all#all'><i class='fas fa-cog'></i></a>.",
     ["dhcp_servers_title"] = "DHCP Servers",
     ["dns_servers_title"] = "DNS Servers",
     ["dns_servers_description"] = "A list of comma separated DNS Servers IPs",
@@ -6315,7 +6315,7 @@ local lang = {
     ["network_policy"] = "Policies",
     ["gateway_servers_title"] = "Network Gateways",
     ["allowed_servers_description"] = "Each list needs a comma separated list of allowed IPs. Example: 173.194.76.109,52.97.232.242",
-    ["uses_of_servers"] = "An alert is triggered whenever:<ul><li>A restricted host connects to any public IP address not whitelisted.</li><li>A restricted host connects to any non whitelisted core host.</li><li>A core host connects to any non whitelisted address.</li></ul>",
+    ["uses_of_servers"] = "An alert is triggered whenever:<ul><li>A restricted host connects to a public IP address not whitelisted.</li><li>A restricted host connects to a non whitelisted core host.</li><li>A core host connects to any non whitelisted address.</li></ul>",
     ["ntp_servers_title"] = "NTP Servers",
     ["smtp_servers_title"] = "SMTP Servers",
   },

@@ -109,17 +109,14 @@ class IpAddress {
   void set(union usa* ip);
   void set(const char* ip);
   void reloadBlacklist(ndpi_detection_module_struct* ndpi_struct);
-  inline bool isLoopbackAddress() const { return (addr.loopbackIP); };
-  inline bool isPrivateAddress() const { return (addr.privateIP); };
+  inline bool isLoopbackAddress() const  { return (addr.loopbackIP); };
+  inline bool isPrivateAddress() const   { return (addr.privateIP); };
   inline bool isMulticastAddress() const { return (addr.multicastIP); };
   inline bool isBroadcastAddress() const { return (addr.broadcastIP); };
   inline bool isBlacklistedAddress() const { return (addr.blacklistedIP); };
-  inline bool isBroadMulticastAddress() const {
-    return (addr.broadcastIP || addr.multicastIP);
-  };
-  inline bool isNonEmptyUnicastAddress() const {
-    return (!isMulticastAddress() && !isBroadcastAddress() && !isEmpty());
-  };
+  inline bool isBroadMulticastAddress() const { return (addr.broadcastIP || addr.multicastIP); };
+  inline bool isNonEmptyUnicastAddress() const { return (!isMulticastAddress() && !isBroadcastAddress() && !isEmpty()); };
+  inline bool isPublicAddress() const{ return ((!isPrivateAddress()) && isNonEmptyUnicastAddress()); }
   inline u_int8_t getVersion() const { return (addr.ipVersion); };
   inline void setVersion(u_int8_t version) { addr.ipVersion = version; };
 

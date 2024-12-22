@@ -34,7 +34,7 @@ class HostPolicyAlert : public FlowAlert {
   }
   static u_int8_t getDefaultScore() { return SCORE_LEVEL_WARNING; };
 
-  HostPolicyAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){setAlertScore(getDefaultScore());};
+  HostPolicyAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){ setAlertScore(getDefaultScore()); };
   ~HostPolicyAlert(){};
 
   FlowAlertType getAlertType() const { return getClassType(); }

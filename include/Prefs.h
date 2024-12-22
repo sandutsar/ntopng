@@ -746,7 +746,7 @@ class Prefs {
   void reloadServersConfiguration();
 #ifdef NTOPNG_PRO
   bool reloadNetworksPolicyConfiguration();
-  bool loadPolicyConfiguration(AddressTree *tree, char *key, const char* type);
+  bool loadPolicyConfiguration(AddressTree *tree, char *key, NetworkConfiguationId id);
   AddressTree* getNetworksPolicyConfiguration();
 #endif
   bool isGateway(IpAddress *ip, u_int16_t vlan_id);
@@ -772,6 +772,7 @@ class Prefs {
   inline char* getCiphersList()            { return(ciphers_list);                     }
 #ifdef NTOPNG_PRO
   inline char* getLicMgrConfigFile()       { return(lic_mgr_config_file);              }
+  inline AddressTree* getNwPolicyConfig()  { return(networks_policy_configuration);    }
 #endif
 };
 
