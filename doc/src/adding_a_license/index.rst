@@ -141,8 +141,36 @@ In addition to the standard licenses described above, ntopng can use the license
 
 In order to use the LM simply do ```ntopng --license-mgr <licensemgr>.conf <other ntopng options>```.
 
+Below you can find an example of license manager configuration file for ntopng:
+
+.. code:: bash
+	  
+	  LICENSE_MANAGER=127.0.0.1:9999
+
+	  #
+	  # Unique instance name
+	  #
+	  INSTANCE_NAME=dummy ntopng instance
+
+	  #
+	  # User authentication token
+	  #
+	  AUTH_TOKEN=fjfgsfgsj
+
+	  #
+	  # nprobe ntopng
+	  #
+	  PRODUCT_FAMILY=ntopng
+
+	  #
+	  # pro enterprise_s enterprise_m enterprise_l
+	  #
+	  PRODUCT_EDITION=enterprise_m
 
 
+where
 
-
-
+- LICENSE_MANAGER is the IP and port of the host where the LM is running.
+- INSTANCE_NAME is a string used to indetity this specific instance
+- AUTH_TOKEN is a token that the LM can use to prevent issuing valid licenses for unknown AUTH_TOKEN. Its value must be configured in the LM.
+- PRODUCT_FAMILY and PRODUCT_EDITION define what license the ntop application will as the LM when contacting it.
