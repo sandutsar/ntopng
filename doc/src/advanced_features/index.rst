@@ -9,7 +9,7 @@ section.
     :numbered:
 
     access_control_list
-    asset_inventory
+    host_policy
     authentication
     behavior_analysis
     bridging_and_policing
