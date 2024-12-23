@@ -475,7 +475,7 @@ const map_table_def_columns = async (columns) => {
     let html_ref = '';
     let location = '';
     const f_print_asn = (key, asn, row) => {
-        if (asn !== undefined && asn.value != 0) {
+        if (asn !== undefined) {
             return `<a class='tag-filter' data-tag-key='${key}' data-tag-value='${asn.value}' title='${asn.title}' href='javascript:void(0)'>${asn.label}</a>`;
         }
         return "";
