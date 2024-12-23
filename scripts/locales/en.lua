@@ -6302,8 +6302,8 @@ local lang = {
     ["trigger_network_alerts"] = "Trigger Network Alerts",
   },
   ["network_configuration"] = {
-    ["alert_note"] = "The configurations below are used by the 'Unexpected DNS/NTP/DHCP/SMTP/Gateway Server' behavioural checks <a href='" .. ntop.getHttpPrefix() .. "/lua/admin/edit_configset.lua?subdir=all#all'><i class='fas fa-cog'></i></a>.",
-    ["policy_note"] = "Policy Note",
+    ["alert_note"] = "The configuration below is used by the 'Unexpected DNS/NTP/DHCP/SMTP/Gateway Server' behavioural checks: make sure to enable them <a href='" .. ntop.getHttpPrefix() .. "/lua/admin/edit_configset.lua?subdir=all#all'><i class='fas fa-cog'></i></a>.",
+    ["policy_note"] = "The configuration below are used by the 'Host Policy' behavioural check: make sure to enable it <a href='" .. ntop.getHttpPrefix() .. "/lua/admin/edit_configset.lua?subdir=all#all'><i class='fas fa-cog'></i></a>.",
     ["dhcp_servers_title"] = "DHCP Servers",
     ["dns_servers_title"] = "DNS Servers",
     ["dns_servers_description"] = "A list of comma separated DNS Servers IPs",
