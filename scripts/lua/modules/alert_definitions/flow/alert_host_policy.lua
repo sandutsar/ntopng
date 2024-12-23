@@ -44,7 +44,16 @@ end
 function flow_alert_host_policy.format(ifid, alert, alert_type_params)
    -- Extracting info field
    local href = ntop.getHttpPrefix() .. '/lua/admin/network_configuration.lua?page=policy'
-   local key = "alerts_dashboard.alert_host_policy_descr_"..alert_type_params.reason
+   local key
+   local reason = alert_type_params.reason
+   
+   if(reason == nil) then
+      key = tostring(flow_alert_keys.flow_alert_host_policy)
+      reason = alert_type_params.alerts[key].reason
+   end
+   
+
+   key = "alerts_dashboard.alert_host_policy_descr_"..reason
 		
    return(i18n(key, { href = href }))
 end
