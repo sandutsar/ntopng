@@ -6303,6 +6303,7 @@ local lang = {
   },
   ["network_configuration"] = {
     ["alert_note"] = "The configurations below are used by the 'Unexpected DNS/NTP/DHCP/SMTP/Gateway Server' behavioural checks <a href='" .. ntop.getHttpPrefix() .. "/lua/admin/edit_configset.lua?subdir=all#all'><i class='fas fa-cog'></i></a>.",
+    ["policy_note"] = "Policy Note",
     ["dhcp_servers_title"] = "DHCP Servers",
     ["dns_servers_title"] = "DNS Servers",
     ["dns_servers_description"] = "A list of comma separated DNS Servers IPs",

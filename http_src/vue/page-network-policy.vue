@@ -1,6 +1,9 @@
 <template>
     <div class="m-3">
-        <div class="m-4 card card-shadow">
+        <div class="alert alert-info alert-dismissable">
+            <span v-html="policy_note"></span>
+        </div>
+        <div class="card card-shadow">
             <div class="card-body">
                 <table class="table table-striped table-bordered col-sm-12">
                     <tbody class="table_length">
@@ -57,7 +60,7 @@ const set_config_url = `${http_prefix}/lua/pro/rest/v2/set/network/policy.lua`
 const get_config_url = `${http_prefix}/lua/pro/rest/v2/get/network/policy.lua`
 const modifiedInputs = ref([]);
 
-const alert_note = ref(_i18n('network_configuration.alert_note'))
+const policy_note = ref(_i18n('network_configuration.policy_note'))
 const isSaving = ref(false);
 const saveSuccess = ref(false);
 const disable_save = ref(true)
@@ -74,8 +77,8 @@ const saveButtonClass = computed(() => {
 });
 
 const reloadNetworks = function () {
-    saveConfig()
-    getConfig();
+    /* Save the configuration and reload the configured confs */
+    saveConfig();
 }
 
 const check_name = {
@@ -117,15 +120,26 @@ const markAsModified = (key) => {
 // Function to validate Network addresses inserted in text area
 const validateNetworkAddresses = () => {
     let isValid = true;
-    Object.keys(networks).forEach(key => {
+    Object.keys(networks).forEach((key) => {
+        const fixed_networks = [];
         const network_list = networks[key].split(',').map(net => net.trim()).filter(net => net !== '');
-        if (network_list.length === 0) {
-            validationErrors[key] = '';
-        } else if (!network_list.every(regexValidation.validateCIDR)) {
-            validationErrors[key] = 'Invalid Network format';
-            isValid = false;
-        } else {
-            validationErrors[key] = '';
+        network_list.forEach((net) => {
+            if (regexValidation.validateCIDR(net)) {
+                fixed_networks.push(net);
+                return;
+            } else if (regexValidation.validateIPv4(net)) {
+                fixed_networks.push(net + "/32");
+                return;
+            } else if (regexValidation.validateIPv6(net)) {
+                fixed_networks.push(net + "/128");
+                return;
+            } else {
+                validationErrors[key] = 'Invalid Network format';
+                isValid = false;
+            }
+        })
+        if (isValid) {
+            networks[key] = fixed_networks.join(",")
         }
     });
     return isValid;
@@ -146,14 +160,19 @@ const saveConfig = async () => {
             }
         }
 
-        await ntopng_utility.http_post_request(set_config_url, data)
+        const res = await ntopng_utility.http_post_request(set_config_url, data)
         modifiedInputs.value = [];
-
-        // Show success when saved
-        saveSuccess.value = true;
-        setTimeout(() => {
-            saveSuccess.value = false;
-        }, 1500);
+        if (!res.error) {
+            // Show success when saved
+            saveSuccess.value = true;
+            setTimeout(() => {
+                saveSuccess.value = false;
+                getConfig();
+            }, 500);
+        }
+        return true;
     }
+
+    return false;
 };
 </script>

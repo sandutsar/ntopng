@@ -3,7 +3,7 @@
         <div class="alert alert-info alert-dismissable">
             <span v-html="alert_note"></span>
         </div>
-        <div class="m-4 card card-shadow">
+        <div class="card card-shadow">
             <div class="card-body">
                 <table class="table table-striped table-bordered col-sm-12">
                     <tbody class="table_length">
