@@ -5,7 +5,7 @@ ntopng is able to define an Access Control List, used to trigger an alert in cas
 
 .. note::
 
-  This feature is available with at least Enterprise L License.
+  This feature is available with Enterprise L License or better.
 
 .. note::
 
