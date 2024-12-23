@@ -23,14 +23,8 @@
 
 ndpi_serializer* HostPolicyAlert::getAlertJSON(ndpi_serializer* serializer) {
   if(serializer) {
-    char buf[64], buf1[64];
-    Flow *f = getFlow();  
-    char *cli = f->get_cli_ip_addr()->print(buf, sizeof(buf));
-    char *srv = f->get_srv_ip_addr()->print(buf1, sizeof(buf1));   
-    
-    ndpi_serialize_string_string(serializer, "cli_ip", cli);
-    ndpi_serialize_string_string(serializer, "srv_ip", srv);    
+    ndpi_serialize_string_uint32(serializer, "reason", (int)reason);
   }
-  
+
   return serializer;
 }

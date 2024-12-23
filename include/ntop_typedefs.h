@@ -1220,6 +1220,13 @@ typedef enum {
   restricted_host_network_id,
   core_host_network_id,
   whitelisted_host_network_id
-} NetworkConfiguationId;
+} NetworkConfigurationId;
+
+typedef enum {
+  policy_reason_unknown = 0,
+  restricted_client_connected_public_ip_not_whitelisted,
+  restricted_client_connected_to_core_host,
+  core_host_connected_to_non_whitelisted_server
+} HostPolicyAlertReason;
 
 #endif /* _NTOP_TYPEDEFS_H_ */

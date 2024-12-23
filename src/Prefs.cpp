@@ -3244,7 +3244,7 @@ bool Prefs::reloadNetworksPolicyConfiguration() {
 /* *************************************** */
 
 bool Prefs::loadPolicyConfiguration(AddressTree *tree,
-				    char *key, NetworkConfiguationId id) {
+				    char *key, NetworkConfigurationId id) {
   char *rsp = NULL;
   Redis *redis = ntop->getRedis();
   u_int actual_len = redis->len(key);

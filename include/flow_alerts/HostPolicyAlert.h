@@ -26,6 +26,7 @@
 
 class HostPolicyAlert : public FlowAlert {
  private:
+  HostPolicyAlertReason reason;
   ndpi_serializer *getAlertJSON(ndpi_serializer *serializer);
 
  public:
@@ -37,7 +38,8 @@ class HostPolicyAlert : public FlowAlert {
   HostPolicyAlert(FlowCheck *c, Flow *f) : FlowAlert(c, f){ setAlertScore(getDefaultScore()); };
   ~HostPolicyAlert(){};
 
-  FlowAlertType getAlertType() const { return getClassType(); }
+  void setReason(HostPolicyAlertReason r) { reason = r; }
+  FlowAlertType getAlertType() const      { return getClassType(); }
 };
 
 #endif /* _HOST_POLICY_ALERT_H_ */

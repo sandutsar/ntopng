@@ -1183,7 +1183,7 @@ static int ntop_check_network_policy(lua_State *vm) {
   char *local_devices, *corporate_devices, *whitelisted_networks;
   char *rsp = NULL;
   u_int16_t rsp_max_len = 512;
-
+    
   lua_newtable(vm);
 
   if ((rsp = (char *)malloc(rsp_max_len)) == NULL) {

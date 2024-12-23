@@ -746,7 +746,7 @@ class Prefs {
   void reloadServersConfiguration();
 #ifdef NTOPNG_PRO
   bool reloadNetworksPolicyConfiguration();
-  bool loadPolicyConfiguration(AddressTree *tree, char *key, NetworkConfiguationId id);
+  bool loadPolicyConfiguration(AddressTree *tree, char *key, NetworkConfigurationId id);
   AddressTree* getNetworksPolicyConfiguration();
 #endif
   bool isGateway(IpAddress *ip, u_int16_t vlan_id);

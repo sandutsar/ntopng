@@ -22,7 +22,7 @@ local flow_alert_host_policy = classes.class(alert)
 flow_alert_host_policy.meta = {
    alert_key = flow_alert_keys.flow_alert_host_policy,
    icon = "fas fa-fw fa-exclamation",
-   i18n_title = "alerts_dashboard.access_control_list",
+   i18n_title = "alerts_dashboard.host_policy",
 }
 
 -- ##############################################
@@ -44,7 +44,9 @@ end
 function flow_alert_host_policy.format(ifid, alert, alert_type_params)
    -- Extracting info field
    local href = ntop.getHttpPrefix() .. '/lua/admin/network_configuration.lua?page=policy'
-   return(i18n("alerts_dashboard.access_control_list_descr", { href = href }))
+   local key = "alerts_dashboard.alert_host_policy_descr_"..alert_type_params.reason
+		
+   return(i18n(key, { href = href }))
 end
 
 -- #######################################################
