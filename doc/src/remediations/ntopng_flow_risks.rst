@@ -1216,3 +1216,32 @@ Detecting this alert may suggest potential Distributed Denial of Service (DDoS) 
 #. **Additional Notes:**
 This alert is more relevant in networks with high volumes of TCP traffic or where TCP-based services are exposed to the internet. Regular monitoring and thresholding can help identify abnormal reset patterns indicative of potential attacks. The severity level of this alert is typically considered MEDIUM.
 
+.. _Risk 102:
+
+ACCESS CONTROL LIST
+===================
+
+#. **Description:**
+This alert is triggered whenever a network flow violates the specified ACL policy defined under Settings -> Network Configuration
+
+#. **Potential Causes:**
+Detecting this alert may suggest a potential host misbehaviour, misconfiguration or security problem.
+
+#. **Recommended Actions:**
+Check if the configured policy is properly configured, or if the host that triggered the alerted host is misconfigured or it has been infected by some malware.
+
+
+.. _Risk 103:
+
+HOST POLICY
+===========
+
+#. **Description:**
+This alert is triggered whenever a network flow violates the specified policy defined under Settings -> Network Configuration -> Policies
+
+#. **Potential Causes:**
+Detecting this alert may suggest a potential host misbehaviour, misconfiguration or security problem.
+
+#. **Recommended Actions:**
+Check if the configured policy is properly configured, or if the host that triggered the alerted host is misconfigured or it has been infected by some malware. Typically these issues might also be caused by network devices that perform unexpected activites (e.g. silent softwrae updates): if acceptable, the contacted hosts need to be added to the whitelisted hosts list (see the host policy configuration).
+

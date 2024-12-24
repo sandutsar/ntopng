@@ -493,7 +493,7 @@ FULLY ENCRYPTED
 
 .. _Risk 052:
   
-TLS ALPN SNU MISMATCH
+TLS ALPN SNI MISMATCH
 ========================
 
 
