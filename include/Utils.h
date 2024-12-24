@@ -335,7 +335,8 @@ class Utils {
   static bool readEthernetIPDeviceInfo(char *ip_address, u_int8_t timeout_sec, lua_State *vm);
   static const char* OSType2Str(OSType os);
   static const char* learningMode2str(OSLearningMode mode);
-  static bool checkNetworkList(char *network_list, char *rsp, bool (*callback)(char *, char *));
+  static bool checkNetworkList(char *network_list, char *rsp,
+			       bool (*callback)(char *, char *, void *user_data), void *user_data);
 };
 
 #endif /* _UTILS_H_ */

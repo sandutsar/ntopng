@@ -7573,7 +7573,9 @@ const char* Utils::learningMode2str(OSLearningMode mode) {
 
 /* ******************************************* */
 
-bool Utils::checkNetworkList(char *network_list, char *rsp, bool (*callback)(char *, char *)) {
+bool Utils::checkNetworkList(char *network_list, char *rsp,
+			     bool (*callback)(char *, char *, void *user_data),
+			     void *user_data) {
   /* callback is a function that receive a network as argument and a pointer to rsp,
    * used in case of errors, to give a feedback and return a boolean, if the callback worked or not
    */
@@ -7585,9 +7587,10 @@ bool Utils::checkNetworkList(char *network_list, char *rsp, bool (*callback)(cha
   /* Iterate the list of networks */
   std::stringstream ipList(cidr);
   std::string ip;
+
   while (std::getline(ipList, ip, ',')) {
     /* Call the callback */
-    if (!callback((char *) ip.c_str(), rsp)) {
+    if (!callback((char *) ip.c_str(), rsp, user_data)) {
       return false;
     }
   }
