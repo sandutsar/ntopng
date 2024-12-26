@@ -50,7 +50,7 @@ top-down order as they are listed in the preferences. If at least one of the aut
 methods succeeds, then the user is allowed to access the web GUI.
 
 Local Authentication
-####################
+--------------------
 
 This is the authentication method enabled by default when ntopng is installed.
 It will use the users credentials configured_ via the ntopng GUI to authenticate new users.
@@ -58,7 +58,7 @@ It will use the users credentials configured_ via the ntopng GUI to authenticate
 .. _`configured`: ../web_gui/settings.html#manage-users
 
 LDAP Authentication
-###################
+-------------------
 
 An LDAP server can be used to authenticate users.
 
@@ -105,21 +105,51 @@ otherwise:
 
 .. code:: bash
 
-  ldapsearch -h ldap_server_ip -D 'cn=binding_user,dc=mydomain,dc=org' -w binding_password -b"dc=mydomain,dc=org" -s sub "(objectclass=*)"
+  ldapsearch -h ldap_server_ip -D 'cn=binding_user,dc=mydomain,dc=org' -w binding_password -b 'dc=mydomain,dc=org' -s sub "(objectclass=*)"
 
 The parameters above should be modified according to the actual configuration in use.
 It is important to configure the LDAP server properly in order to correctly expose the necessary
-group metadata to ntopng, otherwise authentication will not work properly. The following
-link contains recommendations to be applied to an OpenLDAP server for ntopng communication:
-https://github.com/ntop/ntopng/blob/dev/doc/README.LDAP.
+group metadata to ntopng, otherwise authentication will not work properly. Read the
+next paragraph for recommendations to be applied to an OpenLDAP server for ntopng communication.
 
 A detailed blog post that discusses LDAP authentication and shows how
 to configure an LDAP server can be found at:
 https://www.ntop.org/ntopng/remote-ntopng-authentication-with-radius-and-ldap/
 
+OpenLDAP as Active Directory proxy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using the sAMAccount account type in combination with OpenLDAP as an Active Directory proxy,
+ntopng authentication will not work because the "memberOf" attribute used by ntopng is not found.
+In fact, OpenLDAP does not understand the "memberOf" attribute of AD and so it creates a
+MEMBEROF (uppercase) pseudo attribute, which is not standard.
+
+In order to make this setup work properly, the following should be added to the OpenLDAP config:
+
+.. code:: text
+
+   attributetype ( 1.2.840.113556.1.2.102
+     NAME 'memberOf'
+     SYNTAX '1.3.6.1.4.1.1466.115.121.1.12'
+   )
+
+When using POSIX accounts, the LDAP server should be configured as follows in order
+to work correctly with ntopng:
+
+- Into the LDAP user configuration, note down the "uid" parameter (called "User Name"
+  in OpenLDAP, not to be confused with "UidNumber"). You will need it below.
+
+- Into the LDAP group configuration, you should add a new custom field "memberUid", with
+  the same value of the user "uid" field above.
+
+As an example, supposing there is a group "usersGroup" and a user "ntopngUser" as uid,
+a new field "memberUid" should be added to the "usersGroup" configuration with "ntopngUser" as
+value.
+
+The *memberUid* (ntopngUser in this case) is the username to use for the ntopng authentication.
 
 RADIUS Authentication
-#####################
+---------------------
 
 .. figure:: ../img/advanced_features_radius_settings.png
   :align: center
@@ -169,7 +199,7 @@ https://www.ntop.org/ntopng/remote-ntopng-authentication-with-radius-and-ldap/
 
 
 HTTP Authentication
-###################
+-------------------
 
 Ntopng also supports authentication via HTTP POST requests. In this case,
 and JSON data
@@ -206,7 +236,7 @@ The following link provides some information on how to setup a simple HTTP authe
 work with ntopng: https://github.com/ntop/ntopng/blob/dev/doc/README.HTTP_AUTHENTICATOR .
 
 Unable to Login
-###############
+---------------
 
 Instructions on how to recover after being locked out of the ntopng GUI can be found
 in the `FAQ page`_.
@@ -214,7 +244,7 @@ in the `FAQ page`_.
 .. _`FAQ page`: ../faq.html#cannot-login-into-the-gui
 
 Token based authentication
-##########################
+--------------------------
 
 A security token is a “trusted tool“ to enter a restricted resource. It can be seen as a key that allows a user to authenticate and prove it’s identity.
 The logic behind the token - based authentication is simple.
