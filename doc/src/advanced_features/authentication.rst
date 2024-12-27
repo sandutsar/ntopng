@@ -190,13 +190,34 @@ Upon a successfully authentication, the command above should return the followin
 
   rad_recv: Access-Accept packet from host 127.0.0.1 port 1812, id=4, length=20
 
-The following link provides more information on the RADIUS setup for ntopng:
-https://github.com/ntop/ntopng/blob/dev/doc/README.RADIUS.
-
 A detailed blog post that discusses RADIUS authentication in ntopng,
 and shows how to set up a RADIUS server can be found at:
 https://www.ntop.org/ntopng/remote-ntopng-authentication-with-radius-and-ldap/
 
+Additional Notes
+~~~~~~~~~~~~~~~~
+
+ntopng sends an Access-Request to the RADIUS server and, if Access-Accept
+is returned, the user is authenticated.
+
+In order to distinguish between admin and normal users, a `Filter-Id` attribute is
+used (https://tools.ietf.org/html/rfc2865#section-5.11). The `Filter-Id` for admin
+users should correspond to the `RADIUS Admin Group` set into the ntopng RADIUS preferences.
+
+Setting up a FreeRadius server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Check out https://www.packet6.com/install-freeradius-ubuntu-server.
+`testing123` is the default secret for localhost. In order to set up the Filter-Id 
+attribute for a user, the following lines should be added to `/etc/freeradius/users`
+
+.. code:: text
+
+   testuser Cleartext-Password := "Password123"
+     Filter-Id = "ntopAdmin"
+
+In order for authentication to work properly, testuser must actually exist as a Linux user
+in the system where FreeRadius is installed.
 
 HTTP Authentication
 -------------------
