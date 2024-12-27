@@ -55,20 +55,20 @@ void HostChecksExecutor::loadHostChecks(HostChecksLoader *fcl) {
 
 /* **************************************************** */
 
-void HostChecksExecutor::releaseAllDisabledAlerts(Host *h) {
-  time_t now = time(NULL);
-
+void HostChecksExecutor::releaseAllDisabledAlerts(Host *h, time_t now) {
   for (u_int i = 0; i < NUM_DEFINED_HOST_CHECKS; i++) {
-    HostCheckID t = (HostCheckID)i;
+    HostCheckID t = (HostCheckID) i;
     HostCheck *cb = getCheck(t);
+    HostAlert *alert = h->getCheckEngagedAlert(t);
 
-    if (!cb) {
-      /* Check disabled or not a C++ check: check engaged alerts with auto
-       * release */
-      HostAlert *alert = h->getCheckEngagedAlert(t);
-      if (alert && (!alert->getTimeout() || now > alert->getTimeout()) &&
-          (alert->hasAutoRelease() ||
-           ntop->getPrefs()->dontEmitHostAlerts() /* alerts disabled */)) {
+    if (alert) {
+      if (/* Check max engage time (24h) required to optimize DB queries */
+          (now - alert->getEngageTime() > CONST_MAX_ALERT_ENGAGE_TIME)
+          /* Check disabled or not a C++ check: check engaged alerts with auto
+           * release */
+          || (!cb && (!alert->getTimeout() || now > alert->getTimeout()) &&
+              (alert->hasAutoRelease() ||
+               ntop->getPrefs()->dontEmitHostAlerts() /* alerts disabled */))) {
         h->releaseAlert(alert);
       }
     }
@@ -82,7 +82,7 @@ void HostChecksExecutor::execChecks(Host *h) {
   time_t now = time(NULL);
 
   /* Release (auto-release) alerts for disabled checks */
-  releaseAllDisabledAlerts(h);
+  releaseAllDisabledAlerts(h, now);
 
   run_min_cbs = h->isTimeToRunMinChecks(now);
   run_5min_cbs = h->isTimeToRun5MinChecks(now);

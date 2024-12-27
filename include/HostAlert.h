@@ -37,8 +37,7 @@ class HostAlert {
   u_int64_t rowid; /* row id used by engaged alert in the in-memory table */
   time_t engage_time;
   time_t release_time;
-  time_t timeout_time; /* used by alerts with no C++ Check to automatically
-                          disengage */
+  time_t timeout_time; /* used by alerts with no C++ Check to automatically disengage */
   risk_percentage cli_pctg; /* The fraction of total risk that goes to the client */
   bool is_attacker, is_victim; /* Whether the host of this alert is considered
                                   to be an attacker o a victim */

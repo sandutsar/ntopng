@@ -615,6 +615,8 @@
                                        */
 #define CONST_MAX_NEW_FLOWS_SECOND 25 /* keep in sync with alert_utils.lua */
 #define CONST_ALERT_GRACE_PERIOD 60   /* No more than 1 alert/min */
+#define CONST_MAX_ALERT_ENGAGE_TIME (60*60*24) /* 24h (sec) */
+
 #define CONST_CONTACTED_BY "contacted_by"
 #define CONST_CONTACTS "contacted_peers" /* Peers contacted by this host */
 

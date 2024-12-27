@@ -264,7 +264,8 @@ function alert_store:add_time_filter(epoch_begin, epoch_end, is_write)
             -- Include engaged alerts triggered before epoch_begin
             local ext_time_interval_cond = string.format("(%s OR (%s >= %u AND %s < %u AND alert_status = %u))",
                 time_interval_cond,
-                field, self._epoch_begin - (24*60*60), -- tstamp >= 1 day before (avoid full db scan)
+                -- Note: condition on tstamp >= 1 day before (avoid full db scan - see also CONST_MAX_ALERT_ENGAGE_TIME in C++)
+                field, self._epoch_begin - (24*60*60),
                 field, self._epoch_begin,
                 alert_consts.alert_status.engaged.alert_status_id)
             time_interval_cond = ext_time_interval_cond

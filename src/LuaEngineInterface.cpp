@@ -5420,6 +5420,7 @@ static int ntop_interface_trigger_traffic_alert(lua_State *vm) {
         alert = new TrafficVolumeAlert(
             host_check_traffic_volume, h, CLIENT_FULL_RISK_PERCENTAGE,
             std::string(metric), frequency_sec, threshold, value, t_sign);
+
         if (alert) {
           /* Specify when the alert will auto-release if not continuously
            * triggered */

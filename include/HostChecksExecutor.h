@@ -35,7 +35,7 @@ class HostChecksExecutor { /* One instance per ntopng Interface */
   void loadHostChecksAlerts(std::list<HostCheck *> *cb_list);
   void loadHostChecks(HostChecksLoader *fcl);
 
-  void releaseAllDisabledAlerts(Host *h);
+  void releaseAllDisabledAlerts(Host *h, time_t now);
 
  public:
   HostChecksExecutor(HostChecksLoader *fcl, NetworkInterface *_iface);
