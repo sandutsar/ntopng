@@ -48,7 +48,7 @@ class OtherAlertableEntity : public AlertableEntity {
   std::map<u_int32_t /* std::string */, std::string> alert_cache[MAX_NUM_PERIODIC_SCRIPTS];
   std::map<u_int32_t /* std::string */, Alert> engaged_alerts[MAX_NUM_PERIODIC_SCRIPTS];
 
-  void getPeriodicityAlerts(lua_State *vm, ScriptPeriodicity p,
+  void getAlertsByPeriodicity(lua_State *vm, ScriptPeriodicity p,
                             AlertType type_filter, AlertLevel severity_filter,
                             AlertRole role_filter, u_int *idx);
 
