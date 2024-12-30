@@ -2349,6 +2349,10 @@ function alert_store:format_json_record_common(value, entity_id, no_html)
 
     record[BASE_RNAME.SCRIPT_KEY.name] = alert_json["alert_generation"] and alert_json["alert_generation"]["script_key"]
 
+    local is_engaged = self._status == alert_consts.alert_status.engaged.alert_status_id or
+       (value.alert_status and tonumber(value.alert_status) == alert_consts.alert_status.engaged.alert_status_id)
+    record["is_engaged"] = is_engaged
+
     return record
 end
 
