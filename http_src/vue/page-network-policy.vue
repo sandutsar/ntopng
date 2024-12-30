@@ -114,7 +114,8 @@ const markAsModified = (key) => {
     if (!modifiedInputs.value.includes(key)) {
         modifiedInputs.value.push(key);
     }
-    disable_save.value = false
+    validationErrors[key] = '';
+    disable_save.value = false;
 };
 
 // Function to validate Network addresses inserted in text area
