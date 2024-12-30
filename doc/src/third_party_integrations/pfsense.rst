@@ -181,6 +181,22 @@ Troubleshooting
    If you experience issues running the redis service on pfSense 2.4.x,
    please try upgrading your pfSense installation to 2.5 with *pfSense-upgrade*
 
+Dependencies Issues
+~~~~~~~~~~~~~~~~~~~
+
+Before installing ntopng, make sure the ntopng community package shipped with
+pfsense is not installed. Otherwise, when trying to install the ntop-built 
+ntopng package, it may happen that the pkg manager tries to remove vital system
+packages including pfsense itself. If this happens, in command line, remove ntopng:
+
+.. code:: bash
+
+   pkg remove -f ntopng
+
+Then install the ntop repository as described before.
+
+Redis Failures
+~~~~~~~~~~~~~~
 
 On certain versions of pfSense, redis fails to start automatically and it requires some intervention on configuration files. To check if redis has been started successfully run the following command:
 
