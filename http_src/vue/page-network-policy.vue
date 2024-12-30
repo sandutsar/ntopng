@@ -4,8 +4,9 @@
             <span v-html="policy_note"></span>
         </div>
         <div class="card card-shadow">
+            <Loading v-if="show_spinner"></Loading>
             <div class="card-body">
-                <table class="table table-striped table-bordered col-sm-12">
+                <table class="table table-striped table-bordered col-sm-12" :class="show_spinner ? 'ntopng-gray-out' : ''">
                     <tbody class="table_length">
                         <tr v-for="(value, key) in check_name" :key="key" class="mb-4">
                             <td>
@@ -14,6 +15,7 @@
                                 </div>
                                 <div class="ms-4 me-4">
                                     <textarea v-model="networks[key]" class="form-control rounded"
+                                        :class="(show_border_error) ? 'border-danger' : ''"
                                         :placeholder="`Enter ${value.device_type} Networks (Comma Separated)`"
                                         @input="markAsModified(key)" rows="2"></textarea>
                                     <small>{{ _i18n(value.i18n_description) }}</small>
@@ -26,10 +28,17 @@
                         </tr>
                     </tbody>
                 </table>
-                <div class="d-flex justify-content-end me-1">
-                    <button class="btn btn-primary" :disabled="disable_save" @click="reloadNetworks">
-                        {{ _i18n('save_settings') }}
-                    </button>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div v-if="show_configuration_error" class="text-danger">
+                            <span v-html="configuration_error"></span>
+                        </div>
+                    </div>
+                    <div clas="align-items-center ms-auto">
+                        <button class="btn btn-primary" :disabled="disable_save" @click="reloadNetworks">
+                            {{ _i18n('save_settings') }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -41,6 +50,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ntopng_utility } from "../services/context/ntopng_globals_services.js";
 import { default as NoteList } from "./note-list.vue";
+import { default as Loading } from "./loading.vue";
 import regexValidation from "../utilities/regex-validation.js";
 
 const _i18n = (t) => i18n(t);
@@ -61,9 +71,13 @@ const get_config_url = `${http_prefix}/lua/pro/rest/v2/get/network/policy.lua`
 const modifiedInputs = ref([]);
 
 const policy_note = ref(_i18n('network_configuration.policy_note'))
+const configuration_error = ref('');
+const show_configuration_error = ref(false);
 const isSaving = ref(false);
 const saveSuccess = ref(false);
-const disable_save = ref(true)
+const disable_save = ref(true);
+const show_border_error = ref(false);
+const show_spinner = ref(false);
 
 const saveButtonText = computed(() => {
     if (isSaving.value) return 'Saving...';
@@ -161,15 +175,26 @@ const saveConfig = async () => {
             }
         }
 
+        show_spinner.value = true;
         const res = await ntopng_utility.http_post_request(set_config_url, data)
         modifiedInputs.value = [];
         if (!res.error) {
             // Show success when saved
             saveSuccess.value = true;
+            configuration_error.value = '';
+            show_configuration_error.value = false;
+            disable_save.value = true;
+            show_border_error.value = false;
             setTimeout(() => {
                 saveSuccess.value = false;
                 getConfig();
+                show_spinner.value = false;
             }, 500);
+        } else {
+            configuration_error.value = 'Error: ' + res.error_msg;
+            show_configuration_error.value = true;
+            show_border_error.value = true;
+            show_spinner.value = false;
         }
         return true;
     }
