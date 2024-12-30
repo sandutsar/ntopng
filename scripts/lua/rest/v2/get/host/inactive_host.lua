@@ -29,7 +29,7 @@ local rsp = {
     host_info = {}
 }
 local serial_key = _GET["serial_key"]
-local list = asset_management_utils.get_inactive_host_info(ifid, serial_key) or {}
+local list = asset_management_utils.getInactiveHostInfo(ifid, serial_key) or {}
 
 -- Check if at least an host is inactive
 for _, host_details in pairs(list or {}) do

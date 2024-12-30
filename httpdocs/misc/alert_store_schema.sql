@@ -444,21 +444,22 @@ CREATE INDEX IF NOT EXISTS `system_alerts_i_alert_status` ON `system_alerts`(ale
 -- -----------------------------------------------------
 -- Table `asset_management`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `asset_management` (
-`rowid` INTEGER PRIMARY KEY AUTOINCREMENT,
-`type` TEXT NOT NULL,
-`key` TEXT NOT NULL UNIQUE,
-`ip` TEXT NULL,
-`mac` TEXT NOT NULL,
-`vlan` UNSIGNED INT NULL,
-`network` UNSIGNED INT NULL,
-`name` TEXT NULL,
-`device_type` UNSIGNED INT NULL,
-`manufacturer` TEXT NULL,
-`first_seen` DATETIME NOT NULL DEFAULT 0,
-`last_seen` DATETIME NOT NULL DEFAULT 0,
-`trigger_alert` INTEGER NULL CHECK(`trigger_alert` IN (0,1)),
-`device_status` TEXT NULL
+CREATE TABLE IF NOT EXISTS `assets` (
+    `rowid` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `type` TEXT NOT NULL,
+    `key` TEXT NOT NULL UNIQUE,
+    `ifid` INT NOT NULL,
+    `ip` TEXT NULL,
+    `mac` TEXT NOT NULL,
+    `vlan` UNSIGNED INT NULL DEFAULT 0,
+    `network` UNSIGNED INT NULL,
+    `name` TEXT NULL,
+    `device_type` UNSIGNED INT NULL,
+    `manufacturer` TEXT NULL,
+    `first_seen` DATETIME NOT NULL DEFAULT 0,
+    `last_seen` DATETIME NOT NULL DEFAULT 0,
+    `gateway_mac` TEXT NULL,
+    `json_info` TEXT NULL -- A json containing all other info
 );
 
 @

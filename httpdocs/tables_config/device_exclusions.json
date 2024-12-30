@@ -3,7 +3,7 @@
 	"data_url": "lua/pro/rest/v2/get/device/exclusion.lua",
 	"use_current_page": false,
 	"enable_search": true,
-	"paging": false,
+	"paging": true,
 	"display_empty_rows": true,
 	"columns": [
 		{
@@ -92,7 +92,7 @@
 		{
 			"title_i18n": "edit_check.device_status",
 			"data_field": "status",
-			"sortable": true,
+			"sortable": false,
 			"class": [
 				"text-nowrap",
 				"text-center"
@@ -101,7 +101,7 @@
 		{
 			"title_i18n": "edit_check.trigger_alert",
 			"data_field": "trigger_alert",
-			"sortable": true,
+			"sortable": false,
 			"class": [
 				"text-nowrap",
 				"text-center"

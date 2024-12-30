@@ -76,7 +76,8 @@ Mac::Mac(NetworkInterface *_iface, u_int8_t _mac[6])
        ntop->getPrefs()->isNetBoxEnabled()))
     dumpAssetInfo();
 
-  if ((!special_mac) && ntop->getRedis() && ntop->getPrefs()->is_pro_edition()) dumpAssetInfoToRedis();
+  if ((!special_mac) && ntop->getRedis() && ntop->getPrefs()->is_enterprise_m_edition()) 
+    dumpAssetInfoToRedis(false);
 
   if((!special_mac) && (!broadcast_mac))
     ntop->get_am()->createMac(this);
@@ -96,7 +97,8 @@ Mac::~Mac() {
   if ((!broadcast_mac) && (!special_mac)) dumpToRedis();
 
 #ifdef NTOPNG_PRO
-  if (!special_mac && ntop->getRedis() && ntop->getPrefs()->is_pro_edition()) dumpAssetInfoToRedis();
+  if (!special_mac && ntop->getRedis() && ntop->getPrefs()->is_enterprise_m_edition()) 
+    dumpAssetInfoToRedis(true);
 #endif
 
   if (model) free(model);
@@ -504,6 +506,7 @@ void Mac::dumpToRedis() {
 /* *************************************** */
 
 #ifdef NTOPNG_PRO
+/* This is used for netbox */
 void Mac::dumpAssetInfo() {
   char buf[32], *json_str = NULL;
   ndpi_serializer device_json;
@@ -532,7 +535,7 @@ void Mac::dumpAssetInfo() {
   ndpi_term_serializer(&device_json);
 }
 
-void Mac::dumpAssetInfoToRedis() {
+void Mac::dumpAssetInfoToRedis(bool dump_last_seen) {
   char mac_addr[64], mac_disconnection_key[128], *mac, *json_str;
   ndpi_serializer device_json;
   u_int32_t json_str_len = 0;
@@ -545,24 +548,17 @@ void Mac::dumpAssetInfoToRedis() {
   ndpi_serialize_string_string(&device_json, "mac", mac);
   ndpi_serialize_string_string(&device_json, "manufacturer", get_manufacturer());
   ndpi_serialize_string_uint32(&device_json, "first_seen", first_seen);
-  ndpi_serialize_string_uint32(&device_json, "last_seen", last_seen);
+  if (dump_last_seen) ndpi_serialize_string_uint32(&device_json, "last_seen", last_seen);
   ndpi_serialize_string_uint32(&device_json, "device_type", getDeviceType());
   ndpi_serialize_string_string(&device_json, "key", getSerializationKey(redis_key, sizeof(redis_key), true));
   
   json_str = ndpi_serializer_get_buffer(&device_json, &json_str_len);
   if ((json_str != NULL) && (json_str_len > 0)) {
     snprintf(redis_key, sizeof(redis_key), OFFLINE_LOCAL_HOSTS_MACS_QUEUE_NAME, iface->get_id());
-    
     ntop->getRedis()->lpush(redis_key, json_str, CONST_MAX_INACTIVE_HOSTS_MAC_QUEUE_LEN);
   }
 
   ndpi_term_serializer(&device_json);
-
-  /* Will be removed */
-  snprintf(mac_disconnection_key, sizeof(mac_disconnection_key),
-      (char *)MACS_DISCONNECTION, iface->get_id());
-
-  ntop->getRedis()->lpush(mac_disconnection_key, print(mac_addr, sizeof(mac_addr)), 0 /* No Trim */);
 }
 #endif
 

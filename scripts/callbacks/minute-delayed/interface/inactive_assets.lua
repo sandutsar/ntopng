@@ -6,9 +6,9 @@ local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 
 require "ntop_utils"
-require "lua_utils"
+require "check_redis_prefs"
+local json = require "dkjson"
 local asset_management_utils = require "asset_management_utils"
-local json = require ("dkjson")
 
 -- #################################################################
 -- Periodically fetches inactive host information from redis to add 
@@ -17,15 +17,27 @@ local json = require ("dkjson")
 
 local start_time = os.time()  -- Record the start time
 local duration = 40           -- Duration in seconds
+local ifid = interface.getId()
+local version = 0
+local redis_key = string.format("ntopng.inactive_hosts_macs.queue.ifid_%d", ifid)
 
-local redis_key = string.format("ntopng.inactive_hosts_macs.queue.ifid_%d", interface.getId())
+if ntop.llenCache(redis_key) > 0 then
+    if hasClickHouseSupport() then
+        version = asset_management_utils.getLastVersion(ifid)
+        version = tonumber(version or 0) + 1
+    end
 
-while os.difftime(os.time(), start_time) < duration and ntop.llenCache(redis_key) > 0 do
-    local entry = json.decode(ntop.lpopCache(redis_key))
+    while os.difftime(os.time(), start_time) < duration do
+        local entry = ntop.lpopCache(redis_key)
 
-    if entry["type"] == "host" then
-        asset_management_utils.insert_host(entry)
-    else
-        asset_management_utils.insert_mac(entry)
+        if entry then
+            entry = json.decode(entry) or {}
+            if entry and entry["type"] == "host" then
+                asset_management_utils.insertHost(entry, version, ifid)
+            elseif entry and entry["type"] == "mac" then
+                asset_management_utils.insertMac(entry, version, ifid)
+            end
+            version = version + 1
+        end
     end
 end

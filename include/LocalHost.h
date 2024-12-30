@@ -48,10 +48,9 @@ class LocalHost : public Host {
   void deferredInitialization();
   void freeLocalHostData();
   void addInactiveData();
-  void removeInactiveData();
   virtual void deleteHostData();
 
-  char *getMacBasedSerializationKey(char *redis_key, size_t size, char *mac_key);
+  char *getMacBasedSerializationKey(char *redis_key, size_t size, char *mac_key, bool short_format);
   char *getIPBasedSerializationKey(char *redis_key, size_t size, bool short_format);
   void luaDoHDot(lua_State *vm);
 #ifdef NTOPNG_PRO

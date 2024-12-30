@@ -44,8 +44,8 @@ for key, value in pairs(filters) do
     end
 end
 
-local tot_inactive_hosts = asset_management_utils.get_total_inactive_hosts(ifid, filters)[1].count
-local inactive_hosts = asset_management_utils.get_inactive_hosts(ifid, order, gui_to_db_columns[sort], start, length, filters)
+local tot_inactive_hosts = asset_management_utils.getNumInactiveHosts(ifid, filters)[1].count
+local inactive_hosts = asset_management_utils.getInactiveHosts(ifid, order, gui_to_db_columns[sort], start, length, filters)
 
 for _, value in pairs(inactive_hosts or {}) do
     local record = {}

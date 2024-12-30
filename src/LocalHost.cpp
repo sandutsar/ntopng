@@ -195,15 +195,13 @@ void LocalHost::initialize() {
 /* *************************************** */
 
 void LocalHost::deferredInitialization() {
-  removeInactiveData();
   Host::deferredInitialization();
 }
 
 /* *************************************** */
 
 void LocalHost::addInactiveData() {
-  char key[128], *serialization_key;
-
+  Mac *cur_mac = getMac();
   /* Remove the key from the hash, used to get the offline hosts */
   /* Exclude the multicast/broadcast addresses */
   if (!ntop->getRedis() || !isLocalUnicastHost()) return;
@@ -211,16 +209,15 @@ void LocalHost::addInactiveData() {
   /* Exclude local-link fe80::/10, marked as private */
   if (isIPv6() && isPrivateHost()) return;
 
-  char buf[64], *json_str = NULL;
-  ndpi_serializer host_json;
-  u_int32_t json_str_len = 0;
-  Mac *cur_mac = getMac();
-
   /* In case the MAC is NULL or the MAC is a special */
   /* address or a broadcast address do not include it */
   if (!cur_mac || cur_mac->isSpecialMac() || cur_mac->isBroadcast()) return;
 
-#if 0
+  char key[128], buf[64], *serialization_key = NULL, *json_str = NULL;
+  ndpi_serializer host_json;
+  u_int32_t json_str_len = 0;
+
+#ifdef NTOPNG_DEBUG
   ntop->getTrace()->traceEvent(TRACE_NORMAL,
 			       "Adding Host %s to inactive hosts Interace %d, with MAC: %s",
 			       ip.print(buf, sizeof(buf)),
@@ -254,28 +251,11 @@ void LocalHost::addInactiveData() {
   if ((json_str != NULL) && (json_str_len > 0)) {
     char redis_key[64];
 
-    /* Will be removed */
-    snprintf(redis_key, sizeof(redis_key), OFFLINE_LOCAL_HOSTS_KEY, iface->get_id());
-    ntop->getRedis()->hashSet(redis_key, serialization_key, json_str);
-
     snprintf(redis_key, sizeof(redis_key), OFFLINE_LOCAL_HOSTS_MACS_QUEUE_NAME, iface->get_id());
     ntop->getRedis()->lpush(redis_key, json_str, CONST_MAX_INACTIVE_HOSTS_MAC_QUEUE_LEN);
   }
 
   ndpi_term_serializer(&host_json);
-}
-
-/* *************************************** */
-
-void LocalHost::removeInactiveData() {
-  char key[128], redis_key[64];
-
-  /* Remove the key from the hash, used to get the offline hosts */
-  if (!ntop->getRedis() || !isLocalUnicastHost()) return;
-
-  snprintf(redis_key, sizeof(redis_key), OFFLINE_LOCAL_HOSTS_KEY,
-           iface->get_id());
-  ntop->getRedis()->hashDel(redis_key, getSerializationKey(key, sizeof(key)));
 }
 
 /* *************************************** */
@@ -319,7 +299,7 @@ char *LocalHost::getSerializationKey(char *redis_key, u_int bufsize, bool short_
 
     get_mac_based_tskey(mac, mac_buf, sizeof(mac_buf));
 
-    return (getMacBasedSerializationKey(redis_key, bufsize, mac_buf));
+    return (getMacBasedSerializationKey(redis_key, bufsize, mac_buf, short_format));
   }
 
   return (getIPBasedSerializationKey(redis_key, bufsize, short_format));
@@ -607,9 +587,9 @@ void LocalHost::deleteHostData() {
 /* *************************************** */
 
 char *LocalHost::getMacBasedSerializationKey(char *redis_key, size_t size,
-                                             char *mac_key) {
+                                             char *mac_key, bool short_format) {
   /* Serialize both IP and MAC for static hosts */
-  snprintf(redis_key, size, HOST_BY_MAC_SERIALIZED_KEY, iface->get_id(),
+  snprintf(redis_key, size, short_format ? MAC_SERIALIZED_SHORT_KEY : HOST_BY_MAC_SERIALIZED_KEY, iface->get_id(),
            mac_key);
 
   return (redis_key);

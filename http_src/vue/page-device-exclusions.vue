@@ -1,76 +1,60 @@
 <template>
-  
 
-<div class="row">
-  <div class="col-md-12 col-lg-12">
-    <div class="alert alert-danger d-none" id='alert-row-buttons' role="alert">
-    </div>
-    <div class="card">
-      <div class="card-body">
-        <div v-if="is_learning_status" class="alert alert-info">
-          {{ learning_message }}
-        </div>
-      	<div id="table_devices_vue">
-          <modal-delete-confirm ref="modal_delete_confirm"
-            :title="title_delete"
-            :body="body_delete"
-            @delete="delete_row">
-          </modal-delete-confirm>
-          <modal-delete-confirm ref="modal_delete_all"
-            :title="title_delete_all"
-            :body="body_delete_all"
-            @delete="delete_all">
-          </modal-delete-confirm>
-          <modal-add-device-exclusion ref="modal_add_device"
-            :title="title_add"
-            :body="body_add"
-            :footer="footer_add"
-            :list_notes="list_notes_add"
-            @add="add_device_rest">
-          </modal-add-device-exclusion>
-          <modal-edit-device-exclusion ref="modal_edit_device"
-            :title="title_edit"
-            :title_edit_all="title_edit_all"
-            @edit="edit_row">
-          </modal-edit-device-exclusion>
-            
-          <TableWithConfig ref="table_device_exclusions"
-				        :csrf="csrf"
-				        :table_id="table_id"
-                :f_map_columns="map_table_def_columns"
-				        :get_extra_params_obj="get_extra_params_obj"
-                :f_map_config="map_config"
-                :f_sort_rows="columns_sorting"
-                @custom_event="on_table_custom_event">
-                <template v-slot:custom_header>
+
+  <div class="row">
+    <div class="col-md-12 col-lg-12">
+      <div class="alert alert-danger d-none" id='alert-row-buttons' role="alert">
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div v-if="is_learning_status" class="alert alert-info">
+            {{ learning_message }}
+          </div>
+          <div id="table_devices_vue">
+            <modal-delete-confirm ref="modal_delete_confirm" :title="title_delete" :body="body_delete"
+              @delete="delete_row">
+            </modal-delete-confirm>
+            <modal-delete-confirm ref="modal_delete_all" :title="title_delete_all" :body="body_delete_all"
+              @delete="delete_all">
+            </modal-delete-confirm>
+            <modal-add-device-exclusion ref="modal_add_device" :title="title_add" :body="body_add" :footer="footer_add"
+              :list_notes="list_notes_add" @add="add_device_rest">
+            </modal-add-device-exclusion>
+            <modal-edit-device-exclusion ref="modal_edit_device" :title="title_edit" :title_edit_all="title_edit_all"
+              @edit="edit_row">
+            </modal-edit-device-exclusion>
+
+            <TableWithConfig ref="table_device_exclusions" :csrf="csrf" :table_id="table_id"
+              :f_map_columns="map_table_def_columns" :get_extra_params_obj="get_extra_params_obj"
+              :f_map_config="map_config" :f_sort_rows="columns_sorting" @custom_event="on_table_custom_event">
+              <template v-slot:custom_header>
                 <button class="btn btn-link" type="button" ref="add_device" @click="add_device"><i
                     class='fas fa-plus'></i></button>
               </template>
-          </TableWithConfig>
+            </TableWithConfig>
+          </div>
         </div>
+        <div class="card-footer mt-3">
+          <button type="button" @click="delete_all_confirm" class="btn btn-danger me-1">
+            <i class='fas fa-trash'></i> {{ _i18n("edit_check.delete_all_device_exclusions") }}
+          </button>
+          <button type="button" @click="edit_all_devices_confirm" class="btn btn-secondary">
+            <i class='fas fa-edit'></i> {{ _i18n("edit_check.edit_all_devices_status") }}
+          </button>
+        </div>
+
       </div>
-      <div class="card-footer mt-3">
-        <button type="button" @click="delete_all_confirm"  class="btn btn-danger me-1">
-          <i class='fas fa-trash'></i> {{ _i18n("edit_check.delete_all_device_exclusions") }}
-        </button>
-        <button type="button" @click="edit_all_devices_confirm"  class="btn btn-secondary">
-          <i class='fas fa-edit'></i> {{ _i18n("edit_check.edit_all_devices_status") }}
-        </button>
-      </div>
-          
-  </div>
-  <NoteList :note_list="notes_list" :add_sub_notes=true 
-                    :sub_note_list="sub_notes_list"> 
-          </NoteList>
+      <NoteList :note_list="notes_list" :add_sub_notes=true :sub_note_list="sub_notes_list">
+      </NoteList>
     </div>
-</div>
+  </div>
 </template>
 
 <script setup>
-import  TableWithConfig  from "./table-with-config.vue";
-import  ModalDeleteConfirm  from "./modal-delete-confirm.vue";
-import  ModalAddDeviceExclusion  from "./modal-add-device-exclusion.vue";
-import  ModalEditDeviceExclusion  from "./modal-edit-device-exclusion.vue";
+import TableWithConfig from "./table-with-config.vue";
+import ModalDeleteConfirm from "./modal-delete-confirm.vue";
+import ModalAddDeviceExclusion from "./modal-add-device-exclusion.vue";
+import ModalEditDeviceExclusion from "./modal-edit-device-exclusion.vue";
 import { default as NoteList } from "./note-list.vue";
 import { default as sortingFunctions } from "../utilities/sorting-utils.js";
 import { ref, onMounted } from "vue";
@@ -84,29 +68,29 @@ const modal_edit_device = ref();
 
 const table_id = ref('device_exclusions');
 
-const add_url             = `${http_prefix}/lua/pro/rest/v2/add/device/exclusion.lua`;
-const delete_url          = `${http_prefix}/lua/pro/rest/v2/delete/device/exclusion.lua`;
-const edit_url            = `${http_prefix}/lua/pro/rest/v2/edit/device/exclusion.lua`;
+const add_url = `${http_prefix}/lua/pro/rest/v2/add/device/exclusion.lua`;
+const delete_url = `${http_prefix}/lua/pro/rest/v2/delete/device/exclusion.lua`;
+const edit_url = `${http_prefix}/lua/pro/rest/v2/edit/device/exclusion.lua`;
 const learning_status_url = `${http_prefix}/lua/pro/rest/v2/get/device/learning_status.lua`;
 const is_learning_status = ref(false);
 const _i18n = (t) => i18n(t);
 
-let title_delete= '';
-let body_delete= '';
-let title_delete_all= _i18n('edit_check.delete_all_device_exclusions');
-let body_delete_all=  _i18n('edit_check.delete_all_device_exclusions_message');
-let title_add= _i18n('edit_check.add_device_exclusion');
-let body_add= _i18n('edit_check.add_device_exclusion_message');
-let footer_add= _i18n('edit_check.add_device_exclusion_notes');
-let list_notes_add= _i18n('edit_check.add_device_exclusion_list_notes');
-let title_edit= _i18n('edit_check.edit_device_exclusion');
-let title_edit_all= _i18n('edit_check.edit_all_devices_status');
-let learning_message= _i18n('edit_check.learning');
-let row_to_delete= ref(null);
-let row_to_edit= ref(null);
+let title_delete = '';
+let body_delete = '';
+let title_delete_all = _i18n('edit_check.delete_all_device_exclusions');
+let body_delete_all = _i18n('edit_check.delete_all_device_exclusions_message');
+let title_add = _i18n('edit_check.add_device_exclusion');
+let body_add = _i18n('edit_check.add_device_exclusion_message');
+let footer_add = _i18n('edit_check.add_device_exclusion_notes');
+let list_notes_add = _i18n('edit_check.add_device_exclusion_list_notes');
+let title_edit = _i18n('edit_check.edit_device_exclusion');
+let title_edit_all = _i18n('edit_check.edit_all_devices_status');
+let learning_message = _i18n('edit_check.learning');
+let row_to_delete = ref(null);
+let row_to_edit = ref(null);
 
 const props = defineProps({
-    context: Object
+  context: Object
 });
 
 
@@ -124,11 +108,11 @@ const sub_notes_list = [
   _i18n("edit_check.device_exclusion_page_notes.sub_note_2")
 ];
 
-/* ******************************************************************** */ 
+/* ******************************************************************** */
 
 /* Function to handle all buttons */
 function on_table_custom_event(event) {
-  
+
   let events_managed = {
     "click_button_edit_device": click_button_edit_device,
     "click_button_historical_flows": click_button_historical_flows,
@@ -147,13 +131,13 @@ async function click_button_delete(event) {
   body_delete = body;
 
   title_delete = i18n('edit_check.device_exclusion');
-  modal_delete_confirm.value.show(body_delete, title_delete);    
-  
+  modal_delete_confirm.value.show(body_delete, title_delete);
+
 }
 
 async function click_button_edit_device(event) {
   row_to_edit.value = event.row;
-  modal_edit_device.value.show(row_to_edit.value);  
+  modal_edit_device.value.show(row_to_edit.value);
 }
 
 function click_button_historical_flows(event) {
@@ -173,24 +157,20 @@ const csrf = props.crsf;
 /* Function to delete device */
 const delete_row = async function () {
   const row = row_to_delete.value;
-
-  const url = NtopUtils.buildURL(delete_url, {
-    device: row.mac_address.mac,
-  })
-
-  rest_params.device = {
-    mac: row.mac_address.mac
-  };
-  await ntopng_utility.http_post_request(url, rest_params);
+  const delete_params = {
+    csrf: props.context.csrf,
+    ifid: props.context.ifid,
+    device: row.mac_address.mac
+  }
+  await ntopng_utility.http_post_request(delete_url, delete_params);
   refresh();
-
 }
 
-const delete_all_confirm = async function() {
+const delete_all_confirm = async function () {
   modal_delete_all.value.show();
 }
 
-const edit_all_devices_confirm = async function() {
+const edit_all_devices_confirm = async function () {
   modal_edit_device.value.show();
 }
 
@@ -205,17 +185,17 @@ const delete_all = async function () {
 
 };
 
-const learning_status = async function() {
-    
+const learning_status = async function () {
+
   const rsp = await ntopng_utility.http_request(learning_status_url);
-  if(rsp.learning_done) {
+  if (rsp.learning_done) {
     is_learning_status.value = false;
   } else {
     is_learning_status.value = true;
   }
 }
 
-const refresh = async function() {
+const refresh = async function () {
   await learning_status();
   table_device_exclusions.value.refresh_table();
 }
@@ -226,7 +206,7 @@ function add_device() {
 
 const add_device_rest = async function (set_params_in_url) {
   let params = set_params_in_url;
-  params.mac_list = params.mac_list.replace(/(?:\t| )/g,'')
+  params.mac_list = params.mac_list.replace(/(?:\t| )/g, '')
   params.mac_list = params.mac_list.replace(/(?:\r\n|\r|\n)/g, ',');
 
   const url = NtopUtils.buildURL(add_url, {
@@ -235,22 +215,22 @@ const add_device_rest = async function (set_params_in_url) {
 
   await ntopng_utility.http_post_request(url, rest_params);
   refresh();
-          
+
 };
 
-const edit_row = async function(params) {
+const edit_row = async function (params) {
+  let edit_params = {
+    csrf: props.context.csrf,
+    ifid: props.context.ifid,
+    mac_status: params.mac_status,
+    trigger_alerts: params.trigger_alerts ? "1" : "0"
+  }
   let row = row_to_edit.value;
-  if(row != null)
-    params.mac_alias = params.mac_alias.replace(/(?:\t| )/g,'');   
-  if(row != null)
-    params.mac = row.mac_address.mac;
-  params.csrf = props.context.csrf;
-
-  const url = NtopUtils.buildURL(edit_url, {
-    ...params
-  })
-
-  await ntopng_utility.http_post_request(url, rest_params);
+  if (row != null)
+    edit_params.mac_alias = params.mac_alias.replace(/(?:\t| )/g, '');
+  if (row != null)
+    edit_params.mac = row.mac_address.mac;
+  await ntopng_utility.http_post_request(edit_url, edit_params);
 
   refresh();
 };
@@ -260,11 +240,11 @@ function columns_sorting(col, r0, r1) {
   if (col != null) {
     let r0_col = r0[col.data.data_field];
     let r1_col = r1[col.data.data_field];
-    if(col.id == "last_ip") {
+    if (col.id == "last_ip") {
       if (r0_col != '') {
         r0_col = take_ip(r0_col);
         r0_col = NtopUtils.convertIPAddress(r0_col);
-      } 
+      }
       if (r1_col != '') {
         r1_col = take_ip(r1_col);
         r1_col = NtopUtils.convertIPAddress(r1_col);
@@ -273,25 +253,25 @@ function columns_sorting(col, r0, r1) {
         return r0_col.localeCompare(r1_col);
       }
       return r1_col.localeCompare(r0_col);
-    } else if(col.id == "manufacturer" ) {
+    } else if (col.id == "manufacturer") {
       if (r0_col === undefined) r0_col = '';
       if (r1_col === undefined) r1_col = '';
       if (col.sort == 1) {
         return r0_col.localeCompare(r1_col);
       }
       return r1_col.localeCompare(r0_col);
-    } else if(col.id == "mac_address") {
+    } else if (col.id == "mac_address") {
       r0_col = r0_col.mac;
       r1_col = r1_col.mac;
       if (col.sort == 1) {
         return r0_col.localeCompare(r1_col);
       }
       return r1_col.localeCompare(r0_col);
-    }else if(col.id == "first_seen") {
+    } else if (col.id == "first_seen") {
       r0_col = r0["first_seen"]["timestamp"] == 0 ? 0 : r0["first_seen"]["timestamp"];
       r1_col = r1["first_seen"]["timestamp"] == 0 ? 0 : r1["first_seen"]["timestamp"];
       return sortingFunctions.sortByNumberWithNormalizationValue(r0_col, r1_col, col.sort)
-    } else if(col.id == "last_seen") {
+    } else if (col.id == "last_seen") {
       r0_col = r0["last_seen"]["timestamp"] == 0 ? 0 : r0["last_seen"]["timestamp"];
       r1_col = r1["last_seen"]["timestamp"] == 0 ? 0 : r1["last_seen"]["timestamp"];
       return sortingFunctions.sortByNumberWithNormalizationValue(r0_col, r1_col, col.sort)
@@ -310,7 +290,7 @@ function columns_sorting(col, r0, r1) {
       return r1_col.localeCompare(r0_col);
     }
   }
-  
+
 }
 
 function take_ip(r_col) {
@@ -337,7 +317,7 @@ function format_bool(r_col) {
 }
 
 const map_table_def_columns = async (columns) => {
-    
+
   let map_columns = {
     "mac_address": (data, row) => {
       let label = data.mac;
@@ -360,7 +340,7 @@ const map_table_def_columns = async (columns) => {
       } else {
         return first_seen.data;
       }
-    }, 
+    },
     "last_seen": (last_seen, row) => {
       if (last_seen.timestamp == 0) {
         return '';
@@ -384,7 +364,7 @@ const map_table_def_columns = async (columns) => {
     },
     "trigger_alert": (trigger_alert, row) => {
       let is_enabled = false;
-      if (trigger_alert == "false") 
+      if (trigger_alert == "false")
         is_enabled = false;
       else
         is_enabled = trigger_alert;
@@ -408,27 +388,27 @@ const map_table_def_columns = async (columns) => {
       });
     }*/
   });
-    // console.log(columns);
+  // console.log(columns);
   return columns;
 };
 
 const get_extra_params_obj = () => {
-    /*let params = get_url_params(active_page, per_page, columns_wrap, map_search, first_get_rows);
-    set_params_in_url(params);*/
-    let params = get_url_params();
-    return params;
+  /*let params = get_url_params(active_page, per_page, columns_wrap, map_search, first_get_rows);
+  set_params_in_url(params);*/
+  let params = get_url_params();
+  return params;
 };
 
 function get_url_params() {
-    let actual_params = {
-        ifid: ntopng_url_manager.get_url_entry("ifid") || props.context.ifid,
-    };    
+  let actual_params = {
+    ifid: ntopng_url_manager.get_url_entry("ifid") || props.context.ifid,
+  };
 
-    return actual_params;
+  return actual_params;
 }
 
 const map_config = (config) => {
-    return config;
+  return config;
 };
 
 </script>

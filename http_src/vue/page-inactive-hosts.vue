@@ -70,6 +70,9 @@ const map_table_def_columns = (columns) => {
       let ip_address = host.ip
       let icons = ''
 
+      if (!dataUtils.isEmptyOrNull(host.vlan.name)) {
+        ip_address = `${ip_address}@${host.vlan.name}`
+      }
       if (!dataUtils.isEmptyOrNull(host.system_host)) {
         icons = `${icons} ${system_host_icon}`
       }

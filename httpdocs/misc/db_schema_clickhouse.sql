@@ -855,21 +855,23 @@ CREATE TABLE IF NOT EXISTS `mitre_table_info` (
 
 /* ASSET */
 
-CREATE TABLE IF NOT EXISTS `asset_management` (
-`type` String NOT NULL,
-`key` String NOT NULL,
-`ip` String NULL,
-`mac` String NOT NULL,
-`vlan` UInt16 NULL,
-`network` UInt16 NULL,
-`name` String NULL,
-`device_type` UInt16 NULL,
-`manufacturer` String NULL,
-`first_seen` DateTime NOT NULL,
-`last_seen` DateTime NOT NULL,
-`trigger_alert` Boolean NULL,
-`device_status` String NULL
-) ENGINE = MergeTree() PRIMARY KEY (`key`) ORDER BY (`key`);
+CREATE TABLE IF NOT EXISTS `assets` (
+  `type` String NOT NULL,
+  `key` String NOT NULL,
+  `ifid` UInt8 NOT NULL,
+  `ip` String NULL,
+  `mac` String NOT NULL,
+  `vlan` UInt16 NULL,
+  `network` UInt16 NULL,
+  `name` String NULL,
+  `device_type` UInt16 NULL,
+  `manufacturer` String NULL,
+  `first_seen` DateTime NOT NULL,
+  `last_seen` DateTime NOT NULL,
+  `gateway_mac` String NULL,
+  `json_info` String NULL, -- A json containing all other info
+  version UInt64 -- Used to not have duplicates
+) ENGINE = ReplacingMergeTree(version) PRIMARY KEY (`type`, `key`) ORDER BY (`type`, `key`);
 @
 
 /* VIEWS */

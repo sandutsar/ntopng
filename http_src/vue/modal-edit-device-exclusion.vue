@@ -1,34 +1,33 @@
 <!-- (C) 2022 - ntop.org     -->
 <template>
-<modal @showed="showed()" ref="modal_id">
-  <template v-slot:title>
-    <template v-if="edit_all == false">
-      {{title}}
+  <modal @showed="showed()" ref="modal_id">
+    <template v-slot:title>
+      <template v-if="edit_all == false">
+        {{ title }}
+      </template>
+      <template v-else>
+        {{ title_edit_all }}
+      </template>
+
     </template>
-    <template v-else>
-      {{ title_edit_all }}
-    </template>
-    
-  </template>
-  <template v-slot:body>
+    <template v-slot:body>
       <template v-if="edit_all == false">
 
-      <div class="form-group mb-3 row">
-        <label class="col-form-label col-sm-4">{{ _i18n('edit_check.device_alias') }}</label>
-        <div class="col-sm-7">
-          <input type="text" name="custom_name" class="form-control" :placeholder="custom_name_placeholder"
-            v-model="input_mac_address_name">
-        </div>
+        <div class="form-group mb-3 row">
+          <label class="col-form-label col-sm-4">{{ _i18n('edit_check.device_alias') }}</label>
+          <div class="col-sm-7">
+            <input type="text" name="custom_name" class="form-control" :placeholder="custom_name_placeholder"
+              v-model="input_mac_address_name">
+          </div>
 
-      </div>
+        </div>
       </template>
 
       <div class="form-group mb-3 row">
         <label class="col-form-label col-sm-4">{{ _i18n('edit_check.device_status') }}</label>
         <div class="col-sm-7">
 
-          <SelectSearch v-model:selected_option="input_device_status" 
-            :options="device_status_list">
+          <SelectSearch v-model:selected_option="input_device_status" :options="device_status_list">
           </SelectSearch>
         </div>
       </div>
@@ -63,45 +62,46 @@ const emit = defineEmits(['edit']);
 const showed = () => { };
 
 const props = defineProps({
-    title: String,
-    title_edit_all: String,
+  title: String,
+  title_edit_all: String,
 });
 
 
 const _i18n = (t) => i18n(t);
 const device_status_list = ref([
-  {id: "allowed", value:"allowed", label:_i18n('edit_check.authorized') },
-  {id: "denied", value:"denied", label:_i18n('edit_check.unauthorized') },
+  { id: "allowed", value: "allowed", label: _i18n('edit_check.authorized') },
+  { id: "denied", value: "denied", label: _i18n('edit_check.unauthorized') },
 ])
 
 const edit_all = ref(false);
 
 const show = (row) => {
-    if(row != null) {
-      let tmp_device_status = null;
-      device_status_list.value.forEach((item) => {
-        if(item.id == row.status) {
-          tmp_device_status = item;
-        }
-      });
-      input_device_status.value = tmp_device_status;
-      input_mac_address_name.value = row.mac_address.mac;
-      input_trigger_alerts.value = row.trigger_alert || false;
-    } else {
-      input_device_status.value = device_status_list.value[0];
-      edit_all.value = true;
-    }
-    
-    modal_id.value.show();
+  if (row != null) {
+    let tmp_device_status = null;
+    device_status_list.value.forEach((item) => {
+      if (item.id == row.status) {
+        tmp_device_status = item;
+      }
+    });
+    input_device_status.value = tmp_device_status;
+    input_mac_address_name.value = row.mac_address.mac;
+    input_trigger_alerts.value = row.trigger_alert || false;
+    edit_all.value = false;
+  } else {
+    input_device_status.value = device_status_list.value[0];
+    edit_all.value = true;
+  }
+
+  modal_id.value.show();
 };
 
 const edit_ = () => {
-    if(edit_all.value == false)
-      emit('edit', { mac_alias: input_mac_address_name.value, mac_status: input_device_status.value.value, trigger_alerts: input_trigger_alerts.value });
-    else 
-      emit('edit', { mac_status: input_device_status.value.value, trigger_alerts: input_trigger_alerts.value, mac_alias: 'all', });
+  if (edit_all.value == false)
+    emit('edit', { mac_alias: input_mac_address_name.value, mac_status: input_device_status.value.value, trigger_alerts: input_trigger_alerts.value });
+  else
+    emit('edit', { mac_status: input_device_status.value.value, trigger_alerts: input_trigger_alerts.value, mac_alias: 'all', });
 
-    close();
+  close();
 };
 
 const close = () => {

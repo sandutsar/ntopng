@@ -19,7 +19,7 @@ end
 
 local ifid = _GET["ifid"] or interface.getId()
 
-local available_filters = asset_management_utils.get_filters(ifid)
+local available_filters = asset_management_utils.getFilters(ifid)
 local rsp = {}
 local filters = {}
 
