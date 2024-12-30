@@ -1575,7 +1575,9 @@ function alert_store:count_by_severity_and_time_historical()
         local cur_slot = tonumber(p.slot)
         local cur_count = tonumber(p.count)
         if cur_slot >= min_slot and cur_slot <= max_slot then
-            all_severities[severity_id].all_slots[cur_slot] = cur_count
+            all_severities[severity_id].all_slots[cur_slot] = cur_count + (all_severities[severity_id].all_slots[cur_slot] or 0)
+        elseif cur_slot < min_slot then -- alerts engaged before the interval start time
+            all_severities[severity_id].all_slots[min_slot] = cur_count + (all_severities[severity_id].all_slots[min_slot] or 0)
         end
     end
 
