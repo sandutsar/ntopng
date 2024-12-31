@@ -31,7 +31,7 @@ nDPIStats::nDPIStats(bool _enable_throughput_stats,
 #ifdef NTOPNG_PRO
   nextMinPeriodicUpdate = 0;
 #endif
-  enable_throughput_stats = _enable_throughput_stats,
+  enable_throughput_stats = _enable_throughput_stats;
   enable_behavior_stats = _enable_behavior_stats;
 }
 
@@ -45,6 +45,8 @@ nDPIStats::nDPIStats(nDPIStats &stats) {
 #ifdef NTOPNG_PRO
   nextMinPeriodicUpdate = 0;
 #endif
+  enable_throughput_stats = false;
+  enable_behavior_stats = false;
 
   for (it = stats.counters.begin(); it != stats.counters.end(); ++it) {
     ProtoCounter *c = it->second;
