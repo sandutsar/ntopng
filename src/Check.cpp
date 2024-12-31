@@ -50,14 +50,12 @@ bool Check::isCheckCompatibleWithEdition() const {
       break;
 
     case ntopng_edition_pro:
-      if (!ntop->getPrefs()
-               ->is_pro_edition() /* includes Pro, Enterprise M/L */)
+      if (!ntop->getPrefs()->is_pro_edition() /* includes Pro, Enterprise M/L */)
         return (false);
       break;
 
     case ntopng_edition_enterprise_m:
-      if (!ntop->getPrefs()
-               ->is_enterprise_m_edition() /* includes Enterprise M/L */)
+      if (!ntop->getPrefs()->is_enterprise_m_edition() /* includes Enterprise M/L */)
         return (false);
       break;
 

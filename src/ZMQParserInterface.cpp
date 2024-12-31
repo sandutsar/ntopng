@@ -905,11 +905,17 @@ bool ZMQParserInterface::parsePENZeroField(ParsedFlow *const flow,
         flow->direction = value->int_num;
       break;
     case EXPORTER_IPV4_ADDRESS:
-      if (value->string != NULL) {
-        /* Format: a.b.c.d, possibly overrides NPROBE_IPV4_ADDRESS */
-        u_int32_t ip = ntohl(inet_addr(value->string));
-
-        if (ip) {
+      {
+	u_int32_t ip;
+	
+	if(value->int_num != 0)
+	  ip = value->int_num;
+	else if (value->string != NULL) {
+	  /* Format: a.b.c.d, possibly overrides NPROBE_IPV4_ADDRESS */
+	  ip = ntohl(inet_addr(value->string));
+	} else ip = 0;
+      
+	if (ip) {
 	  flow->exporter_device_ip = ip;
 
 	  if(ntop->getPrefs()->is_edr_mode()) {
@@ -927,7 +933,7 @@ bool ZMQParserInterface::parsePENZeroField(ParsedFlow *const flow,
 	    }
 	  }
 	}
-      }
+      }      
       break;
     case EXPORTER_IPV6_ADDRESS:
       if (value->string != NULL && strlen(value->string) > 0)
@@ -2325,9 +2331,9 @@ int ZMQParserInterface::parseSingleTLVFlow(ndpi_deserializer *deserializer,
                 if ((additional_key != NULL) && (additional_value != NULL)) {
                   // ntop->getTrace()->traceEvent(TRACE_NORMAL, "Additional
                   // field: %s", additional_key);
-                  flow.addAdditionalField(
-                      additional_key, json_object_new_string(additional_value));
+                  flow.addAdditionalField(additional_key, json_object_new_string(additional_value));
                 }
+		
                 json_object_iter_next(&additional_it);
               }
 
@@ -2352,8 +2358,7 @@ int ZMQParserInterface::parseSingleTLVFlow(ndpi_deserializer *deserializer,
               (custom_app_maps = new (std::nothrow) CustomAppMaps()))
             custom_app_maps->checkCustomApp(key_str, &value, &flow);
 #endif
-          ntop->getTrace()->traceEvent(
-              TRACE_DEBUG, "Not handled ZMQ field %u.%u", pen, key_id);
+          ntop->getTrace()->traceEvent(TRACE_DEBUG, "Not handled ZMQ field %u.%u", pen, key_id);
           add_to_additional_fields = true;
           break;
       } /* switch */
@@ -2365,9 +2370,8 @@ int ZMQParserInterface::parseSingleTLVFlow(ndpi_deserializer *deserializer,
 #if 1
       flow.addAdditionalField(deserializer);
 #else
-      flow.addAdditionalField(
-          key_str, value_is_string ? json_object_new_string(value.string)
-                                   : json_object_new_int64(value.int_num));
+      flow.addAdditionalField(key_str, value_is_string ? json_object_new_string(value.string)
+			      : json_object_new_int64(value.int_num));
 #endif
     }
 

@@ -511,8 +511,7 @@ void ZMQCollectorInterface::collect_flows() {
             uncompressed = zmq_payload, uncompressed_len = size;
 
           if (ntop->getPrefs()->get_zmq_encryption_pwd())
-            Utils::xor_encdec(
-			      (u_char *)uncompressed, uncompressed_len,
+            Utils::xor_encdec((u_char *)uncompressed, uncompressed_len,
 			      (u_char *)ntop->getPrefs()->get_zmq_encryption_pwd());
 
           if (false) {
@@ -542,15 +541,14 @@ void ZMQCollectorInterface::collect_flows() {
           switch (h->url[0]) {
 	  case 'e': /* event */
 	    recvStats.num_events++;
-	    parseEvent(uncompressed, uncompressed_len, source_id, msg_id,
-		       this);
+	    parseEvent(uncompressed, uncompressed_len, source_id, msg_id, this);
 	    break;
 
 	  case 'f': /* flow */
 	    if (tlv_encoding)
 	      recvStats.num_flows += parseTLVFlow(uncompressed, uncompressed_len,
 						  subscriber_id, msg_id, this);
-	    else {
+	    else if(ntop->getPrefs()->is_pro_edition()) {
 	      uncompressed[uncompressed_len] = '\0';
 	      recvStats.num_flows += parseJSONFlow(uncompressed, uncompressed_len, subscriber_id, msg_id);
 	    }

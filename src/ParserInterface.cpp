@@ -27,7 +27,7 @@
 
 ParserInterface::ParserInterface(const char *endpoint,
                                  const char *custom_interface_type)
-    : NetworkInterface(endpoint, custom_interface_type) {
+  : NetworkInterface(endpoint, custom_interface_type) {
   if (trace_new_delete)
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "[new] %s", __FILE__);
 
@@ -89,29 +89,25 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
 
 #ifdef NTOPNG_PRO
   if ((unique_source_id != 0) && (!isSubInterface())) {
-    if (!flow_interfaces_stats->checkExporters(
-            unique_source_id, zflow->inIndex, zflow->outIndex,
-            zflow->exporter_device_ip, zflow->nprobe_ip)) {
+    if (!flow_interfaces_stats->checkExporters(unique_source_id, zflow->inIndex, zflow->outIndex,
+					       zflow->exporter_device_ip, zflow->nprobe_ip)) {
       static bool shown = false;
 
       if (!shown) {
-        ntop->getTrace()->traceEvent(
-            TRACE_NORMAL, "Flow dropped due to limits to the license");
+        ntop->getTrace()->traceEvent(TRACE_NORMAL, "Flow dropped due to limits to the license");
+	
+        ntop->getTrace()->traceEvent(TRACE_NORMAL,
+				     "Exporters: %d/%d max | Exporter Interfaces: %d/%d max",
+				     ntop->getNumFlowExporters(), get_max_num_flow_exporters(),
+				     ntop->getNumFlowExportersInterfaces(),
+				     get_max_num_flow_exporters_interfaces());
 
-        ntop->getTrace()->traceEvent(
-            TRACE_NORMAL,
-            "Exporters: %d/%d max | Exporter Interfaces: %d/%d max",
-            ntop->getNumFlowExporters(), get_max_num_flow_exporters(),
-            ntop->getNumFlowExportersInterfaces(),
-            get_max_num_flow_exporters_interfaces());
-
-        ntop->getTrace()->traceEvent(
-            TRACE_NORMAL,
-            "Discarded [unique_source_id: %u];device_ip: %u][probe_ip: "
-            "%u][iface: %u->%u]",
-            unique_source_id, zflow->exporter_device_ip, zflow->nprobe_ip,
-            zflow->inIndex, zflow->outIndex);
-
+        ntop->getTrace()->traceEvent(TRACE_NORMAL,
+				     "Discarded [unique_source_id: %u];device_ip: %u][probe_ip: "
+				     "%u][iface: %u->%u]",
+				     unique_source_id, zflow->exporter_device_ip, zflow->nprobe_ip,
+				     zflow->inIndex, zflow->outIndex);
+	
         ntop->getRedis()->set(EXPORTERS_EXCEEDED_LIMITS_KEY, "1");
         shown = true;
       }
@@ -152,8 +148,7 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
 
         switch (flowHashingMode) {
           case flowhashing_probe_ip:
-            virtual_observation_point_id =
-                zflow->exporter_device_ip & 0xFFF /* 4096 */;
+            virtual_observation_point_id = zflow->exporter_device_ip & 0xFFF /* 4096 */;
             break;
 
           case flowhashing_iface_idx:
@@ -167,10 +162,8 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
             break;
 
           case flowhashing_probe_ip_and_ingress_iface_idx:
-            virtual_observation_point_id =
-                ((((u_int64_t)zflow->exporter_device_ip) << 32) +
-                 zflow->inIndex) &
-                0xFFF /* 4096 */;
+            virtual_observation_point_id = ((((u_int64_t)zflow->exporter_device_ip) << 32) +
+					    zflow->inIndex) & 0xFFF /* 4096 */;
             break;
 
           case flowhashing_vrfid:
@@ -257,8 +250,7 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
 
   srcIP.set(&zflow->src_ip), dstIP.set(&zflow->dst_ip);
 
-  INTERFACE_PROFILING_SECTION_ENTER("NetworkInterface::processFlow: getFlow",
-                                    0);
+  INTERFACE_PROFILING_SECTION_ENTER("NetworkInterface::processFlow: getFlow", 0);
 
   if (zflow->getSIPCallId()) {
     size_t len = strlen(zflow->getSIPCallId());

@@ -210,7 +210,8 @@ Flow::Flow(NetworkInterface *_iface,
 #ifdef ALERTED_FLOWS_DEBUG
   iface_alert_inc = iface_alert_dec = false;
 #endif
-  if(_first_seen > _last_seen) _first_seen = _last_seen;
+  if((_first_seen > _last_seen) || (_first_seen == 0))
+    _first_seen = _last_seen;
 
   first_seen = _first_seen, last_seen = _last_seen;
   bytes_thpt_trend = trend_unknown, pkts_thpt_trend = trend_unknown;
