@@ -1256,6 +1256,9 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   inline u_int32_t getFlowDeviceInIndex() { return flow_device.in_index; };
   inline u_int32_t getFlowDeviceOutIndex() { return flow_device.out_index; };
 
+  inline void setFlowDeviceInIndex(u_int32_t idx)  { if(idx != 0) flow_device.in_index = idx; };
+  inline void setFlowDeviceOutIndex(u_int32_t idx) { if(idx != 0) flow_device.out_index = idx; };
+
   inline const u_int16_t getScore() const { return (flow_score); };
 
 #ifdef HAVE_NEDGE

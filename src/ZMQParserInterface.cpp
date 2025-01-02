@@ -2010,6 +2010,8 @@ bool ZMQParserInterface::preprocessFlow(ParsedFlow *flow) {
 
     if (flow->pkt_sampling_rate == 0) flow->pkt_sampling_rate = 1;
 
+    if(flow->nprobe_ip == 0) flow->nprobe_ip = flow->exporter_device_ip;
+    
     /* Process Flow */
     INTERFACE_PROFILING_SECTION_ENTER("processFlow", 30);
 
@@ -2102,8 +2104,7 @@ int ZMQParserInterface::parseSingleJSONFlow(json_object *o,
               struct json_object_iterator additional_itEnd =
                   json_object_iter_end(additional_o);
 
-              while (
-                  !json_object_iter_equal(&additional_it, &additional_itEnd)) {
+              while (!json_object_iter_equal(&additional_it, &additional_itEnd)) {
                 const char *additional_key =
                     json_object_iter_peek_name(&additional_it);
                 json_object *additional_v = json_object_iter_peek_value(&additional_it);
@@ -2322,8 +2323,7 @@ int ZMQParserInterface::parseSingleTLVFlow(ndpi_deserializer *deserializer,
               struct json_object_iterator additional_itEnd =
                   json_object_iter_end(additional_o);
 
-              while (
-                  !json_object_iter_equal(&additional_it, &additional_itEnd)) {
+              while (!json_object_iter_equal(&additional_it, &additional_itEnd)) {
                 const char *additional_key   = json_object_iter_peek_name(&additional_it);
                 json_object *additional_v    = json_object_iter_peek_value(&additional_it);
                 const char *additional_value = json_object_get_string(additional_v);
