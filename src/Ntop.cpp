@@ -1,6 +1,6 @@
 /*
  *
- * (C) 2013-24 - ntop.org
+ * (C) 2013-25 - ntop.org
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -561,7 +561,7 @@ void Ntop::start() {
   if (PACKAGE_OS[0] != '\0')
     getTrace()->traceEvent(TRACE_NORMAL, "Built on %s", PACKAGE_OS);
 
-  getTrace()->traceEvent(TRACE_NORMAL, "(C) 1998-24 ntop");
+  getTrace()->traceEvent(TRACE_NORMAL, "(C) 1998-25 ntop");
 
   last_modified_static_file_epoch = start_time = time(NULL);
   snprintf(epoch_buf, sizeof(epoch_buf), "%u", (u_int32_t)start_time);
