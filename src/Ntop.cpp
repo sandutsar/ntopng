@@ -4130,8 +4130,11 @@ void Ntop::setZoneInfo() {
     const char *const_zoneinfo = "zoneinfo/";
     u_int len = strlen(const_zoneinfo);
 
-    if(strncmp(zoneinfo, const_zoneinfo, len) == 0)
-      zoneinfo = &zoneinfo[len];
+    if(strncmp(zoneinfo, const_zoneinfo, len) == 0) {
+      char *tmp = zoneinfo;
+      zoneinfo = strdup(&zoneinfo[len]);
+      free(tmp);
+    }
   }
 
   if (zoneinfo)
