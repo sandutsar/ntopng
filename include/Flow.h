@@ -366,7 +366,6 @@ class Flow : public GenericHashEntry {
   void lua_entropy(lua_State *vm);
   void luaScore(lua_State *vm);
   void luaIEC104(lua_State *vm);
-  void callFlowUpdate(time_t t);
   bool setAlertsMap(FlowAlert *alert);
   void setNormalToAlertedCounters();
   /* Decreases scores on both client and server hosts when the flow is being
@@ -454,7 +453,7 @@ class Flow : public GenericHashEntry {
   void updateAlertsJSON();
   inline char *getAlertJSON() { return alerts_json; };
   const char* getDomainName();
-
+  void callFlowUpdate(time_t t);
   void setProtocolJSONInfo();
   void getProtocolJSONInfo(ndpi_serializer *serializer);
   void getCustomFieldsInfo(ndpi_serializer *serializer);
@@ -653,7 +652,7 @@ class Flow : public GenericHashEntry {
                 u_int payload_len, u_int8_t l4_proto, u_int8_t is_fragment,
                 u_int16_t tcp_flags, const struct timeval *when,
                 u_int16_t fragment_extra_overhead);
-  void addFlowStats(bool new_flow, bool cli2srv_direction, u_int in_pkts,
+  bool addFlowStats(bool new_flow, bool cli2srv_direction, u_int in_pkts,
                     u_int in_bytes, u_int in_goodput_bytes, u_int out_pkts,
                     u_int out_bytes, u_int out_goodput_bytes,
                     u_int in_fragments, u_int out_fragments, time_t first_seen,

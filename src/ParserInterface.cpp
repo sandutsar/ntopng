@@ -55,6 +55,7 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
   bool src2dst_direction, new_flow;
   Flow *flow;
   time_t now;
+  bool update_seen = false;
   bpf_timeval now_tv = {0};
   Mac *srcMac = NULL, *dstMac = NULL;
   IpAddress srcIP, dstIP;
@@ -195,8 +196,7 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
         }
 
         if (vIfaceEgress) {
-          ParserInterface *vPIface =
-              dynamic_cast<ParserInterface *>(vIfaceEgress);
+          ParserInterface *vPIface = dynamic_cast<ParserInterface *>(vIfaceEgress);
 
           vPIface->processFlow(zflow);
         }
@@ -209,10 +209,14 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
   }
 
   if (!ntop->getPrefs()->do_ignore_macs()) {
-    srcMac = getMac((u_int8_t *)zflow->src_mac, true /* Create if missing */,
-                    true /* Inline call */);
-    dstMac = getMac((u_int8_t *)zflow->dst_mac, true /* Create if missing */,
-                    true /* Inline call */);
+    u_int8_t zero_mac[6] = { 0 };
+
+    if(memcmp(zflow->src_mac, zero_mac, 6)) {
+      srcMac = getMac((u_int8_t *)zflow->src_mac, true /* Create if missing */,
+		      true /* Inline call */);
+      dstMac = getMac((u_int8_t *)zflow->dst_mac, true /* Create if missing */,
+		      true /* Inline call */);
+    }
   }
 
   srcIP.set(&zflow->src_ip), dstIP.set(&zflow->dst_ip);
@@ -330,6 +334,8 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
         zflow->in_pkts -= in_cur_pkts;
       else
         zflow->in_pkts = 0, out_of_sequence = true;
+
+      update_seen = true;
     }
 
     if (zflow->in_bytes) {
@@ -344,6 +350,8 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
         zflow->out_pkts -= out_cur_pkts;
       else
         zflow->out_pkts = 0, out_of_sequence = true;
+
+      update_seen = true;
     }
 
     if (zflow->out_bytes) {
@@ -421,11 +429,10 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
 #ifdef MAC_DEBUG
   char bufm1[32], bufm2[32];
 
-  ntop->getTrace()->traceEvent(
-      TRACE_NORMAL, "Processing Flow [src mac: %s][dst mac: %s][src2dst: %i]",
-      Utils::formatMac(srcMac->get_mac(), bufm1, sizeof(bufm1)),
-      Utils::formatMac(dstMac->get_mac(), bufm2, sizeof(bufm2)),
-      (src2dst_direction) ? 1 : 0);
+  ntop->getTrace()->traceEvent(TRACE_NORMAL, "Processing Flow [src mac: %s][dst mac: %s][src2dst: %i]",
+			       Utils::formatMac(srcMac->get_mac(), bufm1, sizeof(bufm1)),
+			       Utils::formatMac(dstMac->get_mac(), bufm2, sizeof(bufm2)),
+			       (src2dst_direction) ? 1 : 0);
 #endif
 
   in_pkts = zflow->pkt_sampling_rate * zflow->in_pkts,
@@ -485,11 +492,16 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
                          0 /* TODO: add keepalive */);
   }
 
-  flow->addFlowStats(new_flow, src2dst_direction, in_pkts, in_bytes, 0,
-                     out_pkts, out_bytes, 0,
-                     zflow->pkt_sampling_rate * zflow->in_fragments,
-                     zflow->pkt_sampling_rate * zflow->out_fragments,
-                     zflow->first_switched, zflow->last_switched);
+  if(flow->addFlowStats(new_flow, src2dst_direction, in_pkts, in_bytes, 0,
+			out_pkts, out_bytes, 0,
+			zflow->pkt_sampling_rate * zflow->in_fragments,
+			zflow->pkt_sampling_rate * zflow->out_fragments,
+			zflow->first_switched, zflow->last_switched) == false) {
+    if(update_seen) {
+      flow->updateSeen(zflow->last_switched);
+      flow->callFlowUpdate(zflow->last_switched);    
+    }
+  }
 
   if (zflow->getPreNATSrcIp()) {
     /* Add Pre-Post NAT src/dst IPv4 */
@@ -497,9 +509,8 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
                             zflow->getPostNATSrcIp(), zflow->getPostNATDstIp());
 
     /* Add Pre-Post NAT src/dst Ports */
-    flow->addPrePostNATPort(
-        zflow->getPreNATSrcPort(), zflow->getPreNATDstPort(),
-        zflow->getPostNATSrcPort(), zflow->getPostNATDstPort());
+    flow->addPrePostNATPort(zflow->getPreNATSrcPort(), zflow->getPreNATDstPort(),
+			    zflow->getPostNATSrcPort(), zflow->getPostNATDstPort());
   }
 
   if (!flow->isDetectionCompleted()) {

@@ -5218,14 +5218,14 @@ void Flow::incStats(bool cli2srv_direction, u_int pkt_len, u_int8_t *payload,
 
 /* *************************************** */
 
-void Flow::addFlowStats(bool new_flow, bool cli2srv_direction, u_int in_pkts,
+bool Flow::addFlowStats(bool new_flow, bool cli2srv_direction, u_int in_pkts,
                         u_int in_bytes, u_int in_goodput_bytes, u_int out_pkts,
                         u_int out_bytes, u_int out_goodput_bytes,
                         u_int in_fragments, u_int out_fragments,
                         time_t first_seen, time_t last_seen) {
   /* Don't update seen if no traffic has been observed */
   if(!(in_bytes || out_bytes || in_pkts || out_pkts))
-    return;
+    return(false);
 
   updateSeen(last_seen);
   callFlowUpdate(last_seen);
@@ -5261,6 +5261,8 @@ void Flow::addFlowStats(bool new_flow, bool cli2srv_direction, u_int in_pkts,
     else
       updateThroughputStats(tdiff_msec, out_pkts, out_bytes, 0, in_pkts, in_bytes, 0);
   }
+
+  return(true);
 }
 
 /* *************************************** */
