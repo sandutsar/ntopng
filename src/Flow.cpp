@@ -6075,8 +6075,11 @@ void Flow::setICMPTypeCode(u_int16_t icmp_type_code) {
     icmp_info = new (std::nothrow) ICMPinfo();
     
   if(icmp_info != NULL) {
-    icmp_info->setCode((u_int8_t)(icmp_type_code & 0x00FF));
-    icmp_info->setType((u_int8_t)((icmp_type_code >> 8) & 0xFF));
+    u_int8_t icmp_code = (u_int8_t)(icmp_type_code & 0x00FF);
+    u_int8_t icmp_type = (u_int8_t)((icmp_type_code >> 8) & 0xFF);
+    
+    icmp_info->setCode(icmp_code), protos.icmp.cli2srv.icmp_code = icmp_code;
+    icmp_info->setType(icmp_type), protos.icmp.cli2srv.icmp_type = icmp_type;
   }  
 }
 
