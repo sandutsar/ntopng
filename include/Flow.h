@@ -1462,6 +1462,7 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   inline bool isFlowAccounted()        { return iface_flow_accounted; };
   inline void setFlowAccounted()       { iface_flow_accounted = 1;    };
   void accountFlowTraffic();
+  void setICMPTypeCode(u_int16_t icmp_type_code);
 };
 
 #endif /* _FLOW_H_ */

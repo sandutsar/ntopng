@@ -535,6 +535,8 @@ void Mac::dumpAssetInfo() {
   ndpi_term_serializer(&device_json);
 }
 
+/* *************************************** */
+
 void Mac::dumpAssetInfoToRedis(bool dump_last_seen) {
   char mac_addr[64], *mac, *json_str;
   ndpi_serializer device_json;
@@ -560,6 +562,7 @@ void Mac::dumpAssetInfoToRedis(bool dump_last_seen) {
 
   ndpi_term_serializer(&device_json);
 }
+
 #endif
 
 /* *************************************** */

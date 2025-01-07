@@ -2183,8 +2183,7 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
 
       if(srv_host->getHTTPstats() && host_server_name &&
 	  isThreeWayHandshakeOK()) {
-	srv_host->getHTTPstats()->updateHTTPHostRequest(
-							tv->tv_sec, host_server_name, partial->get_num_http_requests(),
+	srv_host->getHTTPstats()->updateHTTPHostRequest(tv->tv_sec, host_server_name, partial->get_num_http_requests(),
 							partial->get_cli2srv_bytes(), partial->get_srv2cli_bytes());
       }
     }
@@ -6067,6 +6066,18 @@ void Flow::dissectDNS(bool src2dst_direction, char *payload,
     stats.incDNSQuery(getLastQueryType());
   else if((dns_header.flags & 0x8000) == 0x8000)
     stats.incDNSResp(getDNSRetCode());
+}
+
+/* *************************************** */
+
+void Flow::setICMPTypeCode(u_int16_t icmp_type_code) {
+  if(icmp_info == NULL)
+    icmp_info = new (std::nothrow) ICMPinfo();
+    
+  if(icmp_info != NULL) {
+    icmp_info->setCode((u_int8_t)(icmp_type_code & 0x00FF));
+    icmp_info->setType((u_int8_t)((icmp_type_code >> 8) & 0xFF));
+  }  
 }
 
 /* *************************************** */

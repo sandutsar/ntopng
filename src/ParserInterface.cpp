@@ -573,8 +573,7 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
       like "flow->updateDNS" as they check the actual protocol
      */
 
-    if (
-        /* If nprobe acts is in collector-passthrough mode L7_PROTO is not
+    if (/* If nprobe acts is in collector-passthrough mode L7_PROTO is not
            present, using the protocol guess on the ntopng side is desirable in
            this case */
         ((zflow->l7_proto.proto.app_protocol == NDPI_PROTOCOL_UNKNOWN) &&
@@ -629,6 +628,9 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
     flow->setConfidence(zflow->getConfidence());
     flow->setNdpiConfidence(zflow->getConfidence());
 
+    if(flow->get_protocol() == IPPROTO_ICMP)
+      flow->setICMPTypeCode(zflow->icmp_type_code);
+    
     if (flow->isDNS()) flow->updateDNS(zflow);
     if (flow->isHTTP()) flow->updateHTTP(zflow);
     if (flow->isTLS()) flow->updateTLS(zflow);
