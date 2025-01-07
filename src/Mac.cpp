@@ -536,7 +536,7 @@ void Mac::dumpAssetInfo() {
 }
 
 void Mac::dumpAssetInfoToRedis(bool dump_last_seen) {
-  char mac_addr[64], mac_disconnection_key[128], *mac, *json_str;
+  char mac_addr[64], *mac, *json_str;
   ndpi_serializer device_json;
   u_int32_t json_str_len = 0;
   char redis_key[64];
