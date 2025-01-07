@@ -973,7 +973,7 @@ void Flow::processExtraDissectedInformation() {
       char msg[32];
 
       snprintf(msg, sizeof(msg), "%u sec", periodicity);
-      ndpi_set_risk(get_ndpi_flow(), NDPI_PERIODIC_FLOW, msg);
+      ndpi_set_risk(iface->get_ndpi_struct(), get_ndpi_flow(), NDPI_PERIODIC_FLOW, msg);
     }
 
     setRisk(r_bitmap);
