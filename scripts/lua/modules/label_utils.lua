@@ -327,7 +327,13 @@ function getHostAltName(host_info)
         host_key = host_info
     end
 
-    return ntop.getCache(getHostAltNamesKey(host_key))
+    local alt_name = ntop.getCache(getHostAltNamesKey(host_key)) or ""
+    -- In case the alt_name and the key are the same, return nil
+    if (not isEmptyString(alt_name)) and (string.lower(alt_name) == string.lower(host_key)) then
+        return nil
+    end
+
+    return alt_name
 end
 
 -- ##############################################
