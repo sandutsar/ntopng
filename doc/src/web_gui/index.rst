@@ -57,6 +57,7 @@ Each individual menu bar entry will be discussed below.
 
     network_index
     system_index
+    ssl
     settings
     developer
     help_menu
