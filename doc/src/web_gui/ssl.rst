@@ -32,14 +32,14 @@ If you are running from source code, you can create your SSL certificate inside 
 
 .. code-block:: bash
 
-make cert
+   make cert
 
 
 Edit the /etc/ntopng/ntopng.conf file to enable https, adding:
 
 .. code-block:: text
 
---https-port=3001
+   --https-port=3001
 
 
 You may choose ports other than 3001 but it must be a different port to the http port which is port 3000 by default
