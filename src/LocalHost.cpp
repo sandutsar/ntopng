@@ -833,7 +833,7 @@ void LocalHost::setOS(OSType _os, OSLearningMode mode) {
     os_learning[mode] = _os;
 
     char buf[8];
-    snprintf(buf, sizeof(buf), "%d", _os)
+    snprintf(buf, sizeof(buf), "%d", _os);
     addDataToAssets((char *) "os_type", buf);
     
     Host::setOS(_os, mode);
