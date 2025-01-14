@@ -48,7 +48,7 @@ class LocalHost : public Host {
   void initialize();
   void deferredInitialization();
   void freeLocalHostData();
-  void dumpAssetInfo();
+  void dumpAssetInfo(bool include_last_seen);
   virtual void deleteHostData();
   void dumpAssetJson(ndpi_serializer *serializer);
 
