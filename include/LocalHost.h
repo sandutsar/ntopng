@@ -209,6 +209,13 @@ class LocalHost : public Host {
 
   SPSCQueue<std::pair<u_int16_t, u_int16_t>> *getContactedServerPorts() { return (&contacted_server_ports);};
 
+  void setDhcpServer(char *name);
+  void setDnsServer(char *name);
+  void setSmtpServer(char *name);
+  void setNtpServer(char *name);
+  void setImapServer(char *name);
+  void setPopServer(char *name);
+
   void offlineSetMDNSInfo(char *const s);
   void offlineSetMDNSName(const char *n);
   void offlineSetDHCPName(const char *n);

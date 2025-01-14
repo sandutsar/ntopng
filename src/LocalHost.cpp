@@ -732,6 +732,48 @@ void LocalHost::lua_get_fingerprints(lua_State *vm) {
 
 /* *************************************** */
 
+void LocalHost::setDhcpServer(char *name) {
+  Host::setDhcpServer(name);
+  addDataToAssets((char *) "dhcp_server", (char *) "true");
+}
+
+/* *************************************** */
+
+void LocalHost::setDnsServer(char *name) {
+  Host::setDnsServer(name);
+  addDataToAssets((char *) "dns_server", (char *) "true");
+}
+
+/* *************************************** */
+
+void LocalHost::setSmtpServer(char *name) {
+  Host::setSmtpServer(name);
+  addDataToAssets((char *) "smtp_server", (char *) "true");
+}
+
+/* *************************************** */
+
+void LocalHost::setNtpServer(char *name) {
+  Host::setNtpServer(name);
+  addDataToAssets((char *) "ntp_server", (char *) "true");
+}
+
+/* *************************************** */
+
+void LocalHost::setImapServer(char *name) {
+  Host::setImapServer(name);
+  addDataToAssets((char *) "imap_server", (char *) "true");
+}
+
+/* *************************************** */
+
+void LocalHost::setPopServer(char *name) {
+  Host::setPopServer(name);
+  addDataToAssets((char *) "pop_server", (char *) "true");
+}
+
+/* *************************************** */
+
 void LocalHost::offlineSetMDNSInfo(char *const str) {
   Host::offlineSetMDNSInfo(str);
 }
@@ -791,7 +833,7 @@ void LocalHost::setResolvedName(const char *resolved_name) {
 
   if(strcmp(get_ip()->print(buf, sizeof(buf)), resolved_name)) {
     Host::setResolvedName(resolved_name);
-    addDataToAssets((char *) "resolved_name", (char *) resolved_name);
+    addDataToAssets((char *) "dns_name", (char *) resolved_name);
   }
 }
 
