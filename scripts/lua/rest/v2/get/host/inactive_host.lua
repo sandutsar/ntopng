@@ -6,6 +6,7 @@ package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 
 require "lua_utils"
 require "mac_utils"
+local json = require "dkjson"
 local rest_utils = require "rest_utils"
 local asset_management_utils = require "asset_management_utils"
 
@@ -101,6 +102,21 @@ for _, host_details in pairs(list or {}) do
             name = name
         }}
     }
+
+    -- Now add the info inside the json_info
+    local json_info = json.decode(host_details.json_info) or {}
+    for name, value in pairs(json_info or {}) do
+        local formatted_name = i18n('inactive_host_details.' .. name)
+        if isEmptyString(formatted_name) then
+            formatted_name = name
+        end
+        rsp["host_info"][#rsp["host_info"] + 1] = {
+            name = formatted_name,
+            values = {{
+                name = value
+            }}
+        }
+    end
 end
 
 rest_utils.answer(rest_utils.consts.success.ok, rsp)

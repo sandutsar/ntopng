@@ -606,6 +606,96 @@ AddressTree *get_allowed_nets(lua_State *vm) {
 
 /* ****************************************** */
 
+static int ntop_add_data_to_assets(lua_State *vm) {
+  NetworkInterface *iface = getCurrentInterface(vm);
+  char *host = NULL, *field = NULL, *value = NULL;
+
+  ntop->getTrace()->traceEvent(TRACE_DEBUG, "%s() called", __FUNCTION__);
+  if (!iface) return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+
+  if (lua_type(vm, 1) == LUA_TSTRING) /* Host provided in IP@VLAN format */
+    host = (char *)lua_tostring(vm, 1);
+
+  if (host != NULL && strlen(host) > 0) {
+    Host *h;
+    char host_ip[64];
+    char *key;
+    u_int16_t vlan_id = 0;
+
+    get_host_vlan_info(host, &key, &vlan_id, host_ip, sizeof(host_ip));
+
+    if ((!iface) || 
+        ((h = iface->findHostByIP(get_allowed_nets(vm), host_ip, vlan_id, getLuaVMUservalue(vm, observationPointId))) == NULL)) {
+      ntop->getTrace()->traceEvent(TRACE_WARNING, "Unable to locate host %s",
+                                   host_ip);
+      return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+    }
+
+    if (h->isLocalHost()) {
+      /* Available only for local hosts */
+      if (lua_type(vm, 2) == LUA_TSTRING) /* Field provided */
+        field = (char *)lua_tostring(vm, 2);
+        
+      if (lua_type(vm, 3) == LUA_TSTRING) /* Value provided */
+        value = (char *)lua_tostring(vm, 3);
+
+      if (!h->addDataToAssets(field, value)) {
+        ntop->getTrace()->traceEvent(TRACE_WARNING, "Error while updating [%s] Asset Map [field: %s][value :%s]",
+                                  host ? host : "NULL",
+                                  field ? field : "NULL", 
+                                  value ? value : "NULL");
+        return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+      }
+    }
+  }
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+}
+
+/* ****************************************** */
+
+static int ntop_remove_data_from_assets(lua_State *vm) {
+  NetworkInterface *iface = getCurrentInterface(vm);
+  char *host = NULL, *field = NULL;
+
+  ntop->getTrace()->traceEvent(TRACE_DEBUG, "%s() called", __FUNCTION__);
+  if (!iface) return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+
+  if (lua_type(vm, 1) == LUA_TSTRING) /* Host provided in IP@VLAN format */
+    host = (char *)lua_tostring(vm, 1);
+
+  if (host != NULL && strlen(host) > 0) {
+    Host *h;
+    char host_ip[64];
+    char *key;
+    u_int16_t vlan_id = 0;
+
+    get_host_vlan_info(host, &key, &vlan_id, host_ip, sizeof(host_ip));
+
+    if ((!iface) || 
+        ((h = iface->findHostByIP(get_allowed_nets(vm), host_ip, vlan_id, getLuaVMUservalue(vm, observationPointId))) == NULL)) {
+      ntop->getTrace()->traceEvent(TRACE_WARNING, "Unable to locate host %s",
+                                   host_ip);
+      return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+    }
+
+    if (h->isLocalHost()) {
+      /* Available only for local hosts */
+      if (lua_type(vm, 2) == LUA_TSTRING) /* Field provided */
+        field = (char *)lua_tostring(vm, 2);
+
+      if (!h->removeDataFromAssets(field)) {
+        ntop->getTrace()->traceEvent(TRACE_WARNING, "Error while updating [%s] Asset Map [field: %s]",
+                                  host ? host : "NULL",
+                                  field ? field : "NULL");
+        return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+      }
+    }
+  }
+  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
+}
+
+/* ****************************************** */
+
 static int ntop_interface_live_capture(lua_State *vm) {
   NetworkInterface *curr_iface = getCurrentInterface(vm);
   NtopngLuaContext *c;
@@ -5725,6 +5815,9 @@ static luaL_Reg _ntop_interface_reg[] = {
     {"incTotalHostAlerts", ntop_interface_inc_total_host_alerts},
     {"updateIPReassignment", ntop_interface_update_ip_reassignment},
     {"triggerTrafficAlert", ntop_interface_trigger_traffic_alert},
+
+    {"addDataToLocalHostAssets", ntop_add_data_to_assets },
+    {"removeDataFromLocalHostAssets", ntop_remove_data_from_assets },
 
     /* eBPF, Containers and Companion Interfaces */
     {"getPodsStats", ntop_interface_get_pods_stats},

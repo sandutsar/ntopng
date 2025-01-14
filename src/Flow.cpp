@@ -2197,12 +2197,7 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
       srv_host->getDNSstats()->incStats(false /* Server */,
 					partial->get_flow_dns_stats());
     if(cli_host && srv_host) {
-      if(cli_host->incDNSContactCardinality(srv_host)) {
-#ifdef NTOPNG_PRO
-	ntop->get_am()->addClientServerUsage(cli_host, srv_host, dns_server,
-					     NULL /* no DNS server name */, get_first_seen());
-#endif
-      }
+      cli_host->incDNSContactCardinality(srv_host);
     }
     break;
 
@@ -2238,12 +2233,7 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
 
   case NDPI_PROTOCOL_NTP:
     if(cli_host && srv_host) {
-      if(cli_host->incNTPContactCardinality(srv_host)) {
-#ifdef NTOPNG_PRO
-	ntop->get_am()->addClientServerUsage(cli_host, srv_host, ntp_server,
-					     NULL /* no NTP server name */, get_first_seen());
-#endif
-      }
+      cli_host->incNTPContactCardinality(srv_host);
     }
     break;
 
@@ -2289,36 +2279,21 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
   case NDPI_PROTOCOL_MAIL_SMTPS:
   case NDPI_PROTOCOL_MAIL_SMTP:
     if(cli_host && srv_host) {
-      if(cli_host->incSMTPContactCardinality(srv_host)) {
-#ifdef NTOPNG_PRO
-	ntop->get_am()->addClientServerUsage(cli_host, srv_host, smtp_server,
-					     getFlowServerInfo(), get_first_seen());
-#endif
-      }
+      cli_host->incSMTPContactCardinality(srv_host);
     }
     break;
 
   case NDPI_PROTOCOL_MAIL_IMAPS:
   case NDPI_PROTOCOL_MAIL_IMAP:
     if(cli_host && srv_host) {
-      if(cli_host->incIMAPContactCardinality(srv_host)) {
-#ifdef NTOPNG_PRO
-	ntop->get_am()->addClientServerUsage(cli_host, srv_host, imap_server,
-					     getFlowServerInfo(), get_first_seen());
-#endif
-      }
+      cli_host->incIMAPContactCardinality(srv_host);
     }
     break;
 
   case NDPI_PROTOCOL_MAIL_POPS:
   case NDPI_PROTOCOL_MAIL_POP:
     if(cli_host && srv_host) {
-      if(cli_host->incPOPContactCardinality(srv_host)) {
-#ifdef NTOPNG_PRO
-	ntop->get_am()->addClientServerUsage(cli_host, srv_host, pop_server,
-					     getFlowServerInfo(), get_first_seen());
-#endif
-      }
+      cli_host->incPOPContactCardinality(srv_host);
     }
     break;
 

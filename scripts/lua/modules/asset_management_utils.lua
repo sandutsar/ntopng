@@ -44,8 +44,9 @@ local function updateData(entry, ifid, type)
         data = data[1]
         entry.first_seen = data.first_seen -- Keep the old first_seen
         local data_json_info = json.decode(data.json_info or "") or {}
-        local entry_json_info = json.decode(entry.json_info or "") or {}
-        entry.json_info = json.encode(table.merge(data_json_info, entry_json_info)) -- Merge the json_info field
+        -- Merge the json_info field, note, that in case of duplicates, the data from
+        -- entry table are used.
+        entry.json_info = json.encode(table.merge(data_json_info, entry.json_info)) 
     end
     return entry
 end
@@ -199,7 +200,7 @@ end
 function asset_management_utils.insertHost(entry, version, ifid)
     local query = nil
     entry = updateData(entry, ifid, "host")
-
+    
     if hasClickHouseSupport() then
         query = string.format(
             "INSERT INTO %s " ..
