@@ -51,7 +51,7 @@ Flow::Flow(NetworkInterface *_iface,
     vlanId = _vlanId, protocol = _protocol, cli_port = _cli_port,
     srv_port = _srv_port, privateFlowId = _private_flow_id;
   flow_dropped_counts_increased = 0, protocolErrorCode = 0;
-  srcAS = dstAS = 0;
+  srcAS = dstAS = 0, rttSec = 0;
 
   if(_protocol == IPPROTO_TCP)
     tcp = (FlowTCP*)calloc(1, sizeof(FlowTCP));
