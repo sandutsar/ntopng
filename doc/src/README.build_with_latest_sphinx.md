@@ -1,4 +1,4 @@
--+# Documentation
+## Build Documentation
 
 Ntopng documentation uses read the docs and `.rst` file format. This guide describe how to build the documentation with the latest sphinx version (8.0) instead of the old version (1.8)
 
