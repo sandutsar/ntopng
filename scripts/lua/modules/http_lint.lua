@@ -1843,6 +1843,7 @@ local known_parameters = {
     ["tab"] = validateSingleWord, -- Currently active tab, handled by javascript
     ["template"] = validateSingleWord, -- Currently selected template
     ["template_name"] = validateUnquoted,
+    ["endpoint"] = validateSingleWord,
     ["component"] = validateSingleWord,
     ["component_title"] = validateUnquoted,
     ["component_width"] = validateNumber,

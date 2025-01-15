@@ -90,10 +90,13 @@ dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
 
 -- ######################################
 
+local monitor_infrastruture = false
+
 local context = {
   ifid = ifid,
   page = "dashboard",
   template = template,
+  is_infrastruture = monitor_infrastruture,
   csrf = ntop.getRandomCSRFValue(),
   template_endpoint = ntop.getHttpPrefix() .. "/lua/rest/v2/get/dashboard/template/data.lua",
   template_list_endpoint = ntop.getHttpPrefix() .. "/lua/rest/v2/get/dashboard/template/list.lua"

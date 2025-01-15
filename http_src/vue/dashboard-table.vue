@@ -183,10 +183,8 @@ async function refresh_table() {
      ...props.params.url_params,
         ...props.filters
   }
-  const query_params = ntopng_url_manager.obj_to_url_params(url_params);
  
-  //let data = await ntopng_utility.http_request(`${http_prefix}${props.params.url}?${query_params}`);
-  let data = await props.get_component_data(`${http_prefix}${props.params.url}`, query_params);
+  let data = await props.get_component_data(`${http_prefix}${props.params.url}`, url_params);
 
   let rows = [];
   if (props.params.table_type == 'db_search') {
