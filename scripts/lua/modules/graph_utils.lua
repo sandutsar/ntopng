@@ -702,9 +702,12 @@ end
 -- Merge pie data from 2 data sources (compute top of tops)
 function graph_utils.merge_pie_data(aggregated_data, data, max_values)
    -- Merge in temporary table
+   -- Note: aggregated_data may be nil
    local items = {}
-   for _, l in ipairs(aggregated_data.labels) do
-      items[l] = aggregated_data.series[_]
+   if aggregated_data then
+      for _, l in ipairs(aggregated_data.labels) do
+         items[l] = aggregated_data.series[_]
+      end
    end
    for _, l in ipairs(data.labels) do
       if items[l] then
@@ -715,20 +718,20 @@ function graph_utils.merge_pie_data(aggregated_data, data, max_values)
    end
    
    -- Compute tops
-   aggregated_data.labels = {}
-   aggregated_data.series = {}
-   aggregated_data.colors = {}
+   data.labels = {}
+   data.series = {}
+   data.colors = {}
    for l, v in pairsByValues(items or {}, rev) do
-      aggregated_data.labels[#aggregated_data.labels+1] = l
-      aggregated_data.series[#aggregated_data.series+1] = v
-      aggregated_data.colors[#aggregated_data.colors+1] = graph_utils.get_html_color(#aggregated_data.colors)
-      if #aggregated_data.labels >= max_values then
+      data.labels[#data.labels+1] = l
+      data.series[#data.series+1] = v
+      data.colors[#data.colors+1] = graph_utils.get_html_color(#data.colors)
+      if #data.labels >= max_values then
          goto done
       end
    end 
    ::done::
 
-   return aggregated_data 
+   return data 
 end
 
 -- #################################################
