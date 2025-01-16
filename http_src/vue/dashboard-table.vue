@@ -87,10 +87,14 @@ const row_render_functions = {
   /* Render function for 'throughput' table type */
   throughput: function (column, row) {
     if (column.id == 'name') {
+      let name = row.name;
+      if (row['instance_id']) {
+        name = `${row.name} [${row.instance_name}]`;
+      }
       if (row['url'])
-        return `<a href='${row.url}'>${row.name}</a>`;
+        return `<a href='${row.url}'>${name}</a>`;
       else
-        return row.name;
+        return name;
     } else if (column.id == 'throughput') {
       if (row['throughput_type'] && row['throughput_type'] == 'pps') {
         return NtopUtils.fpackets(row[column.id]);
