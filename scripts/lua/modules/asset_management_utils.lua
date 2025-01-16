@@ -123,6 +123,7 @@ local function updateData(entry, ifid, type)
         entry.json_info = json.encode(table.merge(data.json_info or {}, entry.json_info or {}))
     end
 
+    -- Remove the single quote from the manufacturer, it can mess up the query
     entry.manufacturer = entry.manufacturer .. "'"
     if entry.manufacturer then
         entry.manufacturer = string.gsub(entry.manufacturer, "'", "-")
