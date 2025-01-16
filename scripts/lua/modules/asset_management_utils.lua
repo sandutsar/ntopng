@@ -122,6 +122,11 @@ local function updateData(entry, ifid, type)
         -- entry table are used.
         entry.json_info = json.encode(table.merge(data.json_info or {}, entry.json_info or {}))
     end
+
+    entry.manufacturer = entry.manufacturer .. "'"
+    if entry.manufacturer then
+        entry.manufacturer = string.gsub(entry.manufacturer, "'", "-")
+    end
     return entry
 end
 
