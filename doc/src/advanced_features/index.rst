@@ -18,7 +18,6 @@ section.
     devices_exclusion
     dynamic_interfaces_disaggregation
     flows_dump
-    host_rules
     ids_acceleration
     live_pcap_download
     multitenancy
@@ -27,6 +26,7 @@ section.
     snapshots
     syslog
     traffic_profiles
+    traffic_rules
     view_interfaces
     additional_features
 

@@ -106,8 +106,7 @@ page_utils.menu_entries = {
     hosts_treemap         = {key = "hosts_treemap", i18n_title = "tree_map.hosts_treemap", section = "hosts"},
     containers            = {key = "containers", i18n_title = "containers_stats.containers", section = "hosts"},
     pods                  = {key = "pods", i18n_title = "containers_stats.pods", section = "hosts"},
-    host_rules            = {key = "host_rules", i18n_title = "if_stats_config.traffic_rules", section = "hosts", help_link = "https://www.ntop.org/guides/ntopng/advanced_features/host_rules.html"},
-
+    
     -- Chatbot 
     chatbot             = {key = "chatbot", i18n_title = "chatbot", section = "chatbot"},
     -- Interface
@@ -154,6 +153,7 @@ page_utils.menu_entries = {
    scripts_config_system  = {key = "scripts_config", subkey="system", i18n_title = alert_entities.system.i18n_label, section = "admin", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
    scripts_config_syslog  = {key = "scripts_config", subkey="syslog", i18n_title = "syslog.syslog", section = "admin", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
    scripts_config_active_monitoring  = {key = "scripts_config", subkey="active_monitoring", i18n_title = "active_monitoring", section = "admin", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
+   traffic_rules         = {key = "traffic_rules", i18n_title = "if_stats_config.traffic_rules", section = "admin", help_link = "https://www.ntop.org/guides/ntopng/advanced_features/traffic_rules.html"},
    device_exclusions      = {key = "device_exclusions", i18n_title = "edit_check.device_exclusion", section = "hosts"},
    alert_exclusions       = {key = "alert_exclusions", i18n_title = "edit_check.exclusion_list", section = "admin", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},
    alert_exclusions_hosts = {key = "alert_exclusions", subkey="hosts", i18n_title = alert_entities.host.i18n_label, section = "alert_exclusions", help_link = "https://www.ntop.org/guides/ntopng/web_gui/checks.html"},

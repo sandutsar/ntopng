@@ -25,7 +25,7 @@ import { default as PageHostDetailsApplications } from "./page-host-details-appl
 import { default as PageHostDetailsTraffic } from "./page-host-details-traffic.vue";
 import { default as PageHostDetailsPackets } from "./page-host-details-packets.vue";
 import { default as PageHostDetailsFlowSankey } from "./page-host-details-flow-sankey.vue";
-import { default as PageHostRules } from "./page-host-rules.vue";
+import { default as PageHostRules } from "./page-traffic-rules.vue";
 import { default as PageHostDetailsPorts } from "./page-host-details-ports.vue";
 import { default as PageAlertAnalysis } from "./page-alert-analysis.vue";
 import { default as PageHostMap } from "./page-host-map.vue";
@@ -77,6 +77,7 @@ import { default as PageTopInterfaceCategories } from "./page-top-interface-cate
 /* Config pages */
 import { default as PageSNMPConfig } from "./page-snmp-config.vue"
 import { default as PageHostConfig } from "./page-host-config.vue"
+import { default as PageTrafficRules } from "./page-traffic-rules.vue"
 
 // components
 import { default as AlertInfo } from "./alert-info.vue";
@@ -117,7 +118,7 @@ import { default as ModalFilters } from "./modal-filters.vue";
 import { default as ModalTimeseries } from "./modal-timeseries.vue";
 import { default as ModalTrafficExtraction } from "./modal-traffic-extraction.vue";
 import { default as ModalSnapshot } from "./modal-snapshot.vue";
-import { default as ModalAddHostRules } from "./modal-add-host-rules.vue";
+import { default as ModalAddHostRules } from "./modal-add-traffic-rules.vue";
 import { default as ModalAddApplication } from "./modal-add-application.vue";
 import { default as ModalDeleteApplication } from "./modal-delete-application.vue";
 import { default as ModalEditReport } from "./modal-edit-vs-report.vue";
@@ -208,6 +209,7 @@ let ntopVue = {
     PageExportersInterfaces: PageExportersInterfaces,
     PageNetworkConfiguration: PageNetworkConfiguration,
     PageNetworkPolicy: PageNetworkPolicy,
+    PageTrafficRules: PageTrafficRules,
     //PageSankeyTest: PageSankeyTest,
     
     // components
