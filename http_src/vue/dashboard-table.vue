@@ -88,9 +88,8 @@ const row_render_functions = {
   throughput: function (column, row) {
     if (column.id == 'name') {
       let name = row.name;
-      if (row['instance_id']) {
+      if (row['instance_name'])
         name = `${row.name} [${row.instance_name}]`;
-      }
       if (row['url'])
         return `<a href='${row.url}'>${name}</a>`;
       else

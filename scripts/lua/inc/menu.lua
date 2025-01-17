@@ -983,18 +983,27 @@ interface.select(ifs.id .. "")
 
 local infrastructures = {}
 
+local monitor_infrastructure = false
 if ntop.isEnterpriseM() then
     local infrastructure_utils = require("infrastructure_utils")
-    if ntop.isPro() then
-        for _, v in pairs(infrastructure_utils.get_all_instances()) do
-            infrastructures[v.alias] = v.url
+    for _, v in pairs(infrastructure_utils.get_all_instances()) do
+        if v.interfaces and #v.interfaces > 0 then
+            infrastructures[v.id] = {
+               name = v.alias,
+               url = v.url,
+            }
         end
+    end
+    local instance_id = _POST["instance_id"] -- TODO read from ntop.getInstanceId()
+    if instance_id == 'aggregate' then
+        monitor_infrastructure = true
     end
 end
 
 local context = {
     ifnames = ifnames,
     infrastructures = infrastructures,
+    monitor_infrastructure = monitor_infrastructure,
     views = views,
     dynamic = dynamic,
     recording = recording,

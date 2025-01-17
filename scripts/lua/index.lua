@@ -91,6 +91,14 @@ dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
 -- ######################################
 
 local monitor_infrastructure = false
+local instance_id = _POST["instance_id"] -- TODO read from ntop.getInstanceId()
+if instance_id == 'aggregate' and ntop.isEnterpriseM() then
+  local infrastructure_utils = require("infrastructure_utils")
+  local instances = infrastructure_utils.get_all_instances()
+  if table.len(instances) > 0 then
+    monitor_infrastructure = true
+  end
+end
 
 local context = {
   ifid = ifid,
