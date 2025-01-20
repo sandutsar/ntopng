@@ -111,6 +111,12 @@ local function hostinfo2label_resolved(host_info, show_vlan, shorten_len, skip_r
 
         if not isEmptyString(res) then
             res = string.lower(res)
+
+	    if(host_info.names == nil) then
+                host_info.names = {}
+	    end
+
+	    host_info.names["DNS (Cache) Resolution"] = res
         else
             -- Nothing found, just fallback to the IP address
             res = ip
