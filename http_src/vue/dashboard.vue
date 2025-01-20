@@ -896,7 +896,7 @@ function get_component_data_func(component) {
             }
 
             /* If infrastructure monitor, call the aggregator endpoint */
-            if (props.context.is_infrastructure) {
+            if (props.context.is_infrastructure && !url.includes("infrastructure")) {
                 const infrastructure_proxy_url = "/lua/pro/rest/v2/get/infrastructure/aggregate.lua";
 
                 query_params['endpoint'] = url;

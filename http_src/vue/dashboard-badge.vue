@@ -89,10 +89,9 @@ async function refresh_component() {
     if(props.params.counter_formatter == "no_formatting") {
        counter.value = counter_value;
     } else {
-      let counter_formatter = data[props.params.counter_formatter];
-      if (!counter_formatter) {
+      let counter_formatter = props.params.counter_formatter;
+      if (!counter_formatter)
         counter_formatter = "number";
-      }
 
       let formatCounter = formatterUtils.getFormatter(counter_formatter);
       counter.value = formatCounter(counter_value)

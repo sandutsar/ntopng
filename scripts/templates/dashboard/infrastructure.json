@@ -4,9 +4,81 @@
 	"components" : [
 		{
 			"component" : "badge",
+			"id" : "total_throughput",
+			"i18n_name" : "",
+			"color" : "info",
+			"inactive_color" : "secondary",
+			"width" : 4,
+			"height" : 2,
+			"params" : {
+				"url" : "/lua/rest/v2/get/interface/data.lua",
+				"url_params" : {
+				},
+				"icon" : "fas fa-gauge-simple-high",
+				"i18n_name" : "infrastructure_dashboard.total_throughput",
+				"link" : {
+					"url" : "/lua/flows_stats.lua",
+					"url_params" : {}
+				},
+				"counter_path" : "throughput_bps",
+				"counter_formatter" : "bps"
+			}
+		},
+		{
+			"component" : "badge",
 			"id" : "critical_alert_count",
 			"i18n_name" : "",
+			"color" : "success",
+			"inactive_color" : "secondary",
+			"width" : 4,
+			"height" : 2,
+			"params" : {
+				"url" : "/lua/pro/rest/v2/get/infrastructure/aggregate.lua",
+				"url_params" : {
+					"type" : "summary"
+				},
+				"icon" : "fas fa-signal",
+				"i18n_name" : "infrastructure_dashboard.active_instances",
+				"link" : {
+					"url" : "/lua/alert_stats.lua",
+					"url_params" : {
+						"status" : "engaged"
+					}
+				},
+				"counter_path" : "active_instances",
+				"counter_formatter" : "number"
+			}
+		},
+		{
+			"component" : "badge",
+			"id" : "active_host_count",
+			"i18n_name" : "",
 			"color" : "danger",
+			"inactive_color" : "secondary",
+			"width" : 4,
+			"height" : 2,
+			"params" : {
+				"url" : "/lua/pro/rest/v2/get/infrastructure/aggregate.lua",
+				"url_params" : {
+					"type" : "summary"
+				},
+				"icon" : "fas fa-plug-circle-xmark",
+				"i18n_name" : "infrastructure_dashboard.offline_instances",
+				"link" : {
+					"url" : "/lua/hosts_stats.lua",
+					"url_params" : {
+						"mode" : "local"
+					}
+				},
+				"counter_path" : "offline_instances",
+				"counter_formatter" : "number"
+			}
+		},
+		{
+			"component" : "badge",
+			"id" : "active_flow_count",
+			"i18n_name" : "",
+			"color" : "info",
 			"inactive_color" : "secondary",
 			"width" : 4,
 			"height" : 2,
@@ -15,15 +87,13 @@
 				"url_params" : {
 					"type" : "summary"
 				},
-				"icon" : "fas fa-exclamation-triangle",
-				"i18n_name" : "show_alerts.engaged_alerts",
+				"icon" : "fas fa-stream",
+				"i18n_name" : "live_flows",
 				"link" : {
-					"url" : "/lua/alert_stats.lua",
-					"url_params" : {
-						"status" : "engaged"
-					}
+					"url" : "/lua/flows_stats.lua",
+					"url_params" : {}
 				},
-				"counter_path" : "engaged_alerts",
+				"counter_path" : "num_flows",
 				"counter_formatter" : "number"
 			}
 		},
@@ -54,9 +124,9 @@
 		},
 		{
 			"component" : "badge",
-			"id" : "active_flow_count",
+			"id" : "critical_alert_count",
 			"i18n_name" : "",
-			"color" : "info",
+			"color" : "danger",
 			"inactive_color" : "secondary",
 			"width" : 4,
 			"height" : 2,
@@ -65,13 +135,15 @@
 				"url_params" : {
 					"type" : "summary"
 				},
-				"icon" : "fas fa-stream",
-				"i18n_name" : "live_flows",
+				"icon" : "fas fa-exclamation-triangle",
+				"i18n_name" : "show_alerts.engaged_alerts",
 				"link" : {
-					"url" : "/lua/flows_stats.lua",
-					"url_params" : {}
+					"url" : "/lua/alert_stats.lua",
+					"url_params" : {
+						"status" : "engaged"
+					}
 				},
-				"counter_path" : "num_flows",
+				"counter_path" : "engaged_alerts",
 				"counter_formatter" : "number"
 			}
 		},
