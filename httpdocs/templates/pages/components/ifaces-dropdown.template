@@ -1,10 +1,10 @@
 
 {% -- Print out the infrastructure dropdown %}
 
-{% if ntop.isEnterpriseM() and isAdministrator() and (table.len(infrastructures) > 0) then %}  
+{% if ntop.isEnterpriseM() and isAdministrator() and (table.len(infrastructure_instances) > 0) then %}  
 
-  {% -- Form for the aggregated view %}
-  <form id="switch_infrastructure_form_aggregate" method="POST" action="{{ ntop.getHttpPrefix() }}/lua/index.lua">
+  {% -- Form for selecting infrastrucure instance id %}
+  <form id="switch_infrastructure_form" method="POST" action="{{ ntop.getHttpPrefix() }}/lua/index.lua">
     <input name="switch_instance" type="hidden" value="1" />
     <input name="csrf" type="hidden" value="{{ ntop.getRandomCSRFValue() }}" />
     <input name="instance_id" type="hidden" value="" />
@@ -15,7 +15,7 @@
       <select name="infrastructure-dropdown" id="infrastructure-dropdown" class="selectpicker form-select-lg pb-0"
         data-width="fit" data-live-search="true" data-live-search-placeholder="{{ i18n('search') }}" data-actions-box="true">
 
-        <option value="local" href="#" data-content=""> {{ i18n('infrastructure_dashboard.local') }}</option>
+        <option value="{{ ntop.getHttpPrefix() }}/lua/index.lua" href="#" data-content=""> {{ i18n('infrastructure_dashboard.local') }}</option>
 
         <option disabled>{{ i18n('infrastructure_dashboard.dashboards') }}</option>
 
@@ -23,10 +23,10 @@
         {% if monitor_infrastructure then %}
             {% selected = 'selected=""' %}
         {% end %}
-        <option value="aggregate" href="#" data-content="{{ "<i class='fas fa-tachometer-alt'></i> "..i18n('infrastructure_dashboard.infrastructure') }}" {{ selected }}></option>
+        <option value="{{ ntop.getHttpPrefix() }}/lua/index.lua?view=infrastructure" href="#" data-content="{{ "<i class='fas fa-tachometer-alt'></i> "..i18n('infrastructure_dashboard.infrastructure') }}" {{ selected }}></option>
 
         <option disabled>{{ i18n('infrastructure_dashboard.instances') }}</option>
-        {% for k,v in pairs(infrastructures or {}) do %}
+        {% for k,v in pairs(infrastructure_instances or {}) do %}
         <option value="{{ v.url }}" href="#" data-content="{{ "<i class='fas fa-building'></i> "..v.name }}"></option>
         {% end %} 
 
@@ -146,14 +146,13 @@
   $(`#infrastructure-dropdown`).on('change', function(e) {
     const selectedValue = $(this).val();
 
-    if (selectedValue.startsWith('http')) {
-      /* URL */
-      window.location.replace(selectedValue);
-    } else {
-      /* Instance ID */
-      $('#switch_infrastructure_form_aggregate [name="instance_id"]').val(selectedValue);
-      toggleSystemInterface($('#switch_infrastructure_form_aggregate'));
-    }
+    /* URL */
+    window.location.replace(selectedValue);
+
+    /* Instance ID (not yet supported)
+    $('#switch_infrastructure_form [name="instance_id"]').val(selectedValue);
+    toggleSystemInterface($('#switch_infrastructure_form'));
+    */
 
   });
   

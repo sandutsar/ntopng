@@ -2117,6 +2117,7 @@ local known_parameters = {
     ["is_ifname"] = validateBool,
     ["metric_label"] = validateUnquoted,
     ["flows_page_type"] = validateSingleWord,
+    ["view"] = validateSingleWord,
 
     -- VULNERABILITY SCAN
     ["scan_type"] = validateSingleWord,
@@ -2190,7 +2191,6 @@ local known_parameters = {
     ["only_memory"] = validateBool,
     ["only_alerted_hosts"] = validateBool,
     ["map_search"] = validateUnquoted,
-    ["view"] = validateSingleWord,
 
     -- Script editor
     ["script_file_path"] = validateLuaScriptPath,
