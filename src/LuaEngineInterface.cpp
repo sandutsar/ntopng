@@ -51,31 +51,6 @@ NetworkInterface *getCurrentInterface(lua_State *vm) {
 
 /* ****************************************** */
 
-static int ntop_set_active_interface_id(lua_State *vm) {
-  NetworkInterface *iface;
-  int id;
-
-  ntop->getTrace()->traceEvent(TRACE_DEBUG, "%s() called", __FUNCTION__);
-
-  if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
-    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
-  id = lua_tonumber(vm, 1);
-
-  iface = ntop->getNetworkInterface(vm, id);
-
-  ntop->getTrace()->traceEvent(TRACE_INFO, "Index: %d, Name: %s", id,
-                               iface ? iface->get_name() : "<unknown>");
-
-  if (iface != NULL)
-    lua_pushstring(vm, iface->get_name());
-  else
-    lua_pushnil(vm);
-
-  return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
-}
-
-/* ****************************************** */
-
 bool matches_allowed_ifname(char *allowed_ifname, char *iface) {
   return (
       ((allowed_ifname == NULL) ||
@@ -5535,7 +5510,6 @@ static int ntop_interface_trigger_traffic_alert(lua_State *vm) {
 /* ****************************************** */
 
 static luaL_Reg _ntop_interface_reg[] = {
-    {"setActiveInterfaceId", ntop_set_active_interface_id},
     {"getIfNames", ntop_get_interface_names},
     {"getIfMac", ntop_get_interface_mac},
     {"getFirstInterfaceId", ntop_get_first_interface_id},
