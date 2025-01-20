@@ -94,6 +94,9 @@ local monitor_infrastructure = false
 
 local view = _GET["view"]
 local monitor_infrastructure = view and view == 'infrastructure' and ntop.isEnterpriseM() 
+if monitor_infrastructure then
+  template = "infrastructure"
+end
 
 local context = {
   ifid = ifid,
