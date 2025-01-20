@@ -20,7 +20,7 @@
         <option disabled>{{ i18n('infrastructure_dashboard.dashboards') }}</option>
 
         {% local selected = '' %}
-        {% if monitor_infrastructure then %}
+        {% if infrastructure_view then %}
             {% selected = 'selected=""' %}
         {% end %}
         <option value="{{ ntop.getHttpPrefix() }}/lua/index.lua?view=infrastructure" href="#" data-content="{{ "<i class='fas fa-tachometer-alt'></i> "..i18n('infrastructure_dashboard.infrastructure') }}" {{ selected }}></option>
@@ -51,7 +51,7 @@
 </form>
 {% end %}
 
-{% if not monitor_infrastructure then %}
+{% if not infrastructure_view then %}
 
 <li class="nav-item d-sm-flex">
   <div class="d-flex">
@@ -111,7 +111,7 @@
 </div>
 </li>
 
-{% -- not monitor_infrastructure %}
+{% -- not infrastructure_view %}
 {% end %}
 
 {% -- Print the observation point dropdown %}

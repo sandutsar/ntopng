@@ -67,6 +67,23 @@ if (flow_config) then
     end
 end
 
+-- Infrastructure
+local infrastructure_view = false
+local infrastructure_instances = {}
+if ntop.isEnterpriseM() then
+    local infrastructure_utils = require("infrastructure_utils")
+    for _, v in pairs(infrastructure_utils.get_all_instances()) do
+        if v.interfaces and #v.interfaces > 0 then
+            infrastructure_instances[v.id] = {
+               name = v.alias,
+               url = v.url,
+            }
+        end
+    end
+    local view = _GET["view"]
+    infrastructure_view = view and view == 'infrastructure' and table.len(infrastructure_instances) > 0
+end
+
 -- ************************************
 
 local observationPointId = nil
@@ -260,20 +277,19 @@ else
             }, {entry = page_utils.menu_entries.divider}, {
                 entry = page_utils.menu_entries.network_discovery,
                 hidden = not interface.isDiscoverableInterface() or
-                    interface.isLoopback() or ntop.limitResourcesUsage(),
+                    interface.isLoopback() or ntop.limitResourcesUsage() or infrastructure_view,
                 url = "/lua/discover.lua"
             }, {
-                -- Pro or Enterprise with clickhouse disabled
+                -- Old Report: Pro or Enterprise with clickhouse disabled
                 entry = page_utils.menu_entries.traffic_report,
-                hidden = not ((ntop.isPro() and not ntop.isEnterprise() and
-                    not ntop.isnEdgeEnterprise()) or
-                    ((ntop.isEnterprise() or ntop.isnEdgeEnterprise()) and
-                        not is_clickhouse_enabled)),
+                hidden = not ((ntop.isPro() and not ntop.isEnterprise() and not ntop.isnEdgeEnterprise())
+                              or ((ntop.isEnterprise() or ntop.isnEdgeEnterprise()) and not is_clickhouse_enabled))
+                         or infrastructure_view,
                 url = "/lua/pro/report.lua"
             }, {
-                -- Enterprise with clickhouse enabled
+                -- New Report: Enterprise with clickhouse enabled
                 entry = page_utils.menu_entries.traffic_report,
-                hidden = not (ntop.isEnterprise() and is_clickhouse_enabled),
+                hidden = not (ntop.isEnterprise() and is_clickhouse_enabled) or infrastructure_view,
                 url = "/lua/pro/reportng.lua"
             }
         }
@@ -313,7 +329,7 @@ else
         section = page_utils.menu_sections.alerts,
         hidden = not prefs.are_alerts_enabled or
             not auth.has_capability(auth.capabilities.alerts) or is_pcap_dump or
-            is_db_view_interface,
+            is_db_view_interface or infrastructure_view,
         entries = {
             {
                 entry = page_utils.menu_entries.alerts_list,
@@ -335,7 +351,7 @@ else
     -- Flows
     page_utils.add_menubar_section({
         section = page_utils.menu_sections.flows,
-        hidden = is_system_interface,
+        hidden = is_system_interface or infrastructure_view,
         entries = {
             {
                 entry = page_utils.menu_entries.active_flows,
@@ -371,7 +387,8 @@ else
     -- Hosts
     page_utils.add_menubar_section({
         section = page_utils.menu_sections.hosts,
-        hidden = is_system_interface or is_viewed,
+        hidden = is_system_interface or is_viewed
+                 or infrastructure_view,
         entries = {
             {
                 entry = page_utils.menu_entries.hosts,
@@ -398,7 +415,7 @@ else
     page_utils.add_menubar_section({
         section = page_utils.menu_sections.collection,
         hidden = not has_exporters or not ntop.isEnterpriseM() or
-            is_system_interface,
+            is_system_interface or infrastructure_view,
         entries = {
             {
                 entry = page_utils.menu_entries.sflow_exporters,
@@ -427,7 +444,8 @@ service_map_available, _ = behavior_utils.mapsAvailable()
 
 page_utils.add_menubar_section({
     section = page_utils.menu_sections.maps,
-    hidden = is_system_interface or is_viewed,
+    hidden = is_system_interface or is_viewed
+             or infrastructure_view,
     entries = {
         {
             entry = page_utils.menu_entries.analysis_map,
@@ -449,7 +467,7 @@ page_utils.add_menubar_section({
 
 -- Interface
 page_utils.add_menubar_section({
-    hidden = is_system_interface,
+    hidden = is_system_interface or infrastructure_view,
     section = page_utils.menu_sections.if_stats,
     entries = {
         {
@@ -671,7 +689,7 @@ page_utils.add_menubar_section({
 -- Rules & Policies
 page_utils.add_menubar_section({
     section = page_utils.menu_sections.policies,
-    hidden = is_system_interface,
+    hidden = is_system_interface or infrastructure_view,
     entries = {
         {
             entry = page_utils.menu_entries.access_control_list,
@@ -992,27 +1010,10 @@ end
 
 interface.select(ifs.id .. "")
 
-local infrastructure_instances = {}
-
-local monitor_infrastructure = false
-if ntop.isEnterpriseM() then
-    local infrastructure_utils = require("infrastructure_utils")
-    for _, v in pairs(infrastructure_utils.get_all_instances()) do
-        if v.interfaces and #v.interfaces > 0 then
-            infrastructure_instances[v.id] = {
-               name = v.alias,
-               url = v.url,
-            }
-        end
-    end
-    local view = _GET["view"]
-    monitor_infrastructure = view and view == 'infrastructure' and table.len(infrastructure_instances) > 0
-end
-
 local context = {
     ifnames = ifnames,
     infrastructure_instances = infrastructure_instances,
-    monitor_infrastructure = monitor_infrastructure,
+    infrastructure_view = infrastructure_view,
     views = views,
     dynamic = dynamic,
     recording = recording,
