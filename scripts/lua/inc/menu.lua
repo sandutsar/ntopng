@@ -348,6 +348,10 @@ else
                     ifs.isViewed or ifs['type'] == 'db' or
                     not hasClickHouseSupport(),
                 url = "/lua/pro/db_search.lua"
+            }, {
+                entry = page_utils.menu_entries.server_ports,
+                url = '/lua/server_ports.lua',
+                hidden = not ntop.isEnterpriseL()
             }
         }
     })
@@ -376,48 +380,9 @@ else
                 entry = page_utils.menu_entries.devices,
                 hidden = not ifs.has_macs,
                 url = '/lua/macs_stats.lua'
-            }, {
-                entry = page_utils.menu_entries.device_exclusions,
-                section = page_utils.menu_sections.hosts,
-                hidden = not is_admin or
-                    not auth.has_capability(auth.capabilities.checks) or
-                    not ntop.isEnterpriseM() or not devices_exclusion_enabled,
-                url = '/lua/pro/admin/edit_device_exclusions.lua'
-            },
-            {
-                entry = page_utils.menu_entries.networks,
-                url = '/lua/network_stats.lua'
-            },
-            {
-                entry = page_utils.menu_entries.host_pools,
-                url = '/lua/pool_stats.lua'
-            }, {
-                entry = page_utils.menu_entries.autonomous_systems,
-                hidden = not ntop.hasGeoIP(),
-                url = '/lua/as_stats.lua'
-            }, {
-                entry = page_utils.menu_entries.countries,
-                hidden = not ntop.hasGeoIP(),
-                url = '/lua/country_stats.lua'
-            }, {
-                entry = page_utils.menu_entries.vlans,
-                hidden = not interface.hasVLANs(),
-                url = '/lua/vlan_stats.lua'
-            }, {
-                entry = page_utils.menu_entries.pods,
-                hidden = not ifs.has_seen_pods,
-                url = '/lua/pods_stats.lua'
-            }, {
-                entry = page_utils.menu_entries.containers,
-                hidden = not ifs.has_seen_containers,
-                url = '/lua/containers_stats.lua'
             }, {entry = page_utils.menu_entries.divider}, {
-                entry = page_utils.menu_entries.http_servers,
-                url = '/lua/http_servers_stats.lua'
-            }, {
-                entry = page_utils.menu_entries.server_ports_analysis,
-                url = '/lua/hosts_ports_analysis.lua',
-                hidden = not ntop.isEnterpriseL()
+                entry = page_utils.menu_entries.assets,
+                url = '/lua/assets.lua'
             }
         }
     })
@@ -487,10 +452,38 @@ page_utils.add_menubar_section({
     hidden = is_system_interface,
     section = page_utils.menu_sections.if_stats,
     entries = {
-        {entry = page_utils.menu_entries.interface, url = "/lua/if_stats.lua"},
         {
-            hidden = not ntop.isEnterprise() or not isAdministrator(),
-            entry = page_utils.menu_entries.divider
+            entry = page_utils.menu_entries.interface, 
+            url = "/lua/if_stats.lua"
+        }, {entry = page_utils.menu_entries.divider}, {
+            entry = page_utils.menu_entries.networks,
+            url = '/lua/network_stats.lua'
+        }, {
+            entry = page_utils.menu_entries.host_pools,
+            url = '/lua/pool_stats.lua'
+        }, {
+            entry = page_utils.menu_entries.autonomous_systems,
+            hidden = not ntop.hasGeoIP(),
+            url = '/lua/as_stats.lua'
+        }, {
+            entry = page_utils.menu_entries.countries,
+            hidden = not ntop.hasGeoIP(),
+            url = '/lua/country_stats.lua'
+        }, {
+            entry = page_utils.menu_entries.vlans,
+            hidden = not interface.hasVLANs(),
+            url = '/lua/vlan_stats.lua'
+        }, {
+            entry = page_utils.menu_entries.pods,
+            hidden = not ifs.has_seen_pods,
+            url = '/lua/pods_stats.lua'
+        }, {
+            entry = page_utils.menu_entries.containers,
+            hidden = not ifs.has_seen_containers,
+            url = '/lua/containers_stats.lua'
+        }, {entry = page_utils.menu_entries.divider}, {
+            entry = page_utils.menu_entries.http_servers,
+            url = '/lua/http_servers_stats.lua'
         }
     }
 })
@@ -675,6 +668,61 @@ page_utils.add_menubar_section({
 
 -- ##############################################
 
+-- Rules & Policies
+page_utils.add_menubar_section({
+    section = page_utils.menu_sections.policies,
+    hidden = is_system_interface,
+    entries = {
+        {
+            entry = page_utils.menu_entries.access_control_list,
+            hidden = not is_admin or not ntop.isEnterpriseL() or not acl_violation_enabled,
+            url = '/lua/pro/admin/access_control_list.lua'
+        }, {
+            entry = page_utils.menu_entries.device_protocols,
+            hidden = not is_admin,
+            url = '/lua/admin/edit_device_protocols.lua'
+        }, {
+            entry = page_utils.menu_entries.device_exclusions,
+            section = page_utils.menu_sections.hosts,
+            hidden = not is_admin or
+                not auth.has_capability(auth.capabilities.checks) or
+                not ntop.isEnterpriseM() or not devices_exclusion_enabled,
+            url = '/lua/pro/admin/edit_device_exclusions.lua'
+        }, {
+            entry = page_utils.menu_entries.network_config,
+            section = page_utils.menu_sections.admin,
+            hidden = not is_admin or
+                not auth.has_capability(auth.capabilities.checks),
+            url = '/lua/admin/network_configuration.lua'
+        }, {
+            entry = page_utils.menu_entries.traffic_rules,
+            url = '/lua/pro/traffic_rules.lua',
+            hidden = not ntop.isEnterprise() or not isAdministrator()
+        }, {entry = page_utils.menu_entries.divider}, {
+            entry = page_utils.menu_entries.scripts_config,
+            section = page_utils.menu_sections.checks,
+            hidden = not is_admin or
+                not auth.has_capability(auth.capabilities.checks) or
+                (tonumber(getSystemInterfaceId()) == tonumber(interface.getId())), -- disable checks for the system interface
+            url = '/lua/admin/edit_configset.lua?subdir=all'
+        }, {
+            entry = page_utils.menu_entries.alert_exclusions,
+            section = page_utils.menu_sections.admin,
+            hidden = not is_admin or
+                not auth.has_capability(auth.capabilities.checks) or
+                not ntop.isEnterpriseM() or
+                (tonumber(getSystemInterfaceId()) == tonumber(interface.getId())),
+            url = '/lua/pro/admin/edit_alert_exclusions.lua?subdir=host'
+        }, {entry = page_utils.menu_entries.divider}, {
+            entry = page_utils.menu_entries.profiles,
+            hidden = not is_admin or not ntop.isPro() or is_nedge,
+            url = '/lua/pro/admin/edit_profiles.lua'
+        }
+    }
+})
+
+-- ##############################################
+
 -- Notifications
 page_utils.add_menubar_section({
     section = page_utils.menu_sections.notifications,
@@ -702,39 +750,6 @@ page_utils.add_menubar_section({
             hidden = not is_admin,
             url = '/lua/admin/prefs.lua'
         }, {entry = page_utils.menu_entries.divider}, {
-            entry = page_utils.menu_entries.access_control_list,
-            hidden = not is_admin or not ntop.isEnterpriseL() or not acl_violation_enabled,
-            url = '/lua/pro/admin/access_control_list.lua'
-        }, {
-            entry = page_utils.menu_entries.device_protocols,
-            hidden = not is_admin,
-            url = '/lua/admin/edit_device_protocols.lua'
-        }, {
-            entry = page_utils.menu_entries.network_config,
-            section = page_utils.menu_sections.admin,
-            hidden = not is_admin or
-                not auth.has_capability(auth.capabilities.checks),
-            url = '/lua/admin/network_configuration.lua'
-        }, {
-            entry = page_utils.menu_entries.traffic_rules,
-            url = '/lua/pro/traffic_rules.lua',
-            hidden = not ntop.isEnterprise() or not isAdministrator()
-        }, {entry = page_utils.menu_entries.divider}, {
-            entry = page_utils.menu_entries.scripts_config,
-            section = page_utils.menu_sections.checks,
-            hidden = not is_admin or
-                not auth.has_capability(auth.capabilities.checks) or
-                (tonumber(getSystemInterfaceId()) == tonumber(interface.getId())), -- disable checks for the system interface
-            url = '/lua/admin/edit_configset.lua?subdir=all'
-        }, {
-            entry = page_utils.menu_entries.alert_exclusions,
-            section = page_utils.menu_sections.admin,
-            hidden = not is_admin or
-                not auth.has_capability(auth.capabilities.checks) or
-                not ntop.isEnterpriseM() or
-                (tonumber(getSystemInterfaceId()) == tonumber(interface.getId())),
-            url = '/lua/pro/admin/edit_alert_exclusions.lua?subdir=host'
-        }, {
             entry = page_utils.menu_entries.category_lists,
             hidden = not is_admin,
             url = '/lua/admin/blacklists.lua?enabled_status=enabled'
@@ -746,14 +761,6 @@ page_utils.add_menubar_section({
             entry = page_utils.menu_entries.categories,
             hidden = not is_admin,
             url = '/lua/admin/edit_categories.lua'
-        }, {
-            entry = page_utils.menu_entries.manage_data,
-            hidden = not is_admin,
-            url = '/lua/manage_data.lua'
-        }, {
-            entry = page_utils.menu_entries.profiles,
-            hidden = not is_admin or not ntop.isPro() or is_nedge,
-            url = '/lua/pro/admin/edit_profiles.lua'
         }
     }
 })
@@ -775,6 +782,10 @@ if not info.oem and auth.has_capability(auth.capabilities.developer) then
                 {
                     entry = page_utils.menu_entries.analyze_pcap,
                     url = '/lua/upload_pcap.lua'
+                }, {
+                    entry = page_utils.menu_entries.manage_data,
+                    hidden = not is_admin,
+                    url = '/lua/manage_data.lua'
                 },
                 {
                     entry = page_utils.menu_entries.checks_dev,

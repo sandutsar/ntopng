@@ -38,7 +38,7 @@ import { default as PageNetworkDiscovery } from "./page-network-discovery.vue";
 import { default as PageManageConfigurationBackup } from "./page-manage-configurations-backup.vue";
 import { default as PageSNMPDeviceRules } from "./page-snmp-device-rules.vue";
 import { default as PageSnmpDevicesInterfacesSimilarity } from "./page-snmp-devices-interfaces-similarity.vue";
-import { default as PageHostsPortsAnalysis } from "./page-hosts-ports-analysis.vue";
+import { default as PageServerPorts } from "./page-server-ports.vue";
 import { default as NedgeRepeatersConfig } from "./page-nedge-repeaters-config.vue";
 import { default as PageExportersConfig } from "./page-flowdevice-config.vue";
 import { default as PageFlowDeviceInterfaceDetails } from "./page-flowdevice-interface-config.vue";
@@ -152,7 +152,7 @@ let ntopVue = {
     PageHostMap: PageHostMap,
     PageManageConfigurationBackup: PageManageConfigurationBackup,
     PageSNMPDeviceRules: PageSNMPDeviceRules,
-    PageHostsPortsAnalysis: PageHostsPortsAnalysis,
+    PageServerPorts: PageServerPorts,
     PageVulnerabilityScan: PageVulnerabilityScan,
     PageHostVsResult: PageHostVsResult,
     PageOpenPorts: PageOpenPorts,
