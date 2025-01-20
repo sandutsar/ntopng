@@ -2520,10 +2520,10 @@ local lang = {
   ["device_protocols"] = {
     ["alert"] = "Trigger Alert",
     ["device_protocol_policy"] = "Device Application Policy",
-    ["device_protocols"] = "Device Applications",
+    ["device_protocols"] = "Allowed Applications",
     ["devtype_as_proto_client"] = "%{devtype} as <i>%{proto}</i> client",
     ["devtype_as_proto_server"] = "%{devtype} as <i>%{proto}</i> server",
-    ["filter_device_protocols"] = "%{filter} Device Applications",
+    ["filter_device_protocols"] = "%{filter} Allowed Applications",
     ["ok"] = "Acceptable",
   },
   ["device_types"] = {
