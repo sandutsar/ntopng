@@ -14,7 +14,7 @@ page_utils.print_header_and_set_active_menu_entry(page_utils.menu_entries.hosts)
 dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
 
 local title = " "
-local url = ntop.getHttpPrefix() .. "/lua/inactive_host_details.lua?"
+local url = ntop.getHttpPrefix() .. "/lua/asset_details.lua?"
 
 page_utils.print_navbar(title, url, {{
     active = true,

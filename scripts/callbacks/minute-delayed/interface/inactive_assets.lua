@@ -8,7 +8,7 @@ package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 require "ntop_utils"
 require "check_redis_prefs"
 local json = require "dkjson"
-local asset_management_utils = require "asset_management_utils"
+local asset_utils = require "asset_utils"
 
 -- #################################################################
 -- Periodically fetches inactive host information from redis to add 
@@ -19,11 +19,11 @@ local start_time = os.time()  -- Record the start time
 local duration = 40           -- Duration in seconds
 local ifid = interface.getId()
 local version = 0
-local redis_key = string.format("ntopng.inactive_hosts_macs.queue.ifid_%d", ifid)
+local redis_key = string.format("ntopng.assets_hosts_macs.queue.ifid_%d", ifid)
 
 if ntop.llenCache(redis_key) > 0 then
     if hasClickHouseSupport() then
-        version = asset_management_utils.getLastVersion(ifid)
+        version = asset_utils.getLastVersion(ifid)
         version = tonumber(version or 0) + 1
     end
 
@@ -33,9 +33,9 @@ if ntop.llenCache(redis_key) > 0 then
         if entry then
             entry = json.decode(entry) or {}
             if entry and entry["type"] == "host" then
-                asset_management_utils.insertHost(entry, version, ifid)
+                asset_utils.insertHost(entry, version, ifid)
             elseif entry and entry["type"] == "mac" then
-                asset_management_utils.insertMac(entry, version, ifid)
+                asset_utils.insertMac(entry, version, ifid)
             end
             version = version + 1
         end

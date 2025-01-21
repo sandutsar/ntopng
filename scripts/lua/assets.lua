@@ -32,10 +32,11 @@ local json = require "dkjson"
 local json_context = json.encode({
     ifid = interface.getId(),
     historical_available = hasClickHouseSupport(),
-    csrf = ntop.getRandomCSRFValue()
+    csrf = ntop.getRandomCSRFValue(),
+    is_admin = isAdministrator(),
 })
 template_utils.render("pages/vue_page.template", {
-    vue_page_name = "PageInactiveHostsList",
+    vue_page_name = "PageAssets",
     page_context = json_context
 })
 

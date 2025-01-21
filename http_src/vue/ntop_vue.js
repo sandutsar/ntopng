@@ -68,8 +68,8 @@ import { default as PageNetworkConfiguration } from "./page-network-configuratio
 import { default as PageNetworkPolicy } from "./page-network-policy.vue"
 import { default as PageLimits } from "./page-limits.vue"
 import { default as PageLocalHostsReport } from "./page-local-hosts-report.vue"
-import { default as PageInactiveHostsList } from "./page-inactive-hosts.vue"
-import { default as PageInactiveHostDetails } from "./page-inactive-host-details.vue"
+import { default as PageAssets } from "./page-assets.vue"
+import { default as PageAssetDetails } from "./page-asset-details.vue"
 import { default as PageAccessControlList } from "./page-access-control-list.vue"
 import { default as PageTopInterfaceApplications } from "./page-top-interface-applications.vue"
 import { default as PageTopInterfaceCategories } from "./page-top-interface-categories.vue"
@@ -163,8 +163,8 @@ let ntopVue = {
     PageExportersDetails: PageExportersDetails,
     PageLimits: PageLimits,
     PageLocalHostsReport: PageLocalHostsReport,
-    PageInactiveHostsList: PageInactiveHostsList,
-    PageInactiveHostDetails: PageInactiveHostDetails,
+    PageAssets: PageAssets,
+    PageAssetDetails: PageAssetDetails,
     PageAccessControlList: PageAccessControlList,
     PageTopInterfaceApplications: PageTopInterfaceApplications,
     PageTopInterfaceCategories: PageTopInterfaceCategories,

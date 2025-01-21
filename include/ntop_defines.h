@@ -1621,7 +1621,7 @@ extern NtopngLuaContext* getUserdata(struct lua_State *vm);
 #define CUSTOM_FLOW_END_SCRIPT \
   "scripts/callbacks/checks/flows/custom_flow_end_script.lua"
 
-#define OFFLINE_LOCAL_HOSTS_MACS_QUEUE_NAME "ntopng.inactive_hosts_macs.queue.ifid_%d"
+#define OFFLINE_LOCAL_HOSTS_MACS_QUEUE_NAME "ntopng.assets_hosts_macs.queue.ifid_%d"
 
 #define EXPORTERS_EXCEEDED_LIMITS_KEY "ntopng.limits.exporters"
 
