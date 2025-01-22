@@ -334,7 +334,7 @@ void Flow::freeDPIMemory() {
   if(ndpiFlow) {
     if(isDNS()) {
       if(ndpiFlow && (ndpiFlow->protos.dns.is_query == 0)) {
-	      swap_requested = 1;
+	swap_requested = 1;
       }
     } else if(/* !isDNS() */ ntop->getPrefs()->is_dns_cache_enabled()) {
       if(srv_host) {
@@ -8432,8 +8432,9 @@ void Flow::check_swap()
     if(protocol == IPPROTO_UDP) /* && (get_cli_port() > 32768) && (get_srv_port() > 32768) */ {
       /* We disable UDP swap that might be wrong in particular for probing attempts */
       ; /* Don't do anything: this might be RTP or similar */
-    } else
+    } else {
       swap_requested = 1; /* This flow will be swapped */
+    }
   }
 }
 
@@ -8661,8 +8662,9 @@ void Flow::updateTCPHostServices(Host *cli_h, Host *srv_h) {
     if(tcp) {
       if((((tcp->src2dst_tcp_flags & TH_SYN) == 0) && ((tcp->dst2src_tcp_flags & TH_SYN) != 0))
 	 || ((((tcp->src2dst_tcp_flags|tcp->dst2src_tcp_flags) & TH_SYN) == 0) /* No SYN observed */
-	     && (get_cli_port() < get_srv_port())))
+	     && (get_cli_port() < get_srv_port()))) {
 	swap_requested = 1;
+      }
     }
     break;
 
