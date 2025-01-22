@@ -464,4 +464,18 @@ function asset_utils.deleteHost(ifid, serial_key)
     interface.alert_store_query(query)
 end
 
+-- ##############################################
+
+function asset_utils.deleteAllEntriesSince(ifid, type, last_seen)
+    local query = ""
+
+    if hasClickHouseSupport() then
+        query = string.format("ALTER TABLE %s DELETE WHERE type='%s' AND ifid=%s AND last_seen<%s AND last_seen != 0", table_name, type, ifid, last_seen)
+    else
+        query = string.format("DELETE FROM %s WHERE type='%s' AND ifid=%s AND last_seen<%s AND last_seen != 0", table_name, type, ifid, last_seen)
+    end
+
+    interface.alert_store_query(query)
+end
+
 return asset_utils

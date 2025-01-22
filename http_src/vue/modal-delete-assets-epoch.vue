@@ -2,21 +2,23 @@
 <template>
   <modal ref="modal_id">
     <template v-slot:title>
-      {{ _i18n("delete") }}
+      {{ _i18n("asset_details.delete_asset_title") }}
     </template>
     <template v-slot:body>
-      {{ _i18n("delete_since") }}
-      <div class="mt-3" style="max-width: 8rem;">
-        <SelectSearch v-model:selected_option="selected_epoch" :options="epoch_list" @select_option="update_option">
-        </SelectSearch>
-      </div>
-      <div v-if="show_return_msg" class="text-left">
-        <p class="text-sm-start fs-6 fw-medium pt-3 m-0" :class="(err) ? 'text-danger' : 'text-success'"><small>{{ return_message }}</small></p>
+      {{ _i18n("asset_details.delete_asset_older") }}
+      <br>
+      {{ _i18n("asset_details.last_time_seen") + ": " }}
+      <div class="btn-group ms-2 mt-3 mb-3">
+        <span class="input-group-text">
+          <i class="fas fa-calendar-alt"></i>
+        </span>
+        <input class="flatpickr flatpickr-input form-control" type="text" placeholder="Choose a date.."
+          data-id="datetime" ref="begin_date" style="width:10rem;">
       </div>
     </template><!-- modal-body -->
-
     <template v-slot:footer>
-      <button type="button" @click="delete_host" class="btn btn-primary">{{ _i18n("delete") }}</button>
+      <button type="button" @click="delete_host" class="btn btn-danger" :disabled="disable_delete">{{ _i18n("delete")
+        }}</button>
     </template>
   </modal>
 </template>
@@ -25,7 +27,6 @@
 import { ref, onMounted } from "vue";
 import { default as modal } from "./modal.vue";
 import { ntopng_utility } from "../services/context/ntopng_globals_services";
-import { default as SelectSearch } from "./select-search.vue";
 
 const _i18n = (t) => i18n(t);
 const format = ref('csv');
@@ -33,58 +34,56 @@ const selected_epoch = ref();
 const return_message = ref('')
 const show_return_msg = ref(false)
 const err = ref(false);
-const epoch_list = [
-  { label: _i18n("show_alerts.presets.5_min"), value: 300 },
-  { label: _i18n("show_alerts.presets.30_min"), value: 1800 },
-  { label: _i18n("show_alerts.presets.hour"), value: 3600 },
-  { label: _i18n("show_alerts.presets.2_hours"), value: 7200 },
-  { label: _i18n("show_alerts.presets.6_hours"), value: 21600 },
-  { label: _i18n("show_alerts.presets.12_hours"), value: 43200 },
-  { label: _i18n("show_alerts.presets.day"), value: 86400 },
-  { label: _i18n("show_alerts.presets.week"), value: 604800 },
-];
+const begin_date = ref();
+const disable_delete = ref(true);
 
 const emit = defineEmits(["delete_host"]);
 const modal_id = ref();
+const flat_begin_date = ref();
 
 const props = defineProps({
   context: Object,
 });
 
-onMounted(() => { 
-  selected_epoch.value = epoch_list[0];
+onMounted(() => {
+  let f_set_picker = (picker, var_name) => {
+    return flatpickr(begin_date.value, {
+      enableTime: true,
+      dateFormat: "d/m/Y H:i",
+      time_24hr: true,
+      clickOpens: true,
+      onChange: function (selectedDates, dateStr, instance) {
+        disable_delete.value = false;
+      }
+    });
+  }
+  flat_begin_date.value = f_set_picker("begin-date", "begin_date");
 });
 
-function update_option(selected_value) {
-  selected_epoch.value = selected_value;
+
+function server_date_to_date(date, format) {
+  let utc = date.getTime();
+  let local_offset = date.getTimezoneOffset();
+  let server_offset = moment.tz(utc, ntop_zoneinfo)._offset;
+  let offset_minutes = server_offset + local_offset;
+  let offset_ms = offset_minutes * 1000 * 60;
+  var d_local = new Date(utc - offset_ms);
+  return d_local;
 }
 
 async function delete_host() {
   const url = `${http_prefix}/lua/rest/v2/delete/host/asset.lua`;
+  const begin_date = server_date_to_date(flat_begin_date.value.selectedDates[0]);
+  const epoch_begin = ntopng_utility.get_utc_seconds(begin_date.getTime());
   const params = {
     csrf: props.context.csrf,
     ifid: props.context.ifid,
-    serial_key: selected_epoch.value.value,
+    serial_key: epoch_begin,
   };
 
-  let headers = {
-    'Content-Type': 'application/json'
-  };
-  const res = await ntopng_utility.http_request(url, { method: 'post', headers, body: JSON.stringify(params) });
-  if(res) {
-    err.value = false;
-    show_return_msg.value = true;
-    let num_hosts_msg = ''
-    if(res.deleted_hosts > 1) {
-      num_hosts_msg = '. Number hosts deleted: ' + res.deleted_hosts
-    }
-    return_message.value = i18n('succ_del_assets') + num_hosts_msg
-    emit("delete_host");
+  const res = await ntopng_utility.http_post_request(url, params);
+  if (res) {
     close();
-  } else {
-    err.value = true;
-    show_return_msg.value = true;
-    return_message.value = i18n('err_del_assets')
   }
 }
 
@@ -95,7 +94,8 @@ const show = () => {
 const close = () => {
   setTimeout(() => {
     modal_id.value.close();
-  }, 3000 /* 3 seconds */)
+    emit("delete");
+  }, 500 /* .5 seconds */)
 };
 
 defineExpose({ show, close });

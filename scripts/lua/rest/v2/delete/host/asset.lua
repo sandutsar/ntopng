@@ -34,20 +34,13 @@ end
 
 local num_hosts_deleted = 0
 
-tprint(serial_key)
-
-if (serial_key == "all") then
+if tonumber(serial_key) then
+   num_hosts_deleted = asset_utils.deleteAllEntriesSince(ifid, 'host', tonumber(serial_key))
+elseif (serial_key == "all") then
    num_hosts_deleted = asset_utils.deleteAll(ifid, 'host')
 elseif (not isEmptyString(serial_key)) then
    num_hosts_deleted = asset_utils.deleteHost(ifid, serial_key)
 end
---[[
-if tonumber(serial_key) then
-   local epoch = os.time() - tonumber(serial_key)
-   num_hosts_deleted = asset_utils.deleteAllEntriesSince(ifid, epoch)
-else
-else
-end
-]]
+
 rest_utils.answer(rc, {deleted_hosts = num_hosts_deleted})
 

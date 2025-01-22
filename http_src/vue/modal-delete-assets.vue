@@ -74,14 +74,15 @@ async function formatMessage(_row) {
 /* This function runs the delete code, called when apply is clicked */
 async function delete_asset() {
   const url = `${http_prefix}/lua/rest/v2/delete/host/asset.lua`;
+  let serial_key = 'all';
+  if (row.value && row.value.key) {
+    serial_key = row.value.key;
+  }
   let params = {
     csrf: props.context.csrf,
     ifid: props.context.ifid,
-    serial_key: row.value.key,
+    serial_key: serial_key,
   };
-  if (!params.serial_key) {
-    params.serial_key = 'all'
-  }
 
   const res = await ntopng_utility.http_post_request(url, params);
   if (res) {

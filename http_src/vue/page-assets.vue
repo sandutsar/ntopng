@@ -14,11 +14,21 @@
         </div>
       </template> <!-- Dropdown filters -->
     </TableWithConfig>
-    <ModalDeleteAssets ref="modal_delete_assets" :context="context" @delete="refresh_table">
-    </ModalDeleteAssets>
-    <ModalDeleteAssetsEpoch ref="modal_delete_assets_epoch" :context="context" @delete="refresh_table">
-    </ModalDeleteAssetsEpoch>
+    <div class="card-footer mt-3">
+      <button v-if="props.context.is_admin" type="button" @click="delete_assets()" class="btn btn-danger ms-1">
+        <i class="fas fa fa-trash"></i>
+        {{ _i18n("delete_all_entries") }}
+      </button>
+      <button v-if="props.context.is_admin" type="button" @click="delete_assets_epoch" class="btn btn-danger ms-1">
+        <i class="fas fa fa-trash"></i>
+        {{ _i18n("asset_details.delete_asset_older_title") }}
+      </button>
+    </div>
   </div>
+  <ModalDeleteAssets ref="modal_delete_assets" :context="context" @delete="refresh_table">
+  </ModalDeleteAssets>
+  <ModalDeleteAssetsEpoch ref="modal_delete_assets_epoch" :context="context" @delete="refresh_table">
+  </ModalDeleteAssetsEpoch>
 </template>
 
 <script setup>
@@ -173,6 +183,12 @@ const map_table_def_columns = (columns) => {
 
   return columns;
 };
+
+/* ************************************** */
+
+function delete_assets_epoch() {
+  modal_delete_assets_epoch.value.show();
+}
 
 /* ************************************** */
 

@@ -1666,9 +1666,9 @@ setInterval(update_icmp_table, 5000);
         })
     elseif (page == "assets") then
         if (ntop.isEnterpriseL()) then
-            local am = require "asset_utils"
+            local asset_map_utils = require "asset_map_utils"
 
-            am.printHostAssets(host.asset_key)
+            asset_map_utils.printHostAssets(host.asset_key)
         end
     elseif (page == "dns") then
         if ((host.DoH_DoT ~= nil) or (host["dns"] ~= nil)) then
