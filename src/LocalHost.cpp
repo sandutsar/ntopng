@@ -271,7 +271,7 @@ void LocalHost::periodic_stats_update(const struct timeval *tv) {
   checkGatewayInfo();
   /* If at least 5 minutes passed and the map was updated, dump the info */
   float diff = Utils::msTimevalDiff(tv, &last_periodic_asset_update) / 1000; /* in Sec */
-  if ((diff > CONST_MAX_DUMP_DURATION) && asset_map_updated) {
+  if ((diff > CONST_ASSETS_PERIODIC_UPDATE) && asset_map_updated) {
     memcpy(&last_periodic_asset_update, tv, sizeof(last_periodic_asset_update));
     asset_map_updated = false;
     dumpAssetInfo(false);
@@ -690,29 +690,6 @@ void LocalHost::luaDoHDot(lua_State *vm) {
 void LocalHost::setRouterMac(Mac *gw) {
   if (!router_mac_set) {
     memcpy(router_mac, gw->get_mac(), 6), router_mac_set = true;
-  }
-}
-
-/* *************************************** */
-
-void LocalHost::toggleRxOnlyHost(bool rx_only) {
-  Host::toggleRxOnlyHost(rx_only);
-
-  if (isLocalUnicastHost()) {
-    char hostbuf[64], *member;
-
-    member = get_hostkey(hostbuf, sizeof(hostbuf));
-
-    if (is_rx_only) {
-      /* Add this host to the hash of RX-only local hosts */
-      char seenbuf[16];
-
-      snprintf(seenbuf, sizeof(seenbuf), "%u", (u_int32_t)get_last_seen());
-      ntop->getRedis()->hashSet(HASHKEY_LOCALHOST_RX_ONLY, member, seenbuf);
-    } else {
-      /* Delete the key in case it was present */
-      ntop->getRedis()->hashDel(HASHKEY_LOCALHOST_RX_ONLY, member);
-    }
   }
 }
 
