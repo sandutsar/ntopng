@@ -333,8 +333,11 @@ void Flow::allocDPIMemory() {
 void Flow::freeDPIMemory() {
   if(ndpiFlow) {
     if(isDNS()) {
-      if(ndpiFlow && (ndpiFlow->protos.dns.is_query == 0)) {
-	swap_requested = 1;
+      if(ndpiFlow) {
+	if((stats.get_cli2srv_packets() > 0) && (stats.get_srv2cli_packets() == 0)
+	   && (ndpiFlow->protos.dns.is_query == 0)) {
+	  swap_requested = 1;
+	}
       }
     } else if(/* !isDNS() */ ntop->getPrefs()->is_dns_cache_enabled()) {
       if(srv_host) {
