@@ -347,6 +347,7 @@
 #define CONST_INTERFACE_TYPE_DB "db"
 #define CONST_INTERFACE_TYPE_UNKNOWN "unknown"
 
+#define CONST_ASSETS_PERIODIC_UPDATE 600      /* 10 min */
 #define CONST_DEMO_MODE_DURATION 600          /* 10 min */
 #define CONST_MAX_DUMP_DURATION 300           /* 5 min */
 #define CONST_MAX_NUM_PACKETS_PER_LIVE 100000 /* live captures via HTTP */
@@ -573,7 +574,6 @@
 #define HASHKEY_IFACE_TOP_OS "ntopng.cache.top_os"
 #define HASHKEY_IFACE_TOP_OS_HOUR_KEYS_PUSHED "ntopng.cache.top_os_hour_done"
 #define HASHKEY_IFACE_TOP_OS_DAY_KEYS_PUSHED "ntopng.cache.top_os_day_done"
-#define HASHKEY_LOCALHOST_RX_ONLY "ntopng.cache.localhost_host_rx_only"
 
 #define CONST_DEFAULT_DOCS_DIR "httpdocs"
 #define CONST_DEFAULT_SCRIPTS_DIR "scripts"

@@ -34,6 +34,7 @@ local json_context = json.encode({
     historical_available = hasClickHouseSupport(),
     csrf = ntop.getRandomCSRFValue(),
     is_admin = isAdministrator(),
+    is_assets_collection_enabled = (ntop.getPref('ntopng.prefs.enable_assets_collection') ~= '0')
 })
 template_utils.render("pages/vue_page.template", {
     vue_page_name = "PageAssets",

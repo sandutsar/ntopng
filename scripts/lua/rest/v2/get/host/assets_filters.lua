@@ -27,8 +27,10 @@ for _, value in pairs(available_filters or {}) do
     if not filters[value.filter] then
         filters[value.filter] = {}
     end
-
-    filters[value.filter][value.value] = value.count
+    
+    if value.value then
+        filters[value.filter][value.value] = value.count
+    end
 end
 
 for key, value in pairsByKeys(filters or {}, asc) do

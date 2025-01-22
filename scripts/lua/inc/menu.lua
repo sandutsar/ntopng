@@ -57,16 +57,6 @@ if (interface_config) then
     end
 end
 
-if (flow_config) then
-    -- Interface alerts
-    if (flow_config["access_control_list"]) and
-        (flow_config["access_control_list"]["all"]["enabled"]) or
-        (interface_config["acl_violation_arp"]) and 
-        (interface_config["acl_violation_arp"]["min"]["enabled"]) then
-        acl_violation_enabled = true
-    end
-end
-
 -- Infrastructure
 local infrastructure_view = false
 local infrastructure_instances = {}
@@ -693,7 +683,7 @@ page_utils.add_menubar_section({
     entries = {
         {
             entry = page_utils.menu_entries.access_control_list,
-            hidden = not is_admin or not ntop.isEnterpriseL() or not acl_violation_enabled,
+            hidden = not is_admin or not ntop.isEnterpriseL(),
             url = '/lua/pro/admin/access_control_list.lua'
         }, {
             entry = page_utils.menu_entries.device_protocols,

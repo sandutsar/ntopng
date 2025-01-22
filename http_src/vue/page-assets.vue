@@ -1,28 +1,34 @@
 <!-- (C) 2024 - ntop.org     -->
 <template>
   <div class="m-2 mb-3">
-    <TableWithConfig ref="table_assets" :table_id="table_id" :csrf="context.csrf" :f_map_columns="map_table_def_columns"
-      :get_extra_params_obj="get_extra_params_obj" @custom_event="on_table_custom_event">
-      <template v-slot:custom_header>
-        <div class="dropdown me-3 d-inline-block" v-for="item in filter_table_array">
-          <span class="no-wrap d-flex align-items-center my-auto me-2 filters-label"><b>{{ item["basic_label"]
-              }}</b></span>
-          <!-- :key="host_filters_key" -->
-          <SelectSearch v-model:selected_option="item['current_option']" theme="bootstrap-5" dropdown_size="small"
-            :options="item['options']" @select_option="add_table_filter">
-          </SelectSearch>
-        </div>
-      </template> <!-- Dropdown filters -->
-    </TableWithConfig>
-    <div class="card-footer mt-3">
-      <button v-if="props.context.is_admin" type="button" @click="delete_assets()" class="btn btn-danger ms-1">
-        <i class="fas fa fa-trash"></i>
-        {{ _i18n("delete_all_entries") }}
-      </button>
-      <button v-if="props.context.is_admin" type="button" @click="delete_assets_epoch" class="btn btn-danger ms-1">
-        <i class="fas fa fa-trash"></i>
-        {{ _i18n("asset_details.delete_asset_older_title") }}
-      </button>
+    <template v-if="(!props.context.is_assets_collection_enabled)">
+      <div class="alert alert-warning" role="alert" id='error-alert' v-html:="error_message">
+      </div>
+    </template>
+    <div :class="[(!props.context.is_assets_collection_enabled) ? 'ntopng-gray-out' : '']">
+      <TableWithConfig ref="table_assets" :table_id="table_id" :csrf="context.csrf" :f_map_columns="map_table_def_columns"
+        :get_extra_params_obj="get_extra_params_obj" @custom_event="on_table_custom_event">
+        <template v-slot:custom_header>
+          <div class="dropdown me-3 d-inline-block" v-for="item in filter_table_array">
+            <span class="no-wrap d-flex align-items-center my-auto me-2 filters-label"><b>{{ item["basic_label"]
+                }}</b></span>
+            <!-- :key="host_filters_key" -->
+            <SelectSearch v-model:selected_option="item['current_option']" theme="bootstrap-5" dropdown_size="small"
+              :options="item['options']" @select_option="add_table_filter">
+            </SelectSearch>
+          </div>
+        </template> <!-- Dropdown filters -->
+      </TableWithConfig>
+      <div class="card-footer mt-3">
+        <button v-if="props.context.is_admin" type="button" @click="delete_assets()" class="btn btn-danger ms-1">
+          <i class="fas fa fa-trash"></i>
+          {{ _i18n("delete_all_entries") }}
+        </button>
+        <button v-if="props.context.is_admin" type="button" @click="delete_assets_epoch" class="btn btn-danger ms-1">
+          <i class="fas fa fa-trash"></i>
+          {{ _i18n("asset_details.delete_asset_older_title") }}
+        </button>
+      </div>
     </div>
   </div>
   <ModalDeleteAssets ref="modal_delete_assets" :context="context" @delete="refresh_table">
@@ -49,6 +55,7 @@ const filter_table_array = ref([]);
 const table_assets = ref();
 const modal_delete_assets = ref();
 const modal_delete_assets_epoch = ref();
+const error_message = i18n('asset_details.preference_disabled')
 const child_safe_icon = "<font color='#5cb85c'><i class='fas fa-lg fa-child' aria-hidden='true' title='" + i18n("host_pools.children_safe") + "'></i></font>"
 const system_host_icon = "<i class='fas fa-flag' title='" + i18n("system_host") + "'></i>"
 const hidden_from_top_icon = "<i class='fas fa-eye-slash' title='" + i18n("hidden_from_top_talkers") + "'></i>"

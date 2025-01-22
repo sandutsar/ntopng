@@ -79,7 +79,6 @@ class LocalHost : public Host {
     if (network) network->updateRoundTripTime(rtt_msecs);
   }
 
-  void toggleRxOnlyHost(bool rx_only);
   virtual NetworkStats *getNetworkStats(int32_t networkId) {
     return (iface->getNetworkStats(networkId));
   };
