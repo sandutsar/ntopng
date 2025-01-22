@@ -9081,10 +9081,15 @@ void Flow::allocateCollection() {
 /* *************************************** */
 
 #if defined(NTOPNG_PRO)
-  bool Flow::isFlowAllowed(bool *is_allowed) {
-    if (isTCP() || isUDP() || isICMP())
-      return iface->findFlowACL(this, is_allowed);
-    return true;  };
+/* Used by AccessControlList.cpp */
+
+bool Flow::isFlowAllowed(bool *is_allowed) {
+  if (isTCP() || isUDP() || isICMP())
+    return iface->findFlowACL(this, is_allowed);
+  else
+    return true;
+};
+
 #endif
 
 /* *************************************** */

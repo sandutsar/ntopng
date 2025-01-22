@@ -2090,11 +2090,12 @@ static int ntop_interface_insert_ip_acl(lua_State *vm) {
 #ifdef NTOPNG_PRO
   NetworkInterface *curr_iface = getCurrentInterface(vm);
   u_int8_t protocol = 0;
-  u_int16_t port = 0, l7_proto = 0;
+  u_int16_t l7_proto = 0;
   bool is_allowed = true;
-  char *src, *dst;
+  char *src, *dst, *port;
+  
   if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
-    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
+    return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));  
   protocol = (u_int8_t) lua_tointeger(vm, 1);
 
   if (ntop_lua_check(vm, __FUNCTION__, 2, LUA_TSTRING) != CONST_LUA_OK)
@@ -2105,8 +2106,8 @@ static int ntop_interface_insert_ip_acl(lua_State *vm) {
     return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
   dst = (char *)lua_tostring(vm, 3);
 
-  if (lua_type(vm, 4) == LUA_TNUMBER)
-    port = (u_int16_t) lua_tointeger(vm, 4);
+  if (lua_type(vm, 4) == LUA_TSTRING)
+    port = (char *)lua_tostring(vm, 4);
 
   if (lua_type(vm, 5) == LUA_TNUMBER)
     l7_proto = (u_int16_t) lua_tointeger(vm, 5);
@@ -2131,8 +2132,9 @@ static int ntop_interface_remove_ip_acl(lua_State *vm) {
 #ifdef NTOPNG_PRO
   NetworkInterface *curr_iface = getCurrentInterface(vm);
   u_int8_t protocol = 0;
-  u_int16_t port = 0, l7_proto = 0;
-  char *src, *dst;
+  u_int16_t l7_proto = 0;
+  char *src, *dst, *port;
+  
   if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
     return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
   protocol = (u_int8_t) lua_tointeger(vm, 1);
@@ -2145,8 +2147,8 @@ static int ntop_interface_remove_ip_acl(lua_State *vm) {
     return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
   dst = (char *)lua_tostring(vm, 3);
 
-  if (lua_type(vm, 4) == LUA_TNUMBER)
-    port = (u_int16_t) lua_tointeger(vm, 4);
+  if (lua_type(vm, 4) == LUA_TSTRING)
+    port = (char *)lua_tostring(vm, 4);
 
   if (lua_type(vm, 5) == LUA_TNUMBER)
     l7_proto = (u_int16_t) lua_tointeger(vm, 5);
@@ -2154,6 +2156,7 @@ static int ntop_interface_remove_ip_acl(lua_State *vm) {
   if (curr_iface)
     res = curr_iface->removeIPACL(protocol, src, dst, port, l7_proto);
 #endif
+  
   lua_pushboolean(vm, res);
   
   return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_OK));
