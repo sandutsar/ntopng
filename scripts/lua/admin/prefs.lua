@@ -1383,7 +1383,6 @@ if auth.has_capability(auth.capabilities.preferences) then
             default = "1",
             pref = "enable_assets_collection"
         })
-        tprint(prefs.enable_assets_collection)
 
         prefsInputFieldPrefs(subpage_active.entries["mac_address_cache_duration"].title,
             subpage_active.entries["mac_address_cache_duration"].description, "ntopng.prefs.",
