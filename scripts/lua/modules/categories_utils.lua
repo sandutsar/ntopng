@@ -113,8 +113,10 @@ function categories_utils.get_category_protocols_list(cat_id, return_list)
     local res = {}
     local max_protocols_in_list = 5
     local proto_list = interface.getnDPIProtocols(cat_id) or {}
-    for proto_name, proto_id in pairsByKeys(proto_list, asc_insensitive) do
-        res[#res + 1] = proto_name
+    if proto_list and table.len(proto_list) > 0 then
+        for proto_name, proto_id in pairsByKeys(proto_list, asc_insensitive) do
+            res[#res + 1] = proto_name
+        end
     end
 
     local overflown_protos
