@@ -190,7 +190,13 @@ void LocalHost::deferredInitialization() {
 /* *************************************** */
 
 void LocalHost::dumpAssetInfo(bool include_last_seen) {
-  Mac *cur_mac = getMac();
+  /* Return in case the preference is disabled */
+  if (!ntop->getPrefs()->isAssetsCollectionEnabled()) {
+#ifdef NTOPNG_DEBUG
+    ntop->getTrace()->traceEvent(TRACE_NORMAL, "Assets Collection Disabled, please enable it from the Preferences.");
+#endif  
+    return;
+  }
   /* Remove the key from the hash, used to get the offline hosts */
   /* Exclude the multicast/broadcast addresses */
   if (!ntop->getRedis() || !isLocalUnicastHost()) return;
@@ -198,6 +204,7 @@ void LocalHost::dumpAssetInfo(bool include_last_seen) {
   /* Exclude local-link fe80::/10, marked as private */
   if (isIPv6() && isPrivateHost()) return;
 
+  Mac *cur_mac = getMac();
   /* In case the MAC is NULL or the MAC is a special */
   /* address or a broadcast address do not include it */
   if (!cur_mac || cur_mac->isSpecialMac() || cur_mac->isBroadcast()) return;
@@ -907,6 +914,8 @@ void LocalHost::setOS(OSType _os, OSLearningMode mode) {
  * Note: the function overwrite the old values if already present
  */
 bool LocalHost::addDataToAssets(char *_field, char *_value) {
+  if (!ntop->getPrefs()->isAssetsCollectionEnabled()) return false;
+
   /* Check for incorrect values */
   if (_field && _field[0] != '\0' && _value && _value[0] != '\0') {
     std::string field = _field;
@@ -922,6 +931,8 @@ bool LocalHost::addDataToAssets(char *_field, char *_value) {
 
 /* This function instead remove a field from the asset map */
 bool LocalHost::removeDataFromAssets(char *field) {
+  if (!ntop->getPrefs()->isAssetsCollectionEnabled()) return false;
+
   if (asset_map.size() > 0 && field && field[0] != '\0') {
     asset_map.erase(field);
     asset_map_updated = true; /* Next time dump data */
