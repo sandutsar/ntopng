@@ -20,14 +20,15 @@ local duration = 40           -- Duration in seconds
 local ifid = interface.getId()
 local version = 0
 local redis_key = string.format("ntopng.assets_hosts_macs.queue.ifid_%d", ifid)
+local num_keys = ntop.llenCache(redis_key)
 
-if ntop.llenCache(redis_key) > 0 then
+if num_keys > 0 then
     if hasClickHouseSupport() then
         version = asset_utils.getLastVersion(ifid)
         version = tonumber(version or 0) + 1
     end
 
-    while os.difftime(os.time(), start_time) < duration do
+    while os.difftime(os.time(), start_time) < duration and num_keys > 0 do
         local entry = ntop.lpopCache(redis_key)
 
         if entry then
@@ -39,5 +40,6 @@ if ntop.llenCache(redis_key) > 0 then
             end
             version = version + 1
         end
+        num_keys = num_keys - 1
     end
 end
