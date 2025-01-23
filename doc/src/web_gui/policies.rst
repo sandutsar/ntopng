@@ -78,6 +78,13 @@ All parameters are mandatory except in some cases:
 
   PORT|APPLICATION are only available for the TCP/UDP protocols
 
+In case of PORT|APPLICATION:
+ - The application needs to be put in text-like format, e.g. HTTP, TLS, ...;
+ - In case of ports, 3 possibilities are available: 
+    - Configure a single port (e.g. 53);
+    - Configure a port-range, set the starting port and ending port (e.g. 1-100);
+    - Configure all ports to be accepted, in this case it can be done by putting the wildcard `*` or the `all` keyword (case insensitive);
+
 It is not recommended to use the Advanced Settings if not for special cases, because in the other case all the controls are handled by ntopng.
 It is moreover possible to add multiple rules in a single add, by clicking the `+` below the last rule; it is possible to remove a rule instead by clicking the trash icon.
 
