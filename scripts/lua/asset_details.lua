@@ -27,7 +27,7 @@ local json_context = json.encode({
     ifid = interface.getId(),
     csrf = ntop.getRandomCSRFValue()
 })
-template_utils.render("pages/vue_page.template", { vue_page_name = "PageInactiveHostDetails", page_context = json_context })
+template_utils.render("pages/vue_page.template", { vue_page_name = "PageAssetDetails", page_context = json_context })
 
 
 dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")
