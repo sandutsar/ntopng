@@ -164,8 +164,6 @@ let ntopVue = {
     PageExportersDetails: PageExportersDetails,
     PageLimits: PageLimits,
     PageLocalHostsReport: PageLocalHostsReport,
-    PageInactiveHostsList: PageInactiveHostsList,
-    PageInactiveHostDetails: PageInactiveHostDetails,
     PageAccessControlList: PageAccessControlList,
     PageTopInterfaceApplications: PageTopInterfaceApplications,
     PageTopInterfaceCategories: PageTopInterfaceCategories,
