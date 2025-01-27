@@ -187,7 +187,7 @@ async function refresh_table() {
         ...props.filters
   }
  
-  let data = await props.get_component_data(`${http_prefix}${props.params.url}`, url_params);
+  let data = await props.get_component_data(`${http_prefix}${props.params.url}`, url_params, undefined, props.epoch_begin);
 
   let rows = [];
   if (props.params.table_type == 'db_search') {
