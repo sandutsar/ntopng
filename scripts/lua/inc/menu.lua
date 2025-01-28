@@ -63,12 +63,10 @@ local infrastructure_instances = {}
 if ntop.isEnterpriseM() then
     local infrastructure_utils = require("infrastructure_utils")
     for _, v in pairs(infrastructure_utils.get_all_instances()) do
-        if v.interfaces and #v.interfaces > 0 then
-            infrastructure_instances[v.id] = {
-               name = v.alias,
-               url = v.url,
-            }
-        end
+        infrastructure_instances[v.id] = {
+           name = v.alias,
+           url = v.url,
+        }
     end
     local view = _GET["view"]
     infrastructure_view = view and view == 'infrastructure' and table.len(infrastructure_instances) > 0
