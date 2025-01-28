@@ -476,6 +476,11 @@ function rest_utils.enable_direct_mode()
     rest_utils.rest_answer = nil
 end
 
+function rest_utils.disable_direct_mode()
+    rest_utils.direct_mode = false
+    rest_utils.rest_answer = nil
+end
+
 -- Return the REST answer locally (direct_mode)
 function rest_utils.get_answer() return rest_utils.rest_answer end
 
