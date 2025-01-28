@@ -3275,6 +3275,7 @@ local lang = {
     ["looks_like_idle_flow_message"] = "This looks like an <font color=red>idle flow</font> with periodic transmissions just to keep it alive.",
     ["lost_packets"] = "Lost Packets",
     ["low_goodput"] = "Low Goodput",
+    ["l7_json"] = "nDPI Details",
     ["max_estimated_tcp_throughput"] = "Max (Estimated) TCP Throughput",
     ["max_packet_interarrival_time"] = "Max Packet Interarrival Time",
     ["mean_rtt"] = "Mean RTT",

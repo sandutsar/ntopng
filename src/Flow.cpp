@@ -3022,6 +3022,9 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
                                   protos.dns.last_return_code);
     }
 
+    if(l7_json.length() > 0)
+      lua_push_str_table_entry(vm, "l7_json", l7_json.c_str());
+    
 #ifdef HAVE_NEDGE
     lua_push_uint64_table_entry(vm, "marker", marker);
 
@@ -5542,7 +5545,6 @@ void Flow::timeval_diff(struct timeval *begin, const struct timeval *end,
 
 /* *************************************** */
 
-/* FIXX this function is using buf only in a few cases */
 std::string Flow::getFlowInfo(bool isLuaRequest) {
   std::string info_field = std::string("");
 
