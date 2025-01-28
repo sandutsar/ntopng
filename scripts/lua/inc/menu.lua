@@ -301,7 +301,7 @@ else
                 url = "/lua/pro/enterprise/snmpdevices_stats.lua"
             }, {
                 entry = page_utils.menu_entries.active_monitoring,
-                url = "/lua/monitor/active_monitoring_monitor.lua"
+                url = "/lua/active_monitoring.lua"
             }, {
                 entry = page_utils.menu_entries.vulnerability_scan,
                 url = '/lua/vulnerability_scan.lua',
@@ -556,7 +556,7 @@ local poller_entries = {
     }, {
         entry = page_utils.menu_entries.active_monitoring,
         hidden = not is_system_interface,
-        url = "/lua/monitor/active_monitoring_monitor.lua"
+        url = "/lua/active_monitoring.lua"
     }
 }
 
