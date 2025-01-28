@@ -20,10 +20,10 @@
       </template> <!-- Dropdown filters -->
     </TableWithConfig>
     <div class="card-footer mt-3">
-      <a v-if="props.context.is_admin" class="btn secondary ms-1" :href="manage_configurations_url">
+      <button v-if="props.context.is_admin" type="button" class="btn btn-secondary ms-1" :href="manage_configurations_url">
         <i class="fas fa-tasks"></i>
-        {{ _i18n("manage_configurations.manage_configurations") }}
-      </a>
+        {{ _i18n("manage_configurations.manage_configuration") }}
+      </button>
     </div>
   </div>
   <ModalAddActiveMonitoring ref="modal_add_active_monitoring" :interfaces="interfaces_list"

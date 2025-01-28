@@ -122,7 +122,6 @@ elseif (action == "edit") then
     local old_granularity = _POST["old_granularity"]
     local old_url = am_utils.formatAmHost(old_am_host, old_measurement)
 
-    tprint("Test")
     if am_utils.getHost(old_am_host, old_measurement) then
         if ((old_am_host ~= host) or (old_measurement ~= measurement)) then
             -- The key has changed, delete the old host and create a new one
@@ -132,7 +131,6 @@ elseif (action == "edit") then
             -- The key is the same, only update its settings
             am_utils.editHost(host, ifname, measurement, threshold, granularity)
         end
-        tprint("Test1")
     end
 
     res.result = 'ok'

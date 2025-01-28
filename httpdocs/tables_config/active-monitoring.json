@@ -22,6 +22,16 @@
 			"render_v_node_type": "button_list",
 			"button_def_array": [
 				{
+					"id": "timeseries",
+					"icon": "fas fa-chart-area",
+					"title_i18n": "prefs.timeseries",
+					"class": [
+						"link-button",
+						"btn-info"
+					],
+					"event_id": "click_button_timeseries"
+				},
+				{
 					"id": "edit",
 					"icon": "fas fa-edit",
 					"title_i18n": "edit",
@@ -40,16 +50,6 @@
 						"btn-info"
 					],
 					"event_id": "click_button_delete"
-				},
-				{
-					"id": "timeseries",
-					"icon": "fas fa-chart-area",
-					"title_i18n": "prefs.timeseries",
-					"class": [
-						"link-button",
-						"btn-info"
-					],
-					"event_id": "click_button_timeseries"
 				}
 			]
 		},
