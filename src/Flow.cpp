@@ -5445,7 +5445,9 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
           memcpy(&tcp->ackTime, when, sizeof(struct timeval));
           timeval_diff(&tcp->synAckTime, (struct timeval *)when, &tcp->clientRTT3WH, 1);
 
+#ifdef DEBUG
 	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Client RTT: %.1f ms", toMs(&tcp->clientRTT3WH));
+#endif
 	  
           /* Coherence check */
           if(tcp->clientRTT3WH.tv_sec > 5)
@@ -5453,7 +5455,10 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
           else if(cli_host)
             cli_host->updateNetworkRTT(Utils::timeval2ms(&tcp->clientRTT3WH));
 
+#ifdef DEBUG
 	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Server RTT: %.1f ms", toMs(&tcp->serverRTT3WH));
+#endif
+	  
           setRTT();
           iface->getTcpFlowStats()->incEstablished();
         }
