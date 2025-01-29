@@ -72,6 +72,7 @@ for key, info in pairs(active_monitoring_hosts) do
         ip_address = ip_address,
         threshold = info.threshold,
         hourly_stats = hourly_stats or {},
+        am_host = info.host, -- This is used by http_src/constants/metrics-consts.js
         target = {
             name = info.label,
             host = info.host
@@ -84,7 +85,8 @@ for key, info in pairs(active_monitoring_hosts) do
         metadata = {
             is_infrastructure_instance = info.is_infrastructure,
             is_alerted = is_alerted,
-            interface_name = info.ifname,
+            interface_name = getHumanReadableInterfaceName(info.ifname),
+            interface_id = getInterfaceId(info.ifname),
             granularity = info.granularity,
             availability = availability or "",
             unit = last_measurement.i18n_unit,

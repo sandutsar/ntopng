@@ -368,6 +368,26 @@ end
 
 -- ##############################################
 
+-- This function set the interface alias, return true if the
+-- alias is set, false otherwise
+function setInterfaceAlias(iface, alias)
+    local ok = true
+
+    if (isEmptyString(iface)) then
+        ok = false
+    end
+
+    if (ok and (iface ~= alias) and not isEmptyString(alias)) then
+        ntop.setCache(getInterfaceAliasKey(iface), alias)
+    else
+        ok = false
+    end
+
+    return ok
+end
+
+-- ##############################################
+
 function getLocalNetworkAliasKey()
     return "ntopng.network_aliases"
 end
@@ -376,6 +396,15 @@ end
 
 function getInterfaceAliasKey(ifid)
     return "ntopng.prefs.ifid_" .. ifid .. ".name"
+end
+
+-- ##############################################
+
+function getInterfaceAlias(ifid)
+    if not ifid or not tonumber(ifid) then
+        return ""
+    end
+    return ntop.getCache("ntopng.prefs.ifid_" .. tostring(ifid) .. ".name") or ""
 end
 
 -- ##############################################
@@ -564,8 +593,7 @@ function getHumanReadableInterfaceName(interface_name)
         interface_name = getInterfaceName(interface_id)
     end
 
-    local key = 'ntopng.prefs.ifid_' .. tostring(interface_id) .. '.name'
-    local custom_name = ntop.getCache(key)
+    local custom_name = getInterfaceAlias(interface_id)
 
     if not isEmptyString(custom_name) then
         return (shortenCollapse(custom_name))

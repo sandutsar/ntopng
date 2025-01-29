@@ -20,7 +20,8 @@
       </template> <!-- Dropdown filters -->
     </TableWithConfig>
     <div class="card-footer mt-3">
-      <button v-if="props.context.is_admin" type="button" class="btn btn-secondary ms-1" :href="manage_configurations_url">
+      <button v-if="props.context.is_admin" type="button" class="btn btn-secondary ms-1"
+        :href="manage_configurations_url">
         <i class="fas fa-tasks"></i>
         {{ _i18n("manage_configurations.manage_configuration") }}
       </button>
@@ -45,6 +46,7 @@ import { default as dataUtils } from "../utilities/data-utils.js";
 import { ntopng_url_manager } from "../services/context/ntopng_globals_services.js";
 import { default as ModalAddActiveMonitoring } from "./modal-add-active-monitoring.vue";
 import { default as ModalDeleteActiveMonitoring } from "./modal-delete-active-monitoring.vue";
+import { default as interfaceUtils } from "../utilities/map/interface-utils.js";
 
 const _i18n = (t) => i18n(t);
 
@@ -73,7 +75,32 @@ const props = defineProps({
 const map_table_def_columns = (columns) => {
   let map_columns = {
     "target": (value, row) => {
-      return value.name;
+      let target_interface = {}
+      let interface_name = ''
+      let is_infrastructure_instance = ''
+      let is_alerted = ''
+      if (interfaces_list.value.length > 0) {
+        const tmp_iface = interfaces_list.value.find((el) => el.ifid == row.metadata.interface_id)
+        if (tmp_iface) {
+          target_interface["is_pcap_interface"] = tmp_iface["is_pcap_interface"]
+          target_interface["is_packet_interface"] = tmp_iface["is_packet_interface"]
+          target_interface["is_zmq_interface"] = tmp_iface["is_zmq_interface"]
+          target_interface["is_view_interface"] = tmp_iface["is_view_interface"]
+          target_interface["is_dynamic_interface"] = tmp_iface["is_dynamic_interface"]
+          target_interface["is_dropping_interface"] = tmp_iface["is_dropping_interface"]
+          target_interface["is_recording_interface"] = tmp_iface["is_recording_interface"]
+        }
+      }
+      if (!dataUtils.isEmptyOrNull(row.metadata.interface_name)) {
+        interface_name = ` [ ${interfaceUtils.getInterfaceIcon(target_interface)} ${row.metadata.interface_name} ] `;
+      }
+      if (row.metadata.is_infrastructure_instance) {
+        is_infrastructure_instance = " <i class='fas fa-building'></i> "
+      }
+      if (row.metadata.is_alerted) {
+        is_alerted = ' <i class="fas fa-exclamation-triangle" style="color: #f0ad4e;"></i> '
+      }
+      return `${value.name}${is_alerted}${interface_name}${is_infrastructure_instance}`;
     },
     "ip_address": (value, row) => {
       return value;

@@ -24,15 +24,15 @@ local interfaces = interface.getIfNames()
 
 for ifid, ifname in pairs(interfaces) do
   interface.select(ifname)
-  local custom_name = shortenCollapse(getHumanReadableInterfaceName(ifname))
+  local custom_name = getHumanReadableInterfaceName(ifname)
 
   res[#res + 1] = {
     ifid = tonumber(ifid),
     ifname = ifname,
     name = custom_name,
-    packet_interface = interface.isPacketInterface(),
-    pcap_interface = interface.isPcapDumpInterface(),
-    zmq_interface = interface.isZMQInterface()
+    is_packet_interface = interface.isPacketInterface(),
+    is_pcap_interface = interface.isPcapDumpInterface(),
+    is_zmq_interface = interface.isZMQInterface()
   }
 end
 

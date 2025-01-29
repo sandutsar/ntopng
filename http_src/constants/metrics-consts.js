@@ -351,7 +351,7 @@ const sources_types = [
 		}, {
 			main_source_def: true,
 			label: i18n("page_stats.source_def.active_monitoring"),
-			sources_url: "lua/rest/v2/get/am_host/list.lua",
+			sources_url: "lua/rest/v2/get/active_monitoring/timeseries_list.lua",
 			value: "host",
 			disable_tskey: true,
 			value_map_sources_res: "am_host",

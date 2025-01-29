@@ -132,7 +132,7 @@ watch(() => [props.measurements], (cur_value, old_value) => {
 
 /* Watch - detect changes on epoch_begin / epoch_end and refresh the component */
 watch(() => [props.interfaces], (cur_value, old_value) => {
-  const tmp = props.interfaces.filter((t) => (t.packet_interface && !t.pcap_interface))
+  const tmp = props.interfaces.filter((t) => (t.is_packet_interface && !t.is_pcap_interface))
 
   interfaces_list.value = tmp.map((t) => {
     return {
