@@ -111,6 +111,18 @@ end
 
 -- ##############################################
 
+-- This function, given a table, remove the characters that can bring errors to the DB
+local function cleanValues(table_to_clean)
+    for key, value in pairs(table_to_clean or {}) do
+        if type(value) == 'string' then
+            table_to_clean[key] = string.gsub(value, "'", "")        
+        end
+    end
+    return table_to_clean
+end
+
+-- ##############################################
+
 -- This function is used to update entry and merge those info with in DB informations
 -- e.g. in case an host was already into the DB just update those data
 local function updateData(entry, ifid, type)
@@ -120,13 +132,11 @@ local function updateData(entry, ifid, type)
         entry.first_seen = data.first_seen -- Keep the old first_seen
         -- Merge the json_info field, note, that in case of duplicates, the data from
         -- entry table are used.
-        entry.json_info = json.encode(table.merge(data.json_info or {}, entry.json_info or {}))
+        local unified_json = table.merge(data.json_info or {}, entry.json_info or {})
+        entry = cleanValues(entry)
+        entry.json_info = json.encode(cleanValues(unified_json))
     end
 
-    -- Remove the single quote from the manufacturer, it can mess up the query
-    if entry.manufacturer then
-        entry.manufacturer = string.gsub(entry.manufacturer, "'", "-")
-    end
     return entry
 end
 
