@@ -145,6 +145,7 @@ import { default as SelectTablePage } from "./select_table_page.vue";
 import { default as VueNode } from "./vue_node.vue";
 import { default as Loading } from "./loading.vue";
 import { default as Switch } from "./switch.vue";
+import NtopUtils from "../utilities/ntop-utils.js";
 
 /* rows_loaded, is emitted every time the rows are loaded,
  * loaded,      is emitted when the table is loaded (mounted)
@@ -215,11 +216,7 @@ onMounted(async () => {
 });
 
 onUpdated(() => {
-    //console.log("Updating tooltips")
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    NtopUtils.reloadBSTooltips();
 });
 
 const autorefresh_title = computed(() => {
@@ -247,10 +244,6 @@ async function load_table() {
     set_columns_resizable();
     dropdown.value.load_menu();
     emit("loaded");
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
 }
 
 let autorefresh_interval;
