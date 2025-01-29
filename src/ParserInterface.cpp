@@ -379,11 +379,16 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
   }
 
   if (zflow->tcp.clientNwLatency.tv_sec || zflow->tcp.clientNwLatency.tv_usec)
-    flow->setFlowNwLatency(&zflow->tcp.clientNwLatency, src2dst_direction);
+    /* As nProbe divides RTT by 2, we need to double it */
+    zflow->tcp.clientNwLatency.tv_sec *= 2,  zflow->tcp.clientNwLatency.tv_usec *= 2;
+    flow->setFlowRTT(&zflow->tcp.clientNwLatency, src2dst_direction);
 
-  if (zflow->tcp.serverNwLatency.tv_sec || zflow->tcp.serverNwLatency.tv_usec)
-    flow->setFlowNwLatency(&zflow->tcp.serverNwLatency, !src2dst_direction);
-
+  if (zflow->tcp.serverNwLatency.tv_sec || zflow->tcp.serverNwLatency.tv_usec) {
+    /* As nProbe divides RTT by 2, we need to double it */
+    zflow->tcp.serverNwLatency.tv_sec *= 2,  zflow->tcp.serverNwLatency.tv_usec *= 2;
+    flow->setFlowRTT(&zflow->tcp.serverNwLatency, !src2dst_direction);
+  }
+  
   flow->setEndReason(zflow->getEndReason());
   if (zflow->tcp.in_window)
     flow->setFlowTcpWindow(zflow->tcp.in_window, src2dst_direction);
@@ -394,7 +399,7 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
 
   flow->setRisk(zflow->getRisk());
   flow->setTOS(zflow->src_tos, true), flow->setTOS(zflow->dst_tos, false);
-  flow->setRtt();
+  flow->setRTT();
 
   if (zflow->getWLANSSID())
     flow->setWLANInfo(zflow->getWLANSSID(), zflow->getWTPMACAddress());

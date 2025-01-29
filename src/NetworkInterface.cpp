@@ -1839,13 +1839,13 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
       tcp_flags = l4[13];
       tcp_len = min_val(4 * tcph->doff, trusted_l4_packet_len);
       payload = &l4[tcp_len];
-      trusted_payload_len = trusted_l4_packet_len - tcp_len;
+      trusted_payload_len = trusted_l4_packet_len - tcp_len;      
+      
       // TODO: check if payload should be set to NULL when trusted_payload_len
       // == 0
     } else {
       /* Packet too short: this is a faked packet */
-      ntop->getTrace()->traceEvent(
-				   TRACE_INFO, "Invalid TCP packet received [%u bytes long]",
+      ntop->getTrace()->traceEvent(TRACE_INFO, "Invalid TCP packet received [%u bytes long]",
 				   trusted_l4_packet_len);
       incStats(*ingressPacket, when->tv_sec, iph ? ETHERTYPE_IP : ETHERTYPE_IPV6,
                NDPI_PROTOCOL_UNKNOWN, NDPI_PROTOCOL_CATEGORY_UNSPECIFIED, 0,
@@ -1994,6 +1994,7 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
 
     switch (l4_proto) {
     case IPPROTO_TCP:
+      flow->updateTCPAck(when, src2dst_direction, ntohl(tcph->ack_seq));
       flow->updateTcpFlags(when, tcp_flags, src2dst_direction, new_flow);
 
       /*

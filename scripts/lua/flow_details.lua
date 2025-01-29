@@ -1006,13 +1006,13 @@ else
       (dscp_consts.ecn_descr(flow.tos.server.ECN)) .. "</td>")
    print("</tr>")
 
-   if (flow["tcp.nw_latency.client"] ~= nil) then
-      local rtt = flow["tcp.nw_latency.client"] + flow["tcp.nw_latency.server"]
+   if (flow["tcp.nw_latency.3wh_client_rtt"] ~= nil) then
+      local rtt = flow["tcp.nw_latency.3wh_client_rtt"] + flow["tcp.nw_latency.3wh_server_rtt"]
 
       if (rtt > 0) then
-         local cli2srv = round(flow["tcp.nw_latency.client"], 3)
-         local srv2cli = round(flow["tcp.nw_latency.server"], 3)
-
+         local cli2srv = round(flow["tcp.nw_latency.3wh_client_rtt"], 3)
+         local srv2cli = round(flow["tcp.nw_latency.3wh_server_rtt"], 3)
+	 
          print("<tr><th width=10%>" .. i18n("flow_details.rtt_breakdown") .. "</th><td colspan=2>")
          print(
             '<div class="progress"><div class="progress-bar bg-warning" style="width: ' .. (cli2srv * 100 / rtt) ..

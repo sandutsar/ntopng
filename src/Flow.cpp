@@ -53,13 +53,17 @@ Flow::Flow(NetworkInterface *_iface,
   flow_dropped_counts_increased = 0, protocolErrorCode = 0;
   srcAS = dstAS = 0, rttSec = 0;
 
-  if(_protocol == IPPROTO_TCP)
+  if(_protocol == IPPROTO_TCP) {
     tcp = (FlowTCP*)calloc(1, sizeof(FlowTCP));
-  else
+
+    if(tcp != NULL)
+      ndpi_init_data_analysis(&tcp->rtt.cli_to_srv, 4),
+	ndpi_init_data_analysis(&tcp->rtt.srv_to_cli, 4);	    
+  } else
     tcp = NULL;
 
   collection = NULL;
-  
+
   predominant_alert.id = flow_alert_normal,
     predominant_alert.category = alert_category_other,
     predominant_alert_score = 0;
@@ -95,7 +99,6 @@ Flow::Flow(NetworkInterface *_iface,
     dissect_next_http_packet = 0;
   periodic_stats_update_partial = NULL;
   bt_hash = NULL, ebpf = NULL, iec104 = NULL, stun_mapped_address = NULL;
-
   twh_over_view = false;
   flow_verdict = 0;
   operating_system = os_unknown;
@@ -126,7 +129,7 @@ Flow::Flow(NetworkInterface *_iface,
 
   cli_ip_addr = srv_ip_addr = NULL;
   cli_host = srv_host = NULL;
-  
+
   INTERFACE_PROFILING_SUB_SECTION_ENTER(iface,
                                         "Flow::Flow: iface->findFlowHosts", 7);
   iface->findFlowHosts(_iface_idx, _vlanId, _observation_point_id, _private_flow_id,
@@ -409,7 +412,7 @@ void Flow::freeDPIMemory() {
 	tcp->tcp_fingerprint = strdup(ndpiFlow->tcp.fingerprint);
       }
     }
-    
+
     ndpi_free_flow(ndpiFlow);
     ndpiFlow = NULL;
   }
@@ -498,9 +501,11 @@ Flow::~Flow() {
 
   if(tcp != NULL) {
     if(tcp->tcp_fingerprint) free(tcp->tcp_fingerprint);
+
+    ndpi_free_data_analysis(&tcp->rtt.cli_to_srv, 0), ndpi_free_data_analysis(&tcp->rtt.srv_to_cli, 0);
     free(tcp);
   }
-  
+
   if(riskInfo) free(riskInfo);
   if(end_reason) free(end_reason);
 
@@ -508,7 +513,7 @@ Flow::~Flow() {
     if(collection->wifi.wlan_ssid) free(collection->wifi.wlan_ssid);
     free(collection);
   }
-  
+
   if(viewFlowStats) delete (viewFlowStats);
   if(periodic_stats_update_partial) delete (periodic_stats_update_partial);
   if(last_db_dump.partial) delete (last_db_dump.partial);
@@ -1245,42 +1250,6 @@ void Flow::processDNSPacket(const u_char *ip_packet, u_int16_t ip_len,
 
 /* *************************************** */
 
-#ifdef NTOPNG_PRO
-void Flow::processModbusPacket(bool is_query, const u_char *payload,
-			       u_int16_t payload_len, const struct pcap_pkthdr *h) {
-
-  if(ntop->getPrefs()->is_enterprise_l_edition() && (ndpi_confidence == NDPI_CONFIDENCE_DPI)) {
-    /*
-     * Exits if the flow isn't Modbus/TCP or it the interface is not a
-     * packet-interface
-     */
-    u_int16_t len;
-
-    if(!isModbus() || (!getInterface()->isPacketInterface()) || (payload_len < 6))
-      return;
-
-    /* Validate packet */
-    len = (payload[4] << 8) + payload[5];
-
-    if((len == 0) || ((len+6) != payload_len)) {
-      ntop->getTrace()->traceEvent(TRACE_INFO,
-				   "Discarded ModBus/TCP [expected: %u][rcvd: %u][h.len: %u][%02X %02X %02X %02X %02X %02X]",
-				   (len+6), payload_len, h->len,
-				   payload[0], payload[1], payload[2],
-				   payload[3], payload[4], payload[5]);
-      return;
-    }
-
-    if(!modbus) modbus = new (std::nothrow) ModbusStats();
-
-    if(modbus)
-      modbus->processPacket(this, is_query, payload, payload_len, h);
-  }
-}
-#endif
-
-/* *************************************** */
-
 /* Special handling of IEC60870 which is always performed. */
 void Flow::processIEC60870Packet(bool tx_direction, const u_char *payload,
                                  u_int16_t payload_len,
@@ -1514,7 +1483,7 @@ void Flow::setProtocolDetectionCompleted(u_int8_t *payload,
     print(buf, sizeof(buf));
     snprintf(&buf[strlen(buf)], sizeof(buf) - strlen(buf),
              "Malware category detected. [cli_blacklisted: "
-             "%u][srv_blacklisted: xo%u][category: %s][blacklist: %s]",
+             "%u][srv_blacklisted: %u][category: %s][blacklist: %s]",
              isBlacklistedClient(), isBlacklistedServer(),
              get_protocol_category_name(),
 	     get_custom_category_file() ? get_custom_category_file() : "");
@@ -2943,7 +2912,7 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
       if(collection->nextAdjacentAS)
 	lua_push_int32_table_entry(vm, "next_adjacent_as", collection->nextAdjacentAS);
     }
-    
+
     lua_tos(vm);
     lua_get_protocols(vm);
     lua_push_str_table_entry(vm, "community_id",
@@ -3024,7 +2993,7 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
 
     if(l7_json.length() > 0)
       lua_push_str_table_entry(vm, "l7_json", l7_json.c_str());
-    
+
 #ifdef HAVE_NEDGE
     lua_push_uint64_table_entry(vm, "marker", marker);
 
@@ -3417,7 +3386,7 @@ void Flow::sumStats(nDPIStats *ndpi_stats, FlowStats *status_stats) {
   /* Increase Category stats */
   ndpi_stats->incCategoryStats(0, get_protocol_category(),
 			       get_bytes_cli2srv(), get_bytes_srv2cli());
-  
+
   status_stats->incStats(getAlertsBitmap(), protocol,
                          Utils::mapScoreToSeverity(getPredominantAlertScore()),
                          getCli2SrvDSCP(), getSrv2CliDSCP(), this);
@@ -3672,8 +3641,7 @@ void Flow::formatECSHost(json_object *my_object, bool is_client,
 
     /* Adding MAC */
     if(host && host->getMac() && !host->getMac()->isNull())
-      json_object_object_add(
-			     host_object,
+      json_object_object_add(host_object,
 			     Utils::jsonLabel(is_client ? IN_SRC_MAC : IN_DST_MAC, "mac", jsonbuf,
 					      sizeof(jsonbuf)),
 			     json_object_new_string(Utils::formatMac(host ? host->get_mac() : NULL,
@@ -3690,10 +3658,8 @@ void Flow::formatECSHost(json_object *my_object, bool is_client,
       }
 
       /* With NAT they are IPv4 */
-      json_object_object_add(
-			     host_object,
-			     Utils::jsonLabel(
-					      is_client ? (tmp_ip.isIPv4() ? IPV4_SRC_ADDR : IPV6_SRC_ADDR)
+      json_object_object_add(host_object,
+			     Utils::jsonLabel(is_client ? (tmp_ip.isIPv4() ? IPV4_SRC_ADDR : IPV6_SRC_ADDR)
 					      : (tmp_ip.isIPv4() ? IPV4_DST_ADDR : IPV6_DST_ADDR),
 					      "ip", jsonbuf, sizeof(jsonbuf)),
 			     json_object_new_string(tmp_ip.print(buf, sizeof(buf))));
@@ -3705,8 +3671,7 @@ void Flow::formatECSHost(json_object *my_object, bool is_client,
 					      "is_local", jsonbuf, sizeof(jsonbuf)),
 			     json_object_new_boolean(addr->isLocalHost()));
       json_object_object_add(host_object,
-			     Utils::jsonLabel(
-					      is_client ? SRC_ADDR_BLACKLISTED : DST_ADDR_BLACKLISTED,
+			     Utils::jsonLabel(is_client ? SRC_ADDR_BLACKLISTED : DST_ADDR_BLACKLISTED,
 					      "is_blacklisted", jsonbuf, sizeof(jsonbuf)),
 			     json_object_new_boolean(addr->isBlacklistedAddress()));
 
@@ -3776,36 +3741,30 @@ void Flow::formatECSHost(json_object *my_object, bool is_client,
                            Utils::jsonLabel(is_client ? SRC_TOS : DST_TOS,
                                             "tos", jsonbuf, sizeof(jsonbuf)),
                            json_object_new_int(getTOS(true)));
-    json_object_object_add(
-			   host_object,
+    json_object_object_add(host_object,
 			   Utils::jsonLabel(is_client ? L4_SRC_PORT : L4_DST_PORT, "port", jsonbuf,
 					    sizeof(jsonbuf)), json_object_new_int(port));
-    json_object_object_add(
-			   host_object,
+    json_object_object_add(host_object,
 			   Utils::jsonLabel(is_client ? IN_PKTS : OUT_PKTS, "packets", jsonbuf,
 					    sizeof(jsonbuf)),
 			   json_object_new_int64(is_client ? get_partial_packets_cli2srv()
 						 : get_partial_packets_srv2cli()));
-    json_object_object_add(
-			   host_object,
+    json_object_object_add(host_object,
 			   Utils::jsonLabel(is_client ? IN_BYTES : OUT_BYTES, "bytes", jsonbuf,
 					    sizeof(jsonbuf)),
 			   json_object_new_int64(is_client ? get_partial_bytes_cli2srv()
 						 : get_partial_bytes_srv2cli()));
-    json_object_object_add(
-			   host_object,
+    json_object_object_add(host_object,
 			   Utils::jsonLabel(TCP_FLAGS, "packets_retransmissions", jsonbuf,
 					    sizeof(jsonbuf)),
 			   json_object_new_int64(is_client ? stats.get_cli2srv_tcp_retr()
 						 : stats.get_srv2cli_tcp_retr()));
-    json_object_object_add(
-			   host_object,
+    json_object_object_add(host_object,
 			   Utils::jsonLabel(TCP_FLAGS, "packets_out_of_order", jsonbuf,
 					    sizeof(jsonbuf)),
 			   json_object_new_int64(is_client ? stats.get_cli2srv_tcp_ooo()
 						 : stats.get_srv2cli_tcp_ooo()));
-    json_object_object_add(
-			   host_object,
+    json_object_object_add(host_object,
 			   Utils::jsonLabel(TCP_FLAGS, "packets_lost", jsonbuf, sizeof(jsonbuf)),
 			   json_object_new_int64(is_client ? stats.get_cli2srv_tcp_lost()
 						 : stats.get_srv2cli_tcp_lost()));
@@ -3817,15 +3776,12 @@ void Flow::formatECSHost(json_object *my_object, bool is_client,
                              json_object_new_int(vlanId));
 
     if(tcp != NULL)
-      json_object_object_add(
-			     host_object,
-			     Utils::jsonLabel(
-					      is_client ? CLIENT_NW_LATENCY_MS : SERVER_NW_LATENCY_MS,
+      json_object_object_add(host_object,
+			     Utils::jsonLabel(is_client ? CLIENT_NW_LATENCY_MS : SERVER_NW_LATENCY_MS,
 					      "latency", jsonbuf, sizeof(jsonbuf)),
-			     json_object_new_double(toMs(&tcp->clientNwLatency)));
+			     json_object_new_double(toMs(&tcp->clientRTT3WH)/2));
 
-    json_object_object_add(my_object, is_client ? "client" : "server",
-                           host_object);
+    json_object_object_add(my_object, is_client ? "client" : "server", host_object);
   }
 }
 
@@ -3854,8 +3810,7 @@ void Flow::formatECSFlow(json_object *my_object) {
   */
 
   json_object_object_add(my_object, "@timestamp", json_object_new_string(buf));
-  json_object_object_add(
-			 my_object, "type",
+  json_object_object_add(my_object, "type",
 			 json_object_new_string(ntop->getPrefs()->get_es_type()));
 
   /* Formatting Client */
@@ -4035,7 +3990,7 @@ void Flow::formatGenericFlow(json_object *my_object) {
 
   if(collection && collection->wifi.wlan_ssid) {
     char mac_buf[20];
-    
+
     json_object_object_add(my_object,
 			   Utils::jsonLabel(WLAN_SSID, "WLAN_SSID", jsonbuf,
 					    sizeof(jsonbuf)),
@@ -4118,11 +4073,11 @@ void Flow::formatGenericFlow(json_object *my_object) {
     json_object_object_add(my_object,
 			   Utils::jsonLabel(CLIENT_NW_LATENCY_MS, "CLIENT_NW_LATENCY_MS", jsonbuf,
 					    sizeof(jsonbuf)),
-			   json_object_new_double(toMs(&tcp->clientNwLatency)));
+			   json_object_new_double(toMs(&tcp->clientRTT3WH)/2));
     json_object_object_add(my_object,
 			   Utils::jsonLabel(SERVER_NW_LATENCY_MS, "SERVER_NW_LATENCY_MS", jsonbuf,
 					    sizeof(jsonbuf)),
-			   json_object_new_double(toMs(&tcp->serverNwLatency)));
+			   json_object_new_double(toMs(&tcp->serverRTT3WH)/2));
   }
 
   c = cli_host ? cli_host->get_country(buf, sizeof(buf)) : NULL;
@@ -5475,28 +5430,31 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
       } else if(flags_3wh == (TH_SYN | TH_ACK)) {
         if((tcp->synAckTime.tv_sec == 0) && (tcp->synTime.tv_sec > 0)) {
           memcpy(&tcp->synAckTime, when, sizeof(struct timeval));
-          timeval_diff(&tcp->synTime, (struct timeval *)when, &tcp->serverNwLatency, 1);
+          timeval_diff(&tcp->synTime, (struct timeval *)when, &tcp->serverRTT3WH, 1);
 
           /* Coherence check */
-          if(tcp->serverNwLatency.tv_sec > 5)
-            memset(&tcp->serverNwLatency, 0, sizeof(tcp->serverNwLatency));
+          if(tcp->serverRTT3WH.tv_sec > 5)
+            memset(&tcp->serverRTT3WH, 0, sizeof(tcp->serverRTT3WH));
           else if(srv_host)
-            srv_host->updateRoundTripTime(Utils::timeval2ms(&tcp->serverNwLatency));
+            srv_host->updateNetworkRTT(Utils::timeval2ms(&tcp->serverRTT3WH));
         }
       } else if((flags_3wh == TH_ACK) ||
                  (flags_3wh == (TH_ACK | TH_PUSH)) /* TCP Fast Open may contain data and PSH
 						      in the final TWH ACK */) {
         if((tcp->ackTime.tv_sec == 0) && (tcp->synAckTime.tv_sec > 0)) {
           memcpy(&tcp->ackTime, when, sizeof(struct timeval));
-          timeval_diff(&tcp->synAckTime, (struct timeval *)when, &tcp->clientNwLatency, 1);
+          timeval_diff(&tcp->synAckTime, (struct timeval *)when, &tcp->clientRTT3WH, 1);
 
+	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Client RTT: %.1f ms", toMs(&tcp->clientRTT3WH));
+	  
           /* Coherence check */
-          if(tcp->clientNwLatency.tv_sec > 5)
-            memset(&tcp->clientNwLatency, 0, sizeof(tcp->clientNwLatency));
+          if(tcp->clientRTT3WH.tv_sec > 5)
+            memset(&tcp->clientRTT3WH, 0, sizeof(tcp->clientRTT3WH));
           else if(cli_host)
-            cli_host->updateRoundTripTime(Utils::timeval2ms(&tcp->clientNwLatency));
+            cli_host->updateNetworkRTT(Utils::timeval2ms(&tcp->clientRTT3WH));
 
-          setRtt();
+	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Server RTT: %.1f ms", toMs(&tcp->serverRTT3WH));
+          setRTT();
           iface->getTcpFlowStats()->incEstablished();
         }
 
@@ -6043,14 +6001,14 @@ void Flow::dissectDNS(bool src2dst_direction, char *payload,
 void Flow::setICMPTypeCode(u_int16_t icmp_type_code) {
   if(icmp_info == NULL)
     icmp_info = new (std::nothrow) ICMPinfo();
-    
+
   if(icmp_info != NULL) {
     u_int8_t icmp_code = (u_int8_t)(icmp_type_code & 0x00FF);
     u_int8_t icmp_type = (u_int8_t)((icmp_type_code >> 8) & 0xFF);
-    
+
     icmp_info->setCode(icmp_code), protos.icmp.cli2srv.icmp_code = icmp_code;
     icmp_info->setType(icmp_type), protos.icmp.cli2srv.icmp_type = icmp_type;
-  }  
+  }
 }
 
 /* *************************************** */
@@ -7785,10 +7743,10 @@ void Flow::lua_get_tcp_info(lua_State *vm) const {
 			      ? true
 			      : false);
 
-    lua_push_float_table_entry(vm, "tcp.nw_latency.client",
-                               toMs(&tcp->clientNwLatency));
-    lua_push_float_table_entry(vm, "tcp.nw_latency.server",
-                               toMs(&tcp->serverNwLatency));
+    
+    lua_push_float_table_entry(vm, "tcp.nw_latency.3wh_client_rtt", toMs(&tcp->clientRTT3WH));
+    lua_push_float_table_entry(vm, "tcp.nw_latency.3wh_server_rtt", toMs(&tcp->serverRTT3WH));
+    
     lua_push_float_table_entry(vm, "tcp.appl_latency", applLatencyMsec);
     lua_push_float_table_entry(vm, "tcp.max_thpt.cli2srv", getCli2SrvMaxThpt());
     lua_push_float_table_entry(vm, "tcp.max_thpt.srv2cli", getSrv2CliMaxThpt());
@@ -7923,7 +7881,7 @@ void Flow::setProtocolJSONInfo() {
 
   if(ndpi_init_serializer(&s, ndpi_serialization_format_json) == -1)
     return;
-  
+
   getProtocolJSONInfo(&s);
   getCustomFieldsInfo(&s);
   getJSONRiskInfo(&s);
@@ -8134,7 +8092,7 @@ void Flow::updateAlertsJSON() {
   getJSONRiskInfo(&serializer);
 
   if (isBlacklistedFlow())
-    ndpi_serialize_string_string(&serializer, "blacklist", 
+    ndpi_serialize_string_string(&serializer, "blacklist",
       get_custom_category_file() ? get_custom_category_file() : "");
 
   /* Serialize alerts JSON */
@@ -8145,7 +8103,7 @@ void Flow::updateAlertsJSON() {
     FlowAlert *a = it->second;
     const char *j = a->getSerializedAlert();
     if (j) {
-      if (!first) json_map += ","; 
+      if (!first) json_map += ",";
       json_map += "\"" + std::to_string(it->first) + "\": " + j;
       first = false;
     }
@@ -8217,7 +8175,7 @@ bool Flow::setAlertsMap(FlowAlert *alert) {
    * accounted in the score */
   if(alerts_map.isSetBit(alert_type.id)) {
     /* In case of the same alert triggered multiple times, we keep the
-     * first one only, and send out a single notificaiton. */ 
+     * first one only, and send out a single notificaiton. */
 #ifdef DEBUG_SCORE
     ntop->getTrace()->traceEvent(TRACE_NORMAL,
 				 "[%s] Discarding alert type %u (already set)",
@@ -8465,7 +8423,7 @@ void Flow::setWLANInfo(char *_wlan_ssid, u_int8_t *_wtp_mac_address) {
 	free(collection->wifi.wlan_ssid);
       collection->wifi.wlan_ssid = strdup(_wlan_ssid);
     }
-    
+
     memcpy(collection->wifi.wtp_mac_address, _wtp_mac_address, 6);
   }
 }
@@ -8566,7 +8524,7 @@ void Flow::swap() {
 
   if(tcp != NULL)
     Utils::swap8(&tcp->src2dst_tcp_flags, &tcp->dst2src_tcp_flags);
-  
+
   initial_bytes_entropy.c2s = initial_bytes_entropy.s2c;
   initial_bytes_entropy.s2c = s;
 
@@ -8585,7 +8543,7 @@ void Flow::swap() {
     memcpy(&tcp->tcp_seq_s2d, &ts, sizeof(TCPSeqNum));
     Utils::swap16(&tcp->cli2srv_window, &tcp->srv2cli_window);
   }
-  
+
   cli2srvPktTime = srv2cliPktTime;
   srv2cliPktTime = is;
 
@@ -8601,6 +8559,13 @@ void Flow::swap() {
   tmp32 = flow_device.in_index;
   flow_device.in_index = flow_device.out_index;
   flow_device.out_index = tmp32;
+
+  if(tcp != NULL) {
+    u_int32_t tmp = tcp->rtt.last_cli_ack;
+
+    tcp->rtt.last_cli_ack = tcp->rtt.last_srv_ack;
+    tcp->rtt.last_srv_ack = tmp;
+  }
 
   /*
     We do not swap L7 info as if it direction was wrong they were not computed
@@ -8987,7 +8952,7 @@ void Flow::accountFlowTraffic() {
     */
     iface->incnDPIStats(iface->getTimeLastPktRcvd(),
 			getStatsProtocol(), get_protocol_category(),
-			get_bytes_cli2srv(), get_bytes_srv2cli(), 
+			get_bytes_cli2srv(), get_bytes_srv2cli(),
       get_packets_cli2srv(), get_packets_srv2cli());
   }
 }
@@ -9073,19 +9038,5 @@ void Flow::allocateCollection() {
   else
     collection = (FlowCollectionInfo*)calloc(1, sizeof(FlowCollectionInfo));
 }
-
-/* *************************************** */
-
-#if defined(NTOPNG_PRO)
-/* Used by AccessControlList.cpp */
-
-bool Flow::isFlowAllowed(bool *is_allowed) {
-  if (isTCP() || isUDP() || isICMP())
-    return iface->findFlowACL(this, is_allowed);
-  else
-    return true;
-};
-
-#endif
 
 /* *************************************** */

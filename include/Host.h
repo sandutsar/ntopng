@@ -545,7 +545,7 @@ class Host : public GenericHashEntry,
   void updateFinAckAlertsCounter(time_t when, bool finack_sent);
 
   virtual void updateNetworkRTT(u_int32_t rtt_msecs) { return; }
-  inline void updateRoundTripTime(u_int32_t rtt_msecs) {
+  inline void updateRoundTripTimexo(u_int32_t rtt_msecs) {
     if (as) as->updateRoundTripTime(rtt_msecs);
     updateNetworkRTT(rtt_msecs);
   }
