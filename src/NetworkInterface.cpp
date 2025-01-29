@@ -1994,7 +1994,9 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
 
     switch (l4_proto) {
     case IPPROTO_TCP:
+#if defined(NTOPNG_PRO)
       flow->updateTCPAck(when, src2dst_direction, ntohl(tcph->ack_seq));
+#endif
       flow->updateTcpFlags(when, tcp_flags, src2dst_direction, new_flow);
 
       /*
