@@ -593,7 +593,7 @@ public:
                           u_int32_t payloadLen);
   static double toMs(const struct timeval *t);
   void timeval_diff(struct timeval *begin, const struct timeval *end,
-                    struct timeval *result, u_short divide_by_two);
+                    struct timeval *result, bool divide_by_two);
   std::string getFlowInfo(bool isLuaRequest);
   inline std::string getL7JSON() { return(l7_json); }
   inline void setL7JSON(std::string j) { l7_json = j; }
@@ -1114,6 +1114,7 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
 #if defined(NTOPNG_PRO)
   void updateTCPAck(const struct bpf_timeval *when,
 		    bool src2dst_direction, u_int32_t ack_id);
+  u_int8_t getNetworkQOEScore();
 
 #if !defined(HAVE_NEDGE)
   inline void updateProfile() { trafficProfile = iface->getFlowProfile(this); }

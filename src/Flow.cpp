@@ -5430,7 +5430,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
       } else if(flags_3wh == (TH_SYN | TH_ACK)) {
         if((tcp->synAckTime.tv_sec == 0) && (tcp->synTime.tv_sec > 0)) {
           memcpy(&tcp->synAckTime, when, sizeof(struct timeval));
-          timeval_diff(&tcp->synTime, (struct timeval *)when, &tcp->serverRTT3WH, 1);
+          timeval_diff(&tcp->synTime, (struct timeval *)when, &tcp->serverRTT3WH, 0);
 
           /* Coherence check */
           if(tcp->serverRTT3WH.tv_sec > 5)
@@ -5443,7 +5443,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
 						      in the final TWH ACK */) {
         if((tcp->ackTime.tv_sec == 0) && (tcp->synAckTime.tv_sec > 0)) {
           memcpy(&tcp->ackTime, when, sizeof(struct timeval));
-          timeval_diff(&tcp->synAckTime, (struct timeval *)when, &tcp->clientRTT3WH, 1);
+          timeval_diff(&tcp->synAckTime, (struct timeval *)when, &tcp->clientRTT3WH, 0);
 
 #ifdef DEBUG
 	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Client RTT: %.1f ms", toMs(&tcp->clientRTT3WH));
@@ -5486,7 +5486,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
 /* *************************************** */
 
 void Flow::timeval_diff(struct timeval *begin, const struct timeval *end,
-                        struct timeval *result, u_short divide_by_two) {
+                        struct timeval *result, bool divide_by_two) {
   if(end->tv_sec >= begin->tv_sec) {
     result->tv_sec = end->tv_sec - begin->tv_sec;
 
