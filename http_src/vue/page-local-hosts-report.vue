@@ -161,6 +161,9 @@ const map_table_def_columns = (columns) => {
   const formatter = formatterUtils.getFormatter("bytes");
   let map_columns = {
     "ip": (value, row) => {
+      if (row.vlan && row.vlan != 0) {
+        value = value + "@" + row.vlan;
+      }
       const url = `${http_prefix}/lua/host_details.lua?host=${value}`
       if (row.online) {
         return `<a href=${url}>${value}</a>`
