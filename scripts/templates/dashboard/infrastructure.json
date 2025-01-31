@@ -146,10 +146,10 @@
 				"limit" : 180,
 				"version" : 4,
 				"ts_requests": {
-					"$ANY_IFID$" : {
-						"ts_query": "ifid:$IFID$",
+					"0" : {
+						"ts_query": "ifid:0",
 						"ts_schema": "iface:traffic_rxtx",
-						"tskey": "$IFID$"
+						"tskey": "0"
 					}
 				}
 			},
