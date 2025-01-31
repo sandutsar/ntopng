@@ -100,7 +100,7 @@ const map_table_def_columns = (columns) => {
       if (row.metadata.is_alerted) {
         is_alerted = ' <i class="fas fa-exclamation-triangle" style="color: #f0ad4e;"></i> '
       }
-      return `${value.name}${is_alerted}${interface_name}${is_infrastructure_instance}`;
+      return `${value.name}${is_infrastructure_instance}${is_alerted}${interface_name}`;
     },
     "ip_address": (value, row) => {
       return value;

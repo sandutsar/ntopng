@@ -36,12 +36,22 @@ local base_url = "lua/active_monitoring.lua?ifid=" .. ifid
 local title = i18n("graphs.active_monitoring")
 local host_label = ''
 
+-- Host is used by the charts too, so we have to check a couple of characters to correctly format it
+-- because it can be manipulated by drawNewGraphs
+if not isEmptyString(host) then
+    local tmp = string.split(host, ",metric:")
+    if tmp then
+        host = tmp[1] -- The first entry is the real host
+    end
+end
+
 if (not isEmptyString(host) and not isEmptyString(measurement)) then
     local tmp = active_monitoring_utils.getHost(host, measurement)
     if not isEmptyString(tmp) then
         host_label = active_monitoring_utils.formatAmHost(tmp.host, tmp.measurement, true)
     end
     if not isEmptyString(host_label) then
+        title = string.format("<a href='%s/%s'>%s</a>", ntop.getHttpPrefix(), base_url, title)
         title = title .. " / " .. host_label
     end
 end
