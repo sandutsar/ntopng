@@ -1,9 +1,10 @@
 <template>
     <div class="m-3">
-        <div class="alert alert-info alert-dismissable">
-            <span v-html="alert_note"></span>
-        </div>
-        <div class="card card-shadow">
+        <template v-if="(!props.context.is_check_enabled)">
+            <div class="alert alert-warning" role="alert" id='error-alert' v-html:="error_message">
+            </div>
+        </template>
+        <div class="card card-shadow" :class="[(!props.context.is_check_enabled) ? 'ntopng-gray-out' : '']">
             <div class="card-body">
                 <Loading v-if="loading"></Loading>
                 <table class="table table-striped table-bordered col-sm-12"
@@ -65,7 +66,7 @@ const get_config_url = `${http_prefix}/lua/rest/v2/get/network/config.lua`
 const modifiedInputs = ref([]);
 const disable_save = ref(true)
 
-const alert_note = ref(_i18n('network_configuration.alert_note'))
+const error_message = ref(_i18n('network_configuration.alert_note'))
 const isSaving = ref(false);
 const saveSuccess = ref(false);
 

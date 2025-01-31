@@ -687,6 +687,9 @@ function set_stats_rows(ts_charts_options, timeseries_groups, status) {
             if (s.ext_label) {
                 name = s.ext_label
             }
+            if (s.label) {
+                name = s.label
+            }
             name = timeseriesUtils.getSerieName(name, ts_id, ts_group, extend_serie_name);
             let total_formatter_type = f_get_total_formatter_type(ts_group.metric.measure_unit);
             let total_formatter = formatterUtils.getFormatter(total_formatter_type);
