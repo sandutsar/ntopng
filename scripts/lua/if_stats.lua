@@ -900,21 +900,35 @@ if ((page == "overview") or (page == nil)) then
         end
 
         print("<td width=20%><span id=if_drops>")
+        local drops = 0
+        
+        if interface.isView() then
+            local zmq_stats = {}
+            for interface_name, _ in pairsByKeys(interface.getIfNames() or {}) do
+                interface.select(interface_name)
+                local tmp = interface.getStats()
+                for k, v in pairs(tmp.exporters or {}) do
+                    drops = v["num_drops"] + drops
+                end
+            end
+        elseif (ifstats) then
+            drops = ifstats.stats_since_reset.drops
+        end
 
-        if (ifstats.stats.drops > 0) then
+        if (drops > 0) then
             print('<span class="badge bg-danger">')
         end
 
-        print(formatValue(drops) .. " " .. ternary(ifstats.zmqRecvStats, i18n('flows'), label))
+        print(formatValue(drops) .. " " .. ternary((not ifstats.zmqRecvStats or table.len(ifstats.zmqRecvStats) == 0), i18n("pkts"), i18n("flows")))
 
-        if ((ifstats.stats.packets + ifstats.stats.drops) > 0) then
-            local pctg = round((ifstats.stats.drops * 100) / (ifstats.stats.packets + ifstats.stats.drops), 2)
+        if ((ifstats.stats.packets + drops) > 0) then
+            local pctg = round((drops * 100) / (ifstats.stats.packets + drops), 2)
             if (pctg > 0) then
                 print(" [ " .. pctg .. " % ] ")
             end
         end
 
-        if (ifstats.stats.drops > 0) then
+        if (drops > 0) then
             print('</span>')
         end
         print("</span>&nbsp;<span id=drops_trend></span>\n")
@@ -1049,7 +1063,7 @@ if ((page == "overview") or (page == nil)) then
         print("</th></tr>\n")
 
         print("<tr>")
-        print("<th nowrap>" .. i18n("if_stats_overview.exported_flows") ..
+        print("<th nowrap>" .. i18n("if_stats_overview.dumped_flows_to_db") ..
             ternary(charts_available, " <A HREF='" .. url ..
                 "&page=historical&ts_schema=iface:dumped_flows'><i class='fas fa-chart-area fa-sm'></i></A>", "") ..
             "</th>")
@@ -1060,7 +1074,7 @@ if ((page == "overview") or (page == nil)) then
         print("&nbsp;[<span id=exported_flows_rate>" .. formatValue(round(export_rate, 2)) .. " fps</span>]</td>")
 
         print("<th><span id='if_flow_drops_drop'<i class='fas fa-tint' aria-hidden='true'></i></span> ")
-        print(i18n("if_stats_overview.dropped_flows") .. ternary(charts_available, " <A HREF='" .. url ..
+        print(i18n("if_stats_overview.dropped_export_to_db") .. ternary(charts_available, " <A HREF='" .. url ..
             "&page=historical&ts_schema=iface:dumped_flows'><i class='fas fa-chart-area fa-sm'></i></A>", "") .. "</th>")
 
         local span_danger = ""
@@ -2705,7 +2719,7 @@ if page == 'overview' or isEmptyString(page) then
             drops = '<span class="badge bg-danger">';
             }
             drops = drops + NtopUtils.addCommas(rsp.drops)+" " +"]]
-    print(ternary(ifstats.zmqRecvStats, i18n("flows"), i18n("pkts")) .. "\"\n")
+    print(ternary((not ifstats.zmqRecvStats or table.len(ifstats.zmqRecvStats) == 0), i18n("pkts"), i18n("flows")) .. "\"\n")
 
     print [[
             if(pctg > 0)      { drops  += " [ "+pctg+" % ]"; }
