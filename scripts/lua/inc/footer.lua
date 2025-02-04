@@ -383,7 +383,7 @@ print[[
 						const export_pctg = rsp.flow_export_drops / (rsp.flow_export_count + rsp.flow_export_drops + 1);
 						if (export_pctg > ]] print(stats_utils.UPPER_BOUND_INFO_EXPORTS) print[[) {
 							const badge_class = (export_pctg <= ]] print(stats_utils.UPPER_BOUND_WARNING_EXPORTS) print[[) ? 'warning' : 'danger';
-							msg += "<a href=']] print (ntop.getHttpPrefix()) print [[/lua/if_stats.lua'><span class=\"badge bg-"+badge_class+"\"><i class=\"fas fa-exclamation-triangle\" style=\"color: #FFFFFF;\"></i> "+NtopUtils.formatValue(rsp.flow_export_drops, 1)+" Export drop";
+							msg += "<a href=']] print (ntop.getHttpPrefix()) print [[/lua/if_stats.lua'><span class=\"badge bg-"+badge_class+"\"><i class=\"fas fa-exclamation-triangle\" style=\"color: #FFFFFF;\"></i> "+NtopUtils.formatValue(rsp.flow_export_drops, 1)+" DB Export drop";
 							if(rsp.flow_export_drops > 1) msg += "s";
 							msg += "</span></a>";
 						}
