@@ -72,12 +72,14 @@ void RemoteHost::initialize() {
   updateHostPool(true /* inline with packet processing */,
                  true /* first inc */);
 
+#if 0  /* Redis won't cache remote hosts */
   if (ntop->getPrefs()->is_dns_resolution_enabled_for_all_hosts()) {
     /* Just ask ntopng to resolve the name. Actual name will be grabbed once
        needed using the getter.
     */
     ntop->getRedis()->getAddress(host, rsp, sizeof(rsp), true);
   }
-
+#endif
+  
   iface->incNumHosts(this, true /* Initialization: bytes are 0, considered RX only */);
 }

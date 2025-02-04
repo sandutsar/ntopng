@@ -79,8 +79,7 @@ void AddressResolution::resolveHostName(const char *_numeric_ip, char *symbolic,
   int cachedResult = -1;
 
   if (redisInstance != NULL)
-    cachedResult =
-        redisInstance->getAddress(numeric_ip, rsp, sizeof(rsp), false);
+    cachedResult = redisInstance->getAddress(numeric_ip, rsp, sizeof(rsp), false);
 
   if (cachedResult < 0) {
     char hostname[NI_MAXHOST];
