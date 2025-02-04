@@ -35,7 +35,7 @@
 			"width" : 4,
 			"height" : 2,
 			"params" : {
-				"url" : "/lua/pro/rest/v2/get/infrastructure/aggregate.lua",
+				"url" : "/lua/pro/rest/v2/get/infrastructure/stats.lua",
 				"url_params" : {
 					"type" : "summary"
 				},
@@ -59,7 +59,7 @@
 			"width" : 4,
 			"height" : 2,
 			"params" : {
-				"url" : "/lua/pro/rest/v2/get/infrastructure/aggregate.lua",
+				"url" : "/lua/pro/rest/v2/get/infrastructure/stats.lua",
 				"url_params" : {
 					"type" : "summary"
 				},
