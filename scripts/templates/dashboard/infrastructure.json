@@ -1,5 +1,5 @@
 {
-	"name" : "Default Enterprise Dashboard",
+	"name" : "Default Infrastructure Dashboard",
 	"readonly" : true,
 	"components" : [
 		{
