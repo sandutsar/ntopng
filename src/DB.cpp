@@ -43,15 +43,13 @@ void DB::shutdown() { running = false; }
 /* ******************************************* */
 
 void DB::lua(lua_State *vm, bool since_last_checkpoint) const {
-  lua_push_uint64_table_entry(
-      vm, "flow_export_count",
-      exportedFlows - (since_last_checkpoint ? checkpointExportedFlows : 0));
-  lua_push_int32_table_entry(
-      vm, "flow_export_drops",
-      getNumDroppedFlows() -
-          (since_last_checkpoint
-               ? (checkpointDroppedFlows + checkpointQueueDroppedFlows)
-               : 0));
+  lua_push_uint64_table_entry(vm, "flow_export_count",
+			      exportedFlows - (since_last_checkpoint ? checkpointExportedFlows : 0));
+  lua_push_int32_table_entry(vm, "flow_export_drops",
+			     getNumDroppedFlows() -
+			     (since_last_checkpoint
+			      ? (checkpointDroppedFlows + checkpointQueueDroppedFlows)
+			      : 0));
   lua_push_float_table_entry(vm, "flow_export_rate",
                              exportRate >= 0 ? exportRate : 0);
 }
