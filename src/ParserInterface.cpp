@@ -378,14 +378,15 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
     }
   }
 
-  if (zflow->tcp.clientNwLatency.tv_sec || zflow->tcp.clientNwLatency.tv_usec)
+  if (zflow->tcp.clientNwLatency.tv_sec || zflow->tcp.clientNwLatency.tv_usec) {
     /* As nProbe divides RTT by 2, we need to double it */
-    zflow->tcp.clientNwLatency.tv_sec *= 2,  zflow->tcp.clientNwLatency.tv_usec *= 2;
+    zflow->tcp.clientNwLatency.tv_sec *= 2, zflow->tcp.clientNwLatency.tv_usec *= 2;
     flow->setFlowRTT(&zflow->tcp.clientNwLatency, src2dst_direction);
-
+  }
+  
   if (zflow->tcp.serverNwLatency.tv_sec || zflow->tcp.serverNwLatency.tv_usec) {
     /* As nProbe divides RTT by 2, we need to double it */
-    zflow->tcp.serverNwLatency.tv_sec *= 2,  zflow->tcp.serverNwLatency.tv_usec *= 2;
+    zflow->tcp.serverNwLatency.tv_sec *= 2, zflow->tcp.serverNwLatency.tv_usec *= 2;
     flow->setFlowRTT(&zflow->tcp.serverNwLatency, !src2dst_direction);
   }
   
