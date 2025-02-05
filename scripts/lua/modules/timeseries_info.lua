@@ -3141,6 +3141,46 @@ end
 
 -- #################################
 
+local function add_redis_command_timeseries(tags, timeseries)
+    local tmp_tags = table.clone(tags)
+    local redis_timeseries_enabled = areSystemTimeseriesEnabled()
+    if redis_timeseries_enabled then
+        local series = ts_utils.listSeries("redis:hits", tmp_tags, tags.epoch_begin) or {}
+        if not table.empty(series) then
+            for _, serie in pairs(series or {}) do
+                local tot = 0
+                tmp_tags.command = serie.command
+                local tot_serie = ts_utils.queryTotal("redis:hits", tags.epoch_begin, tags.epoch_end, tmp_tags)
+                -- Remove serie with no data
+                for _, value in pairs(tot_serie or {}) do
+                    tot = tot + tonumber(value)
+                end
+    
+                if (tot > 0) then
+                    local label = string.upper(string.sub(serie.command, 5))
+                    timeseries[#timeseries + 1] = {
+                        schema = "redis:hits",
+                        group = i18n("graphs.commands"),
+                        priority = 2,
+                        query = "command:" .. serie.command,
+                        label = label,
+                        measure_unit = "number",
+                        timeseries = {
+                            num_calls = {
+                                label = label .. " " .. i18n("graphs.commands")
+                            }
+                        }
+                    }
+                end
+            end
+        end
+    end
+
+    return timeseries
+end
+
+-- #################################
+
 local function add_top_timeseries(tags, prefix, timeseries)
     if prefix == 'iface' then
         -- Add the top interface timeseries
@@ -3183,6 +3223,8 @@ local function add_top_timeseries(tags, prefix, timeseries)
     elseif prefix == timeseries_id.blacklist then
         -- Add the top interface timeseries
         timeseries = add_top_blacklist_hits_timeseries(tags, timeseries)
+    elseif prefix == timeseries_id.redis then
+        timeseries = add_redis_command_timeseries(tags, timeseries)
     end
     if timeseries ~= nil then
     end
