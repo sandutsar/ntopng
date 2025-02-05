@@ -1120,13 +1120,6 @@ void Flow::processPacket(const struct pcap_pkthdr *h, const u_char *ip_packet,
   else if(isIEC60870())
     processIEC60870Packet((htons(src_port) == 2404) ? true : false, payload,
                           payload_len, h);
-#ifdef NTOPNG_PRO
-#if 0
-  else if(isModbus())
-    processModbusPacket((htons(src_port) != 502) ? true : false, payload,
-			payload_len, h);
-#endif
-#endif
 
   if(detection_completed) {
     if(!needsExtraDissection()) {

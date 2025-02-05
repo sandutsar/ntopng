@@ -65,7 +65,6 @@ void RemoteHost::set_hash_entry_state_idle() {
 void RemoteHost::initialize() {
   char buf[64], host[96];
   char *strIP = ip.print(buf, sizeof(buf));
-  char rsp[256];
 
   snprintf(host, sizeof(host), "%s@%u", strIP, vlan_id);
   stats = allocateStats();
@@ -73,6 +72,7 @@ void RemoteHost::initialize() {
                  true /* first inc */);
 
 #if 0  /* Redis won't cache remote hosts */
+  char rsp[256];
   if (ntop->getPrefs()->is_dns_resolution_enabled_for_all_hosts()) {
     /* Just ask ntopng to resolve the name. Actual name will be grabbed once
        needed using the getter.
