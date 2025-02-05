@@ -289,7 +289,7 @@ end
 function asset_utils.insertHost(entry, version, ifid)
     local query = nil
     entry = updateData(entry, ifid, "host")
-    if not isIPv4(entry["ip"]) or not isIPv6(entry["ip"]) then
+    if not isIPv4(entry["ip"]) and not isIPv6(entry["ip"]) then
         traceError(TRACE_ERROR, TRACE_CONSOLE, "Detected Asset without IP Address:\n")
         tprint(entry)
         return
