@@ -219,29 +219,33 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
     }
   }
 
-  srcIP.set(&zflow->src_ip), dstIP.set(&zflow->dst_ip);
+  if((zflow->src_ip.getVersion() == 0)
+     || (zflow->dst_ip.getVersion() == 0)) {
+    flow = NULL; /* Invalid IPs */
+  } else {  
+    srcIP.set(&zflow->src_ip), dstIP.set(&zflow->dst_ip);
+    
+    INTERFACE_PROFILING_SECTION_ENTER("NetworkInterface::processFlow: getFlow", 0);
+    
+    if (zflow->getSIPCallId()) {
+      size_t len = strlen(zflow->getSIPCallId());
 
-  INTERFACE_PROFILING_SECTION_ENTER("NetworkInterface::processFlow: getFlow", 0);
+      private_flow_id = ndpi_quick_hash((const unsigned char *)zflow->getSIPCallId(), len);
+    } else
+      private_flow_id = 0;
 
-  if (zflow->getSIPCallId()) {
-    size_t len = strlen(zflow->getSIPCallId());
+    /* Updating Flow */
+    flow = getFlow(UNKNOWN_PKT_IFACE_IDX, srcMac, dstMac, zflow->vlan_id,
+		   zflow->observationPointId, private_flow_id,
+		   zflow->exporter_device_ip, zflow->inIndex, zflow->outIndex,
+		   NULL /* ICMPinfo */, &srcIP, &dstIP, zflow->src_port,
+		   zflow->dst_port, zflow->l4_proto, &src2dst_direction,
+		   zflow->first_switched, zflow->last_switched, 0, &new_flow,
+		   true, (u_int8_t *)zflow->src_mac, (u_int8_t *)zflow->dst_mac);
 
-    private_flow_id =
-        ndpi_quick_hash((const unsigned char *)zflow->getSIPCallId(), len);
-  } else
-    private_flow_id = 0;
-
-  /* Updating Flow */
-  flow = getFlow(UNKNOWN_PKT_IFACE_IDX, srcMac, dstMac, zflow->vlan_id,
-                 zflow->observationPointId, private_flow_id,
-                 zflow->exporter_device_ip, zflow->inIndex, zflow->outIndex,
-                 NULL /* ICMPinfo */, &srcIP, &dstIP, zflow->src_port,
-                 zflow->dst_port, zflow->l4_proto, &src2dst_direction,
-                 zflow->first_switched, zflow->last_switched, 0, &new_flow,
-                 true, (u_int8_t *)zflow->src_mac, (u_int8_t *)zflow->dst_mac);
-
-  INTERFACE_PROFILING_SECTION_EXIT(0);
-
+    INTERFACE_PROFILING_SECTION_EXIT(0);
+  }
+  
   if(flow) {
     /* Fix interaface Id (if zero) */
 

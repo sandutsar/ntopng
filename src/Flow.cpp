@@ -2432,19 +2432,21 @@ void Flow::periodic_stats_update(const struct timeval *tv) {
   u_int64_t diff_rcvd_bytes = partial.get_srv2cli_bytes();
   u_int64_t diff_rcvd_goodput_bytes = partial.get_srv2cli_goodput_bytes();
 
-  get_actual_peers(&cli_h,
-                   &srv_h); /* Do the stats update on the actual peers, i.e.,
-                               peers possibly swapped due to the heuristic */
-
+  /*
+    Do the stats update on the actual peers, i.e.,
+    peers possibly swapped due to the heuristic
+  */  
+  get_actual_peers(&cli_h, &srv_h);
+  
   Mac *cli_mac = cli_h ? cli_h->getMac() : NULL;
   Mac *srv_mac = srv_h ? srv_h->getMac() : NULL;
 
-  hosts_periodic_stats_update(getInterface(), cli_h, srv_h, &partial,
-                              first_partial, tv);
+  hosts_periodic_stats_update(getInterface(), cli_h, srv_h, &partial, first_partial, tv);
 
   if(cli_h && srv_h) {
     if(diff_sent_bytes || diff_rcvd_bytes) {
       /* Update L2 Device stats */
+      
       if(srv_mac) {
 	//#ifdef HAVE_NEDGE
         srv_mac->incSentStats(tv->tv_sec, diff_rcvd_packets, diff_rcvd_bytes);
