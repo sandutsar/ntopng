@@ -4229,6 +4229,7 @@ local lang = {
     ["cli_udp_ports"] = "Client UDP Ports",
     ["contacted_hosts"] = "Contacted Hosts",
     ["contacts"] = "Contacts",
+    ["commands"] = "Commands",
     ["custom"] = "Custom",
     ["discarded_probing_bytes"] = "Discarded Probing Traffic",
     ["discarded_probing_packets"] = "Discarded Probing Packets",
