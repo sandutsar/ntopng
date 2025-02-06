@@ -149,10 +149,14 @@ const validateNetworkAddresses = () => {
             } else if (regexValidation.validateIPv6(net)) {
                 fixed_networks.push(net + "/128");
                 return;
-            } else {
-                validationErrors[key] = 'Invalid Network format';
-                isValid = false;
-            }
+            } else if (key === "whitelisted_networks") {
+                if (regexValidation.validateMAC(net)) {
+                    fixed_networks.push(net);
+                    return;
+                }    
+            } 
+            validationErrors[key] = 'Invalid Network format';
+            isValid = false;
         })
         if (isValid) {
             networks[key] = fixed_networks.join(",")
