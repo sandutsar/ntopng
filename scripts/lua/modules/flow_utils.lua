@@ -733,7 +733,7 @@ function getFlowLabel(flow, show_macs, add_hyperlinks, historical_bounds, hyperl
             cli_mac = ""
         else
             if cli_mac and (cli_mac ~= "00:00:00:00:00:00") and not interface.isView() then
-                cli_mac = "<A HREF=\"" .. ntop.getHttpPrefix() .. "/lua/hosts_stats.lua?mac=" .. cli_mac .. "\">" ..
+                cli_mac = "<A HREF=\"" .. ntop.getHttpPrefix() .. "/lua/mac_details.lua?host=" .. cli_mac .. "\">" ..
                               cli_mac .. "</A>"
             elseif interface.isView() and (cli_mac ~= "00:00:00:00:00:00") then
                 cli_mac = cli_mac or ""
@@ -748,7 +748,7 @@ function getFlowLabel(flow, show_macs, add_hyperlinks, historical_bounds, hyperl
             srv_mac = ""
         else
             if srv_mac and (srv_mac ~= "00:00:00:00:00:00") and not interface.isView() then
-                srv_mac = "<A HREF=\"" .. ntop.getHttpPrefix() .. "/lua/hosts_stats.lua?mac=" .. srv_mac .. "\">" ..
+                srv_mac = "<A HREF=\"" .. ntop.getHttpPrefix() .. "/lua/mac_details.lua?host=" .. srv_mac .. "\">" ..
                               srv_mac .. "</A>"
             elseif interface.isView() and (srv_mac ~= "00:00:00:00:00:00") then
                 srv_mac = srv_mac or ""
