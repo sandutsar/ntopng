@@ -186,7 +186,7 @@ Prefs::Prefs(Ntop *_ntop) {
 #endif
   print_version = print_version_json = false;
 
-  if (!(ifNames = (InterfaceInfo *)calloc(UNLIMITED_NUM_INTERFACES,
+  if(!(ifNames = (InterfaceInfo *)calloc(UNLIMITED_NUM_INTERFACES,
                                           sizeof(InterfaceInfo))) ||
       !(deferred_interfaces_to_register =
 	(char **)calloc(UNLIMITED_NUM_INTERFACES, sizeof(char *))))
@@ -251,19 +251,19 @@ Prefs::Prefs(Ntop *_ntop) {
 /* ******************************************* */
 
 Prefs::~Prefs() {
-  if (ifNames) {
+  if(ifNames) {
     for (int i = 0; i < num_interfaces; i++) {
-      if (ifNames[i].name) free(ifNames[i].name);
-      if (ifNames[i].description) free(ifNames[i].description);
+      if(ifNames[i].name) free(ifNames[i].name);
+      if(ifNames[i].description) free(ifNames[i].description);
     }
 
     free(ifNames);
     ifNames = NULL;
   }
 
-  if (deferred_interfaces_to_register) {
+  if(deferred_interfaces_to_register) {
     for (int i = 0; i < num_deferred_interfaces_to_register; i++) {
-      if (deferred_interfaces_to_register[i])
+      if(deferred_interfaces_to_register[i])
         free(deferred_interfaces_to_register[i]);
     }
 
@@ -272,56 +272,56 @@ Prefs::~Prefs() {
   }
 
   if(http_log_path)           free(http_log_path);
-  if (zmq_publish_events_url) free(zmq_publish_events_url);
-  if (data_dir) free(data_dir);
-  if (install_dir) free(install_dir);
-  if (docs_dir) free(docs_dir);
-  if (scripts_dir) free(scripts_dir);
-  if (callbacks_dir) free(callbacks_dir);
+  if(zmq_publish_events_url) free(zmq_publish_events_url);
+  if(data_dir) free(data_dir);
+  if(install_dir) free(install_dir);
+  if(docs_dir) free(docs_dir);
+  if(scripts_dir) free(scripts_dir);
+  if(callbacks_dir) free(callbacks_dir);
 #ifdef NTOPNG_PRO
-  if (pro_callbacks_dir) free(pro_callbacks_dir);
+  if(pro_callbacks_dir) free(pro_callbacks_dir);
 #endif
-  if (pcap_dir) free(pcap_dir);
-  if (config_file_path) free(config_file_path);
-  if (user) free(user);
-  if (pid_path) free(pid_path);
-  if (packet_filter) free(packet_filter);
-  if (cpu_affinity) free(cpu_affinity);
-  if (other_cpu_affinity) free(other_cpu_affinity);
-  if (es_type) free(es_type);
-  if (es_index) free(es_index);
-  if (es_url) free(es_url);
-  if (es_user) free(es_user);
-  if (es_pwd) free(es_pwd);
-  if (es_host) free(es_host);
-  if (instance_name) free(instance_name);
-  if (http_index_page) free(http_index_page);
+  if(pcap_dir) free(pcap_dir);
+  if(config_file_path) free(config_file_path);
+  if(user) free(user);
+  if(pid_path) free(pid_path);
+  if(packet_filter) free(packet_filter);
+  if(cpu_affinity) free(cpu_affinity);
+  if(other_cpu_affinity) free(other_cpu_affinity);
+  if(es_type) free(es_type);
+  if(es_index) free(es_index);
+  if(es_url) free(es_url);
+  if(es_user) free(es_user);
+  if(es_pwd) free(es_pwd);
+  if(es_host) free(es_host);
+  if(instance_name) free(instance_name);
+  if(http_index_page) free(http_index_page);
   free(http_prefix);
   free(local_networks);
   free(redis_host);
-  if (redis_password) free(redis_password);
-  if (cli) free(cli);
-  if (ciphers_list) free(ciphers_list);
-  if (mysql_host) free(mysql_host);
-  if (mysql_dbname) free(mysql_dbname);
-  if (mysql_user) free(mysql_user);
+  if(redis_password) free(redis_password);
+  if(cli) free(cli);
+  if(ciphers_list) free(ciphers_list);
+  if(mysql_host) free(mysql_host);
+  if(mysql_dbname) free(mysql_dbname);
+  if(mysql_user) free(mysql_user);
 #if defined(HAVE_CLICKHOUSE) && defined(NTOPNG_PRO) && defined(HAVE_MYSQL)
-  if (ch_user) free(ch_user);
+  if(ch_user) free(ch_user);
 #endif
-  if (mysql_pw) free(mysql_pw);
-  if (ls_host) free(ls_host);
-  if (ls_port) free(ls_port);
-  if (ls_proto) free(ls_proto);
-  if (http_binding_address1) free(http_binding_address1);
-  if (http_binding_address2) free(http_binding_address2);
-  if (https_binding_address1) free(https_binding_address1);
-  if (https_binding_address2) free(https_binding_address2);
-  if (ndpi_proto_path) free(ndpi_proto_path);
-  if (test_pre_script_path) free(test_pre_script_path);
-  if (test_runtime_script_path) free(test_runtime_script_path);
-  if (test_post_script_path) free(test_post_script_path);
-  if (message_broker_url) free(message_broker_url);
-  if (message_broker) free(message_broker);
+  if(mysql_pw) free(mysql_pw);
+  if(ls_host) free(ls_host);
+  if(ls_port) free(ls_port);
+  if(ls_proto) free(ls_proto);
+  if(http_binding_address1) free(http_binding_address1);
+  if(http_binding_address2) free(http_binding_address2);
+  if(https_binding_address1) free(https_binding_address1);
+  if(https_binding_address2) free(https_binding_address2);
+  if(ndpi_proto_path) free(ndpi_proto_path);
+  if(test_pre_script_path) free(test_pre_script_path);
+  if(test_runtime_script_path) free(test_runtime_script_path);
+  if(test_post_script_path) free(test_post_script_path);
+  if(message_broker_url) free(message_broker_url);
+  if(message_broker) free(message_broker);
 #ifdef NTOPNG_PRO
   if(modbus_allowed_function_codes)
     ndpi_bitmap_free(modbus_allowed_function_codes);
@@ -791,23 +791,23 @@ void usage() {
 void Prefs::setTraceLevelFromRedis() {
   char *lvlStr;
 
-  if ((lvlStr = (char *)malloc(CONST_MAX_LEN_REDIS_VALUE)) == NULL)
+  if((lvlStr = (char *)malloc(CONST_MAX_LEN_REDIS_VALUE)) == NULL)
     ;
 
-  if (!hasCmdlTraceLevel() &&
+  if(!hasCmdlTraceLevel() &&
       ntop->getRedis()->get((char *)CONST_RUNTIME_PREFS_LOGGING_LEVEL, lvlStr,
                             CONST_MAX_LEN_REDIS_VALUE) == 0) {
-    if (!strcmp(lvlStr, "trace")) {
+    if(!strcmp(lvlStr, "trace")) {
       ntop->getTrace()->set_trace_level(TRACE_LEVEL_TRACE);
-    } else if (!strcmp(lvlStr, "debug")) {
+    } else if(!strcmp(lvlStr, "debug")) {
       ntop->getTrace()->set_trace_level(TRACE_LEVEL_DEBUG);
-    } else if (!strcmp(lvlStr, "info")) {
+    } else if(!strcmp(lvlStr, "info")) {
       ntop->getTrace()->set_trace_level(TRACE_LEVEL_INFO);
-    } else if (!strcmp(lvlStr, "normal")) {
+    } else if(!strcmp(lvlStr, "normal")) {
       ntop->getTrace()->set_trace_level(TRACE_LEVEL_NORMAL);
-    } else if (!strcmp(lvlStr, "warning")) {
+    } else if(!strcmp(lvlStr, "warning")) {
       ntop->getTrace()->set_trace_level(TRACE_LEVEL_WARNING);
-    } else if (!strcmp(lvlStr, "error")) {
+    } else if(!strcmp(lvlStr, "error")) {
       ntop->getTrace()->set_trace_level(TRACE_LEVEL_ERROR);
     }
   }
@@ -819,7 +819,7 @@ void Prefs::setTraceLevelFromRedis() {
 
 char *Prefs::get_if_name(int id) {
   for (int i = 0; i < num_interfaces; i++) {
-    if (ifNames[i].id == id) return ifNames[i].name;
+    if(ifNames[i].id == id) return ifNames[i].name;
   }
 
   return NULL;
@@ -829,7 +829,7 @@ char *Prefs::get_if_name(int id) {
 
 char *Prefs::get_if_descr(int id) {
   for (int i = 0; i < num_interfaces; i++) {
-    if (ifNames[i].id == id) return ifNames[i].description;
+    if(ifNames[i].id == id) return ifNames[i].description;
   }
 
   return NULL;
@@ -841,7 +841,7 @@ void Prefs::getDefaultStringPrefsValue(const char *pref_key, char **buffer,
                                        const char *default_value) {
   char rsp[MAX_PATH];
 
-  if ((ntop->getRedis()->get((char *)pref_key, rsp, sizeof(rsp)) == 0) && (rsp[0] != '\0') && strcmp(rsp, "nil"))
+  if((ntop->getRedis()->get((char *)pref_key, rsp, sizeof(rsp)) == 0) && (rsp[0] != '\0') && strcmp(rsp, "nil"))
     *buffer = strdup(rsp);
   else
     *buffer = strdup(default_value);
@@ -853,7 +853,7 @@ bool Prefs::getDefaultBoolPrefsValue(const char *pref_key,
                                      const bool default_value) {
   char rsp[8];
 
-  if (ntop->getRedis()->get((char *)pref_key, rsp, sizeof(rsp)) == 0 &&
+  if(ntop->getRedis()->get((char *)pref_key, rsp, sizeof(rsp)) == 0 &&
       rsp[0] != '\0') {
     return ((rsp[0] == '1' || rsp[0] =='t' /* true */ ) ? true : false);
   } else {
@@ -869,7 +869,7 @@ int32_t Prefs::getDefaultPrefsValue(const char *pref_key,
                                     int32_t default_value) {
   char rsp[32];
 
-  if (ntop->getRedis()->get((char *)pref_key, rsp, sizeof(rsp)) == 0)
+  if(ntop->getRedis()->get((char *)pref_key, rsp, sizeof(rsp)) == 0)
     return (atoi(rsp));
   else {
     snprintf(rsp, sizeof(rsp), "%i", default_value);
@@ -881,9 +881,9 @@ int32_t Prefs::getDefaultPrefsValue(const char *pref_key,
 /* ******************************************* */
 
 static TsDriver str2TsDriver(const char *driver) {
-  if (!strcmp(driver, "influxdb"))
+  if(!strcmp(driver, "influxdb"))
     return (ts_driver_influxdb);
-  else if (!strcmp(driver, "prometheus"))
+  else if(!strcmp(driver, "prometheus"))
     return (ts_driver_prometheus);
   else
     return (ts_driver_rrd);
@@ -1007,48 +1007,48 @@ void Prefs::reloadPrefsFromRedis() {
   enable_broadcast_domain_too_large = getDefaultBoolPrefsValue(CONST_PREFS_BROADCAST_DOMAIN_TOO_LARGE, false);
 
   getDefaultStringPrefsValue(CONST_RUNTIME_PREFS_TS_DRIVER, &aux, (char *)"rrd");
-  if (aux) {
+  if(aux) {
     timeseries_driver = str2TsDriver(aux);
     free(aux);
   }
 
   getDefaultStringPrefsValue(CONST_RUNTIME_PREFS_ENABLE_MAC_NDPI_STATS, &aux, (char *)"none");
-  if (aux) {
+  if(aux) {
     enable_mac_ndpi_stats = strncmp(aux, (char *)"none", 4);
     free(aux);
   }
 
   getDefaultStringPrefsValue(CONST_SAFE_SEARCH_DNS, &aux, DEFAULT_SAFE_SEARCH_DNS);
-  if (aux) {
+  if(aux) {
     safe_search_dns_ip = Utils::inet_addr(aux);
     free(aux);
   }
 
   getDefaultStringPrefsValue(CONST_GLOBAL_DNS, &aux, DEFAULT_GLOBAL_DNS);
-  if (aux) {
+  if(aux) {
     global_primary_dns_ip = Utils::inet_addr(aux);
     free(aux);
   }
 
   getDefaultStringPrefsValue(CONST_SECONDARY_DNS, &aux, DEFAULT_GLOBAL_DNS);
-  if (aux) {
+  if(aux) {
     global_secondary_dns_ip = Utils::inet_addr(aux);
     free(aux);
   }
 
   getDefaultStringPrefsValue(CONST_PREFS_MESSAGE_BROKER_URL, &tmp, DEFAULT_MESSAGE_BROKER_URL);
-  if (tmp) {
-    if (message_broker_url) free(message_broker_url);
+  if(tmp) {
+    if(message_broker_url) free(message_broker_url);
     message_broker_url = strdup(tmp);
     free(tmp);
   }
 
   getDefaultStringPrefsValue(CONST_PREFS_MESSAGE_BROKER, &tmp, DEFAULT_MESSAGE_BROKER);
-  if (message_broker) free(message_broker);
+  if(message_broker) free(message_broker);
   message_broker = tmp;
 
   getDefaultStringPrefsValue(CONST_PREFS_HTTP_INDEX_PAGE, &tmp, DEFAULT_HTTP_INDEX_PAGE);
-  if (http_index_page) free(http_index_page);
+  if(http_index_page) free(http_index_page);
 
   if(tmp[0] == '\0') {
     free(tmp);
@@ -1148,12 +1148,12 @@ void Prefs::refreshBehaviourAnalysis() {
 
 void Prefs::loadInstanceNameDefaults() {
   // Do not re-set the interface name if it has already been set via command line
-  if (instance_name || !ntop)
+  if(instance_name || !ntop)
     return;
   else {
     char tmp[256];
 
-    if (gethostname(tmp, sizeof(tmp)))
+    if(gethostname(tmp, sizeof(tmp)))
       ntop->getTrace()->traceEvent(TRACE_ERROR, "Unable to read hostname [%s]",
                                    strerror(errno));
     else
@@ -1277,7 +1277,7 @@ void Prefs::parseHTTPPort(char *arg) {
   snprintf(tmp, sizeof(tmp), "%s", arg);
 
   a = strtok_r(tmp, ",", &_t);
-  if (a) http_port = atoi(a);
+  if(a) http_port = atoi(a);
 }
 
 /* ******************************************* */
@@ -1285,13 +1285,13 @@ void Prefs::parseHTTPPort(char *arg) {
 char *Prefs::parseLocalNetworks(char *arg) {
   struct stat buf;
 
-  if ((stat(arg, &buf) == 0) && S_ISREG(buf.st_mode)) {
+  if((stat(arg, &buf) == 0) && S_ISREG(buf.st_mode)) {
     string res;
     string line;
     ifstream fl(arg);
     char to_trim[] = {'\t', ' ', '\n', '\r', '"', '\'', '\0'};
 
-    if (fl.is_open()) {
+    if(fl.is_open()) {
       /*
         A file with local networks.
         Multiple local networks are expressed either using commas and also on
@@ -1302,10 +1302,10 @@ char *Prefs::parseLocalNetworks(char *arg) {
         9.9.9.9/32
         10.0.0.0/8
       */
-      while (getline(fl, line)) {
+      while(getline(fl, line)) {
         const char *l = line.c_str();
 
-        if ((l[0] == '\0') || (l[0] == '#')) continue;
+        if((l[0] == '\0') || (l[0] == '#')) continue;
 
         for (u_int i = 0; to_trim[i] != '\0'; i++)
           line.erase(std::remove(line.begin(), line.end(), to_trim[i]),
@@ -1315,7 +1315,7 @@ char *Prefs::parseLocalNetworks(char *arg) {
 
         /* Append the comma if local networks are specified across multiple file
          * lines */
-        if (res.size() > 0) res += ",";
+        if(res.size() > 0) res += ",";
 
         /* Append the current line with one or more local networks */
         res += line;
@@ -1339,9 +1339,9 @@ void Prefs::setCommandLineString(int optkey, const char *optarg) {
   int len = 6;
   int i;
 
-  if (optarg) {
+  if(optarg) {
     for (i = 0; hidden_optkeys[i] != 0; i++) {
-      if (optkey == hidden_optkeys[i]) {
+      if(optkey == hidden_optkeys[i]) {
         optarg = "[hidden]";
         break;
       }
@@ -1350,33 +1350,33 @@ void Prefs::setCommandLineString(int optkey, const char *optarg) {
   }
 
   for (i = 0; long_options[i].name != NULL; i++) {
-    if (long_options[i].val == optkey) {
+    if(long_options[i].val == optkey) {
       opt = (char *)long_options[i].name;
       len += strlen(opt) + 2;
       break;
     }
   }
 
-  if ((p = (char *)malloc(len)) != NULL) {
-    if (opt) {
-      if (optarg && strlen(optarg))
+  if((p = (char *)malloc(len)) != NULL) {
+    if(opt) {
+      if(optarg && strlen(optarg))
         snprintf(p, len - 1, "--%s \'%s\' ", opt, optarg);
       else
         snprintf(p, len - 1, "--%s ", opt);
     } else {
-      if (optarg && strlen(optarg))
+      if(optarg && strlen(optarg))
         snprintf(p, len - 1, "-%c %s ", optkey, optarg);
       else
         snprintf(p, len - 1, "-%c ", optkey);
     }
 
-    if (cli == NULL)
+    if(cli == NULL)
       cli = p;
     else {
       int l = strlen(cli);
       char *backup = cli;
 
-      if ((cli = (char *)realloc(cli, l + len)) != NULL) {
+      if((cli = (char *)realloc(cli, l + len)) != NULL) {
         strcpy(&cli[l], p);
         free(p);
       } else
@@ -1429,9 +1429,9 @@ int Prefs::setOption(int optkey, char *optarg) {
   char *double_dot, buf[128] = {'\0'};
 
   opt = long_options;
-  while (opt->name != NULL) {
-    if (optkey == opt->val) {
-      if (opt->has_arg == required_argument && (!optarg || optarg[0] == '\0')) {
+  while(opt->name != NULL) {
+    if(optkey == opt->val) {
+      if(opt->has_arg == required_argument && (!optarg || optarg[0] == '\0')) {
         ntop->getTrace()->traceEvent(
 				     TRACE_WARNING,
 				     "Missing required argument. Skipping option -%c (--%s).", opt->val,
@@ -1449,7 +1449,7 @@ int Prefs::setOption(int optkey, char *optarg) {
 
   switch (optkey) {
   case 'B':
-    if ((optarg[0] == '\"') && (strlen(optarg) > 2)) {
+    if((optarg[0] == '\"') && (strlen(optarg) > 2)) {
       packet_filter = strdup(&optarg[1]);
       packet_filter[strlen(packet_filter) - 1] = '\0';
     } else
@@ -1493,8 +1493,8 @@ int Prefs::setOption(int optkey, char *optarg) {
   case 'm': {
     char *cur_nets = parseLocalNetworks(optarg);
 
-    if (cur_nets) {
-      if (!local_networks_set) {
+    if(cur_nets) {
+      if(!local_networks_set) {
 	free(local_networks);
 
 	local_networks = cur_nets;
@@ -1503,11 +1503,11 @@ int Prefs::setOption(int optkey, char *optarg) {
 	/* If local_networks is already set up, the new -m argument is going
 	 * to be concat (comma separeted) to the old one */
 
-	if (strlen(cur_nets) > 0) {
+	if(strlen(cur_nets) > 0) {
 	  int new_local_networks_size = strlen(local_networks) + strlen(cur_nets) + 2;
 	  char *new_local_networks    = (char *)malloc(sizeof(char) * new_local_networks_size);
 
-	  if (new_local_networks) {
+	  if(new_local_networks) {
 	    snprintf(new_local_networks, new_local_networks_size, "%s,%s",
 		     local_networks, cur_nets);
 	    free(local_networks);
@@ -1580,22 +1580,22 @@ int Prefs::setOption(int optkey, char *optarg) {
     break;
 
   case 'i':
-    if (!optarg)
+    if(!optarg)
       ntop->getTrace()->traceEvent(TRACE_ERROR,
 				   "No interface specified, -i ignored");
-    else if (strlen(optarg) > MAX_INTERFACE_NAME_LEN - 1)
+    else if(strlen(optarg) > MAX_INTERFACE_NAME_LEN - 1)
       ntop->getTrace()->traceEvent(TRACE_ERROR,
 				   "Interface name too long (exceeding %d characters): ignored %s",
 				   MAX_INTERFACE_NAME_LEN - 1, optarg);
-    else if (!addDeferredInterfaceToRegister(optarg))
+    else if(!addDeferredInterfaceToRegister(optarg))
       ntop->getTrace()->traceEvent(TRACE_ERROR, "Too many interfaces specified with -i: ignored %s", optarg);
     break;
 
   case 'w':
-    if (strchr(optarg, ':') == NULL) {
+    if(strchr(optarg, ':') == NULL) {
       // only the port
       parseHTTPPort(optarg);
-    } else if (optarg[0] == ':') {
+    } else if(optarg[0] == ':') {
       // first char == ':' binds to the loopback address
       parseHTTPPort(&optarg[1]);
       bind_http_to_loopback();
@@ -1610,10 +1610,10 @@ int Prefs::setOption(int optkey, char *optarg) {
     break;
 
   case 'W':
-    if (strchr(optarg, ':') == NULL) {
+    if(strchr(optarg, ':') == NULL) {
       // only the port
       https_port = atoi(optarg);
-    } else if (optarg[0] == ':') {
+    } else if(optarg[0] == ':') {
       // first char == ':' binds to the loopback address
       https_port = atoi(&optarg[1]);
       bind_https_to_loopback();
@@ -1632,7 +1632,7 @@ int Prefs::setOption(int optkey, char *optarg) {
     break;
 
   case 'Z':
-    if (optarg[0] != '/') {
+    if(optarg[0] != '/') {
       ntop->getTrace()->traceEvent(
 				   TRACE_WARNING,
 				   "-Z argument (%s) must begin with '/' (example /ntopng): skipped",
@@ -1640,8 +1640,8 @@ int Prefs::setOption(int optkey, char *optarg) {
     } else {
       int len = strlen(optarg);
 
-      if (len > 0) {
-	if (optarg[len - 1] == '/') {
+      if(len > 0) {
+	if(optarg[len - 1] == '/') {
 	  ntop->getTrace()->traceEvent(TRACE_WARNING,
 				       "-Z argument (%s) cannot end with '/' "
 				       "(example /ntopng): skipped",
@@ -1671,12 +1671,12 @@ int Prefs::setOption(int optkey, char *optarg) {
     */
     snprintf(buf, sizeof(buf), "%s", optarg);
     r = strrchr(buf, '@');
-    if (r) {
+    if(r) {
       bool is_float;
       char *idptr = &r[1];
-      if (Utils::isNumber(idptr, strlen(idptr), &is_float)) {
+      if(Utils::isNumber(idptr, strlen(idptr), &is_float)) {
 	int id = atoi((const char *)idptr);
-	if (id < 0 || id > 0xff) {
+	if(id < 0 || id > 0xff) {
 	  ntop->getTrace()->traceEvent(
 				       TRACE_WARNING,
 				       "Redis DB ID provided with --redis|-r cannot be bigger than %u",
@@ -1688,28 +1688,28 @@ int Prefs::setOption(int optkey, char *optarg) {
       }
     }
 
-    if (strchr(buf, ':')) {
+    if(strchr(buf, ':')) {
       char *w, *c;
 
       c = strtok_r(buf, ":", &w);
 
-      if (redis_host) free(redis_host);
+      if(redis_host) free(redis_host);
       redis_host = strdup(c);
 
       c = strtok_r(NULL, ":", &w);
-      if (c) redis_port = atoi(c);
+      if(c) redis_port = atoi(c);
 
       c = strtok_r(NULL, "\0", &w);
-      if (c) redis_password = strdup(c);
-    } else if (strlen(buf) > 0) {
+      if(c) redis_password = strdup(c);
+    } else if(strlen(buf) > 0) {
       /* only the host */
-      if (redis_host) free(redis_host);
+      if(redis_host) free(redis_host);
       redis_host = strdup(buf);
     }
 
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "ntopng will use redis %s@%u",
 				 redis_host, redis_db_id);
-    if (redis_password)
+    if(redis_password)
       ntop->getTrace()->traceEvent(TRACE_NORMAL,
 				   "redis connection is password-protected");
   } break;
@@ -1734,7 +1734,7 @@ int Prefs::setOption(int optkey, char *optarg) {
     break;
 
   case '5':
-    if (pcap_dir) free(pcap_dir);
+    if(pcap_dir) free(pcap_dir);
     pcap_dir = strdup(optarg);
     break;
 
@@ -1773,45 +1773,45 @@ int Prefs::setOption(int optkey, char *optarg) {
     break;
 
   case 'v': {
-    if (!optarg)
+    if(!optarg)
       ntop->getTrace()->traceEvent(
 				   TRACE_ERROR, "No value specified for verbosity: ignored");
     else {
       has_cmdl_trace_lvl = true;
       errno = 0;
       int8_t lvl = (int8_t)strtol(optarg, NULL, 10);
-      if (errno) {
+      if(errno) {
 	ntop->getTrace()->traceEvent(
 				     TRACE_ERROR, "Invalid '%s' value specified for -v: ignored",
 				     optarg);
       } else {
-	if (lvl < 0) lvl = 0;
+	if(lvl < 0) lvl = 0;
 	ntop->getTrace()->set_trace_level((u_int8_t)lvl);
       }
     }
   } break;
 
   case 'F':
-    if (!optarg)
+    if(!optarg)
       ntop->getTrace()->traceEvent(TRACE_ERROR,
 				   "No connection specified, -F ignored");
 
 #ifndef HAVE_NEDGE
-    else if ((strncmp(optarg, "es", 2) == 0) && (strlen(optarg) > 3)) {
+    else if((strncmp(optarg, "es", 2) == 0) && (strlen(optarg) > 3)) {
       char *elastic_index_type = NULL, *elastic_index_name = NULL,
 	*tmp = NULL, *elastic_url = NULL, *elastic_user = NULL,
 	*elastic_pwd = NULL;
       /* es;<index type>;<index name>;<es URL>;<es pwd> */
 
-      if ((elastic_index_type = strtok_r(&optarg[3], ";", &tmp)) != NULL) {
-	if ((elastic_index_name = strtok_r(NULL, ";", &tmp)) != NULL) {
-	  if ((elastic_url = strtok_r(NULL, ";", &tmp)) != NULL) {
-	    if ((elastic_user = strtok_r(NULL, ";", &tmp)) == NULL)
+      if((elastic_index_type = strtok_r(&optarg[3], ";", &tmp)) != NULL) {
+	if((elastic_index_name = strtok_r(NULL, ";", &tmp)) != NULL) {
+	  if((elastic_url = strtok_r(NULL, ";", &tmp)) != NULL) {
+	    if((elastic_user = strtok_r(NULL, ";", &tmp)) == NULL)
 	      elastic_pwd = (char *)"";
 	    else {
 	      char *double_col = strchr(elastic_user, ':');
 
-	      if (double_col)
+	      if(double_col)
 		elastic_pwd = &double_col[1], double_col[0] = '\0';
 	      else
 		elastic_pwd = (char *)"";
@@ -1820,7 +1820,7 @@ int Prefs::setOption(int optkey, char *optarg) {
 	}
       }
 
-      if (elastic_index_type && elastic_index_name && elastic_url) {
+      if(elastic_index_type && elastic_index_name && elastic_url) {
 	if(es_type)  free(es_type);
 	if(es_index) free(es_index);
 	if(es_url)   free(es_url);
@@ -1847,9 +1847,9 @@ int Prefs::setOption(int optkey, char *optarg) {
 	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Not enough memory");
 
 	if(es_type && es_index && es_url && es_user && es_pwd && es_host) {
-	  if (!strncmp(es_host, "http://", 7))  // url starts either with http or https
+	  if(!strncmp(es_host, "http://", 7))  // url starts either with http or https
 	    Utils::tokenizer(es_host + 7, '/', NULL);
-	  else if (!strncmp(es_host, "https://", 8))
+	  else if(!strncmp(es_host, "https://", 8))
 	    Utils::tokenizer(es_host + 8, '/', NULL);
 	  else
 	    Utils::tokenizer(es_host, '/', NULL);
@@ -1869,34 +1869,34 @@ int Prefs::setOption(int optkey, char *optarg) {
 
 #ifndef HAVE_NEDGE
 #if defined(HAVE_KAFKA) && defined(NTOPNG_PRO)
-    else if ((strncmp(optarg, "kafka", 5) == 0) && (strlen(optarg) > 3)) {
+    else if((strncmp(optarg, "kafka", 5) == 0) && (strlen(optarg) > 3)) {
       char *conf = strdup(&optarg[5]);
 
-      if (conf != NULL) {
+      if(conf != NULL) {
 	char *brokers_list, *tmp;
 
-	if ((brokers_list = strtok_r(conf, ";", &tmp)) != NULL) {
+	if((brokers_list = strtok_r(conf, ";", &tmp)) != NULL) {
 	  char *topic = strtok_r(NULL, ";", &tmp);
 
-	  if (conf != NULL) {
+	  if(conf != NULL) {
 	    char *options = strtok_r(NULL, ";", &tmp);
 
-	    if ((kafka_brokers_list = strdup(brokers_list)) != NULL) {
-	      if ((kafka_topic = strdup(topic)) != NULL) {
+	    if((kafka_brokers_list = strdup(brokers_list)) != NULL) {
+	      if((kafka_topic = strdup(topic)) != NULL) {
 		kafka_options = options ? strdup(options) : NULL;
 	      }
 	    }
 
-	    if ((kafka_brokers_list == NULL) || (kafka_topic == NULL)) {
+	    if((kafka_brokers_list == NULL) || (kafka_topic == NULL)) {
 	      /* Out of memory */
 	      ntop->getTrace()->traceEvent(TRACE_WARNING,
 					   "Not enough memory");
 
-	      if (kafka_brokers_list) {
+	      if(kafka_brokers_list) {
 		free(kafka_brokers_list);
 		kafka_brokers_list = NULL;
 	      }
-	      if (kafka_topic) {
+	      if(kafka_topic) {
 		free(kafka_topic);
 		kafka_topic = NULL;
 	      }
@@ -1916,14 +1916,14 @@ int Prefs::setOption(int optkey, char *optarg) {
 #endif
 #endif /* HAVE_NEDGE */
 
-    else if ((!strncmp(optarg, "mysql", 5)) ||
+    else if((!strncmp(optarg, "mysql", 5)) ||
 	     (!strncmp(optarg, "clickhouse", 10)) ||
 	     (!strncmp(optarg, "clickhouse-cluster", 18)) ||
        (!strncmp(optarg, "clickhouse-cloud", 16))) {
 #ifdef HAVE_MYSQL
       char *sep = strchr(optarg, ';');
 
-      if ((!sep) && (optarg[0] != 'c')) {
+      if((!sep) && (optarg[0] != 'c')) {
 	ntop->getTrace()->traceEvent(TRACE_WARNING, "Invalid --mysql/--clickhouse format: ignored");
       } else {
 	bool all_good = true;
@@ -1934,20 +1934,20 @@ int Prefs::setOption(int optkey, char *optarg) {
 	use_clickhouse_cluster   = (strncmp(optarg, "clickhouse-cluster", 18) == 0) ? true : false;
 	use_clickhouse_cloud   = (strncmp(optarg, "clickhouse-cloud", 16) == 0) ? true : false;
 
-	if (dump_flows_on_clickhouse) {
+	if(dump_flows_on_clickhouse) {
 	  /* Check if CLICKHOUSE_CLIENT is present */
 	  struct stat buf;
 	  bool client_found =((stat(CONST_BIN_DIR "/" CLICKHOUSE_CLIENT, &buf) == 0)
 			      && (S_ISREG(buf.st_mode))) ? true : false;
 
-	  if (!client_found) {
+	  if(!client_found) {
 	    client_found = ((stat(CONST_BIN_DIR "/" CLICKHOUSE_ALT_CLIENT, &buf) == 0) &&
 			    (S_ISREG(buf.st_mode))) ? true : false;
-	    if (client_found) clickhouse_client = CONST_BIN_DIR "/" CLICKHOUSE_ALT_CLIENT_CMD;
+	    if(client_found) clickhouse_client = CONST_BIN_DIR "/" CLICKHOUSE_ALT_CLIENT_CMD;
 	  } else
 	    clickhouse_client = CONST_BIN_DIR "/" CLICKHOUSE_CLIENT;
 
-	  if (!client_found) {
+	  if(!client_found) {
 	    ntop->getTrace()->traceEvent(TRACE_WARNING,
 					 "-F clickhouse is not available "
 					 "(ClickHouse client not found)");
@@ -1958,21 +1958,21 @@ int Prefs::setOption(int optkey, char *optarg) {
 	  }
 	}
 
-	if (all_good) {
+	if(all_good) {
 	  u_int num_semicolumns = 0;
 
 	  dump_flows_on_mysql = true;
 
 	  for (u_int i = 0; optarg[i] != '\0'; i++)
-	    if (optarg[i] == ';') num_semicolumns++;
+	    if(optarg[i] == ';') num_semicolumns++;
 
-	  if ((num_semicolumns == 0) && dump_flows_on_clickhouse) {
+	  if((num_semicolumns == 0) && dump_flows_on_clickhouse) {
 	    mysql_host = strdup((char *)"127.0.0.1");
 	    mysql_dbname = strdup((char *)"ntopng");
 	    mysql_user = strdup((char *)"default");
 	    mysql_pw = strdup((char *)"");
 
-	    if (use_clickhouse_cluster)
+	    if(use_clickhouse_cluster)
 	      clickhouse_cluster_name = strdup((char *)DEFAULT_CLICKHOUSE_CLUSTER);
 	  } else {
 	    optarg = Utils::tokenizer(sep + 1, ';', &mysql_host);
@@ -1980,25 +1980,25 @@ int Prefs::setOption(int optkey, char *optarg) {
 	    optarg = Utils::tokenizer(optarg, ';', &mysql_user);
 	    mysql_pw = strdup(optarg ? optarg : "");
 
-	    if (use_clickhouse_cluster) {
+	    if(use_clickhouse_cluster) {
 	      optarg = Utils::tokenizer(optarg, ';', &mysql_pw);
-	      if (optarg) clickhouse_cluster_name = strdup(optarg);
+	      if(optarg) clickhouse_cluster_name = strdup(optarg);
 	    }
 	  }
 
-    if (use_clickhouse_cloud) {      
+    if(use_clickhouse_cloud) {      
 #if defined(HAVE_CLICKHOUSE) && defined(NTOPNG_PRO) && defined(HAVE_MYSQL)
       char *comma;
       char *tmp = mysql_user;
       mysql_user = NULL;
-      if (tmp && (comma = strchr(tmp, ','))) {
+      if(tmp && (comma = strchr(tmp, ','))) {
 		    //ch_user = mysql_user;
         *(comma++) = '\0';
         mysql_user = strdup(comma);
         ch_user = strdup(tmp);
         free(tmp);
       }
-      if (!ch_user || !mysql_user) {
+      if(!ch_user || !mysql_user) {
         /* Falling back to default values */
         ntop->getTrace()->traceEvent(TRACE_WARNING,
                   "Invalid MySQL or ClickHouse user, falling back to local ClickHouse [ClickHouse user: %s, MySQL user: %s]",
@@ -2013,10 +2013,10 @@ int Prefs::setOption(int optkey, char *optarg) {
 #endif
     }
 
-	  if (use_clickhouse_cluster &&
+	  if(use_clickhouse_cluster &&
 	      ((clickhouse_cluster_name == NULL) ||
 	       (clickhouse_cluster_name[0] == '\0'))) {
-	    if (clickhouse_cluster_name) {
+	    if(clickhouse_cluster_name) {
 	      free((void *)clickhouse_cluster_name);
 	      clickhouse_cluster_name = NULL;
 	    }
@@ -2025,11 +2025,11 @@ int Prefs::setOption(int optkey, char *optarg) {
 	      strdup((char *)DEFAULT_CLICKHOUSE_CLUSTER);
 	  }
 
-	  if (mysql_host && mysql_user) {
-	    if ((mysql_dbname == NULL) || (mysql_dbname[0] == '\0'))
+	  if(mysql_host && mysql_user) {
+	    if((mysql_dbname == NULL) || (mysql_dbname[0] == '\0'))
 	      mysql_dbname = strdup("ntopng");
 
-	    if (mysql_pw == NULL) mysql_pw = strdup("");
+	    if(mysql_pw == NULL) mysql_pw = strdup("");
 
 	    /* Check for non-default SQL port on -F line */
 	    char *mysql_port_str;
@@ -2039,18 +2039,18 @@ int Prefs::setOption(int optkey, char *optarg) {
 	    clickhouse_tcp_port = CONST_DEFAULT_CLICKHOUSE_TCP_PORT;
 	    mysql_port_secure = clickhouse_tcp_port_secure = false; /* No TLS */
 
-	    if (!dump_flows_on_clickhouse)
+	    if(!dump_flows_on_clickhouse)
 	      mysql_port = CONST_DEFAULT_MYSQL_PORT;
 
 	    /* Configured ports, if any */
-	    if ((mysql_port_str = strchr(mysql_host, '@'))) {
+	    if((mysql_port_str = strchr(mysql_host, '@'))) {
 	      char *comma, *clickhouse_tcp_port_str;
 	      long l;
 	      int len;
 
 	      *(mysql_port_str++) = '\0';
 
-	      if ((comma = strchr(mysql_port_str, ','))) {
+	      if((comma = strchr(mysql_port_str, ','))) {
 		clickhouse_tcp_port_str = mysql_port_str;
 		*(comma++) = '\0';
 		mysql_port_str = comma;
@@ -2068,7 +2068,7 @@ int Prefs::setOption(int optkey, char *optarg) {
 		}
 		l = strtol(clickhouse_tcp_port_str, NULL, 10);
 
-		if (errno || !l)
+		if(errno || !l)
 		  ntop->getTrace()->traceEvent(TRACE_WARNING,
 					       "Invalid MySQL port, using default port %d [%s]",
 					       clickhouse_tcp_port, strerror(errno));
@@ -2090,7 +2090,7 @@ int Prefs::setOption(int optkey, char *optarg) {
 
 	      l = strtol(mysql_port_str, NULL, 10);
 
-	      if (errno || !l)
+	      if(errno || !l)
 		ntop->getTrace()->traceEvent(TRACE_WARNING,
 					     "Invalid MySQL port, using default port %d [%s]",
 					     mysql_port, strerror(errno));
@@ -2098,8 +2098,8 @@ int Prefs::setOption(int optkey, char *optarg) {
 		mysql_port = (int)l;
 	    }
 
-	    if (dump_flows_on_clickhouse && mysql_host) {
-	      if (strcmp(mysql_host, "localhost") == 0) {
+	    if(dump_flows_on_clickhouse && mysql_host) {
+	      if(strcmp(mysql_host, "localhost") == 0) {
 		/* Clickhouse does not like localhost */
 		free(mysql_host);
 		mysql_host = strdup("127.0.0.1");
@@ -2111,7 +2111,7 @@ int Prefs::setOption(int optkey, char *optarg) {
 	} /* all_good */
       }
 
-      if (dump_flows_on_clickhouse) dump_flows_on_mysql = false;
+      if(dump_flows_on_clickhouse) dump_flows_on_mysql = false;
 #else
       ntop->getTrace()->traceEvent(TRACE_WARNING,
 				   "-F mysql/-F clickhouse not available: missing MySQL support in ntopng");
@@ -2120,11 +2120,11 @@ int Prefs::setOption(int optkey, char *optarg) {
 
 #ifndef HAVE_NEDGE
 #if !defined(WIN32) && !defined(__APPLE__)
-    else if (!strncmp(optarg, "syslog", strlen("syslog"))) {
+    else if(!strncmp(optarg, "syslog", strlen("syslog"))) {
       char *flows_syslog_facility_text;
 
       dump_flows_on_syslog = true;
-      if (strchr(optarg, ';') != NULL) {
+      if(strchr(optarg, ';') != NULL) {
 	int syslog_facility_value;
 
 	optarg = Utils::tokenizer(strchr(optarg, ';') + 1, ';',
@@ -2132,7 +2132,7 @@ int Prefs::setOption(int optkey, char *optarg) {
 	syslog_facility_value =
 	  Utils::mapSyslogFacilityTextToValue(flows_syslog_facility_text);
 
-	if (syslog_facility_value != -1) {
+	if(syslog_facility_value != -1) {
 	  flows_syslog_facility = syslog_facility_value;
 	  ntop->getTrace()->traceEvent(
 				       TRACE_DEBUG,
@@ -2150,7 +2150,7 @@ int Prefs::setOption(int optkey, char *optarg) {
 
 #ifndef WIN32
   case 'G':
-    if (pid_path) free(pid_path);
+    if(pid_path) free(pid_path);
     pid_path = strdup(optarg);
     break;
 #endif
@@ -2186,7 +2186,7 @@ int Prefs::setOption(int optkey, char *optarg) {
     break;
 
   case 201:
-    if (test_post_script_path) free(test_post_script_path);
+    if(test_post_script_path) free(test_post_script_path);
     test_post_script_path = strdup(optarg);
     break;
 
@@ -2209,7 +2209,7 @@ int Prefs::setOption(int optkey, char *optarg) {
     break;
 
   case 206:
-    if (test_pre_script_path) free(test_pre_script_path);
+    if(test_pre_script_path) free(test_pre_script_path);
     test_pre_script_path = strdup(optarg);
     break;
 
@@ -2237,9 +2237,9 @@ int Prefs::setOption(int optkey, char *optarg) {
     break;
 
   case 212:
-    if (!strcmp(optarg, "ixia"))
+    if(!strcmp(optarg, "ixia"))
       enable_ixia_timestamps = true;
-    else if ((!strcmp(optarg, "vss")) || (!strcmp(optarg, "apcon")))
+    else if((!strcmp(optarg, "vss")) || (!strcmp(optarg, "apcon")))
       enable_vss_apcon_timestamps = true;
     else
       ntop->getTrace()->traceEvent(
@@ -2324,7 +2324,7 @@ int Prefs::setOption(int optkey, char *optarg) {
 #endif
 
   case 218:
-    if (test_runtime_script_path) free(test_runtime_script_path);
+    if(test_runtime_script_path) free(test_runtime_script_path);
     test_runtime_script_path = strdup(optarg);
     break;
 
@@ -2341,28 +2341,28 @@ int Prefs::setOption(int optkey, char *optarg) {
 
 int Prefs::checkOptions() {
 #ifdef NTOPNG_PRO
-  if (print_maintenance) {
+  if(print_maintenance) {
     /* Disable tracing messages */
     ntop->getTrace()->set_trace_level(0);
     ntop->registerPrefs(this, true);
-    if (ntop->getPro()->check_maintenance_duration())
+    if(ntop->getPro()->check_maintenance_duration())
       exit(0);
     else
       exit(1);
   }
 
-  if (print_license) {
+  if(print_license) {
     /* Disable tracing messages */
     ntop->getTrace()->set_trace_level(0);
     ntop->registerPrefs(this, true);
-    if (ntop->getPro()->check_license_validity())
+    if(ntop->getPro()->check_license_validity())
       exit(0);
     else
       exit(1);
   }
 #endif
 
-  if (print_version) {
+  if(print_version) {
 #ifdef NTOPNG_PRO
     char buf[128];
 #endif
@@ -2377,14 +2377,14 @@ int Prefs::checkOptions() {
     printf("License Type:\t%s\n",
            ntop->getPro()->get_license_type(buf, sizeof(buf)));
 
-    if (ntop->getPro()->demo_ends_at())
+    if(ntop->getPro()->demo_ends_at())
       printf("Validity:\t%s\n",
              ntop->getPro()->get_demo_expiration(buf, sizeof(buf)));
     else
       printf("Maintenance:\t%s\n",
              ntop->getPro()->get_maintenance_expiration(buf, sizeof(buf)));
 
-    if (ntop->getPro()->get_encoded_license()[0] != '\0') {
+    if(ntop->getPro()->get_encoded_license()[0] != '\0') {
       char *enc_license = ntop->getPro()->get_encoded_license();
       int i, len = strlen(enc_license);
       for (i = 0; i < len; i += 69) {
@@ -2393,19 +2393,19 @@ int Prefs::checkOptions() {
 
         memcpy(buff, &enc_license[i], clen);
         buff[clen] = '\0';
-        if (i == 0)
+        if(i == 0)
           printf("License:\t%s\n", buff);
         else
           printf("        \t%s\n", buff);
       }
     }
 
-    if (ntop->getPro()->get_license()[0] != '\0')
+    if(ntop->getPro()->get_license()[0] != '\0')
       printf("License Hash:\t%s\n", ntop->getPro()->get_license());
 #endif
 
     exit(0);
-  } else if (print_version_json) {
+  } else if(print_version_json) {
 #if defined(NTOPNG_PRO) && (!defined(FORCE_VALID_LICENSE))
     time_t license_until = (time_t)-1, maintenance_until = (time_t)-1;
     char outbuf[256], edition[64];
@@ -2430,7 +2430,7 @@ int Prefs::checkOptions() {
     ntop->getTrace()->set_trace_level((u_int8_t)0);
     ntop->registerPrefs(this, true);
 
-    if ((license_until = ntop->getPro()->demo_ends_at()) == 0)
+    if((license_until = ntop->getPro()->demo_ends_at()) == 0)
       license_until = (time_t)-1;
 
     maintenance_until = ntop->getPro()->maintenance_ends_at();
@@ -2444,12 +2444,12 @@ int Prefs::checkOptions() {
 #endif
   }
 
-  if (install_dir) ntop->set_install_dir(install_dir);
+  if(install_dir) ntop->set_install_dir(install_dir);
 
   free(data_dir);
   data_dir = strdup(ntop->get_install_dir());
 
-  if (!pcap_dir) pcap_dir = strdup(ntop->get_working_dir());
+  if(!pcap_dir) pcap_dir = strdup(ntop->get_working_dir());
 
   docs_dir = ntop->getValidPath(docs_dir);
   scripts_dir = ntop->getValidPath(scripts_dir);
@@ -2457,30 +2457,30 @@ int Prefs::checkOptions() {
 
 #ifdef NTOPNG_PRO
   pro_callbacks_dir = ntop->getValidPath(pro_callbacks_dir);
-  if (!pro_callbacks_dir) {
+  if(!pro_callbacks_dir) {
     ntop->getTrace()->traceEvent(TRACE_ERROR,
                                  "Unable to locate pro callbacks dir");
     return (-1);
   }
   ntop->removeTrailingSlash(pro_callbacks_dir);
 #endif
-  if (!data_dir) {
+  if(!data_dir) {
     ntop->getTrace()->traceEvent(TRACE_ERROR, "Unable to locate data dir");
     return (-1);
   }
-  if (!docs_dir[0]) {
+  if(!docs_dir[0]) {
     ntop->getTrace()->traceEvent(TRACE_ERROR, "Unable to locate docs dir");
     return (-1);
   }
-  if (!scripts_dir[0]) {
+  if(!scripts_dir[0]) {
     ntop->getTrace()->traceEvent(TRACE_ERROR, "Unable to locate scripts dir");
     return (-1);
   }
-  if (!callbacks_dir[0]) {
+  if(!callbacks_dir[0]) {
     ntop->getTrace()->traceEvent(TRACE_ERROR, "Unable to locate callbacks dir");
     return (-1);
   }
-  if (!pcap_dir[0]) {
+  if(!pcap_dir[0]) {
     ntop->getTrace()->traceEvent(TRACE_ERROR, "Unable to locate pcap dir");
     return (-1);
   }
@@ -2490,16 +2490,16 @@ int Prefs::checkOptions() {
   ntop->removeTrailingSlash(callbacks_dir);
   ntop->removeTrailingSlash(pcap_dir);
 
-  if (http_binding_address1 == NULL)
+  if(http_binding_address1 == NULL)
     http_binding_address1 = strdup(CONST_ANY_ADDRESS);
-  if (http_binding_address2 == NULL)
+  if(http_binding_address2 == NULL)
     http_binding_address2 = strdup(CONST_ANY_ADDRESS);
-  if (https_binding_address1 == NULL)
+  if(https_binding_address1 == NULL)
     https_binding_address1 = strdup(CONST_ANY_ADDRESS);
-  if (https_binding_address2 == NULL)
+  if(https_binding_address2 == NULL)
     https_binding_address2 = strdup(CONST_ANY_ADDRESS);
 
-  if (strcmp(ntop->get_working_dir(), CONST_OLD_DEFAULT_DATA_DIR) == 0 &&
+  if(strcmp(ntop->get_working_dir(), CONST_OLD_DEFAULT_DATA_DIR) == 0 &&
       !is_user_set()) {
     /* Using the old /var/tmp/ntopng with the default user:
      * keep using 'nobody' to preserve backward compaitibility */
@@ -2514,7 +2514,7 @@ int Prefs::checkOptions() {
 int Prefs::loadFromCLI(int argc, char *argv[]) {
   u_char c;
 
-  while (
+  while(
 	 (c = getopt_long(
 #ifdef WIN32
 			  (int *(__cdecl *)(void))argc, (char *const **(__cdecl *)(void))argv,
@@ -2524,11 +2524,11 @@ int Prefs::loadFromCLI(int argc, char *argv[]) {
 			  "k:eg:hi:w:r:sg:m:n:p:qd:t:x:y:1:2:3:4:5:l:L:uv:zA:B:c:CD:E:F:N:G:I:O:Q:"
 			  "S:TU:X:W:VZ:",
 			  long_options, NULL)) != '?') {
-    if (c == 255) break;
+    if(c == 255) break;
     setOption(c, optarg);
   }
 
-  if ((http_port == 0) && (https_port == 0)) {
+  if((http_port == 0) && (https_port == 0)) {
     ntop->getTrace()->traceEvent(
 				 TRACE_ERROR, "Both HTTP and HTTPS ports are disabled: quitting");
     exit(0);
@@ -2549,32 +2549,32 @@ int Prefs::loadFromFile(const char *path) {
 
   fd = fopen(config_file_path, "r");
 
-  if (fd == NULL) {
+  if(fd == NULL) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Config file %s not found",
                                  config_file_path);
     return (-1);
   }
 
-  while (true) {
-    if (!(line = fgets(buffer, sizeof(buffer), fd))) break;
+  while(true) {
+    if(!(line = fgets(buffer, sizeof(buffer), fd))) break;
 
     line = Utils::trim(line);
     num_line++, value = NULL;
 
-    if ((line_len = strlen(line)) < 2 || line[0] == '#') continue;
+    if((line_len = strlen(line)) < 2 || line[0] == '#') continue;
 
-    if (!strncmp(line, "--", 2)) { /* long opt */
+    if(!strncmp(line, "--", 2)) { /* long opt */
       key = &line[2], line_len -= 2;
 
       opt = long_options;
-      while (opt->name != NULL) {
+      while(opt->name != NULL) {
         opt_name_len = strlen(opt->name);
 
-        if (strncmp(key, opt->name, opt_name_len) == 0 &&
+        if(strncmp(key, opt->name, opt_name_len) == 0 &&
             (line_len <= opt_name_len || key[opt_name_len] == '\0' ||
              key[opt_name_len] == ' ' || key[opt_name_len] == '=')) {
-          if (line_len > opt_name_len) key[opt_name_len] = '\0';
-          if (line_len > opt_name_len + 1)
+          if(line_len > opt_name_len) key[opt_name_len] = '\0';
+          if(line_len > opt_name_len + 1)
             value = Utils::trim(&key[opt_name_len + 1]);
 
           // ntop->getTrace()->traceEvent(TRACE_NORMAL, "key: %s value: %s",
@@ -2586,10 +2586,10 @@ int Prefs::loadFromFile(const char *path) {
 
         opt++;
       }
-    } else if (line[0] == '-') { /* short opt */
+    } else if(line[0] == '-') { /* short opt */
       key = &line[1], line_len--;
 
-      if (key[1] != ' ' &&
+      if(key[1] != ' ' &&
           key[1] != '=' &&
           key[1] != '\0') {
         ntop->getTrace()->traceEvent(
@@ -2598,8 +2598,8 @@ int Prefs::loadFromFile(const char *path) {
         continue;
       }
 
-      if (line_len > 1) key[1] = '\0';
-      if (line_len > 2) value = Utils::trim(&key[2]);
+      if(line_len > 1) key[1] = '\0';
+      if(line_len > 2) value = Utils::trim(&key[2]);
       else value = NULL;
 
       // ntop->getTrace()->traceEvent(TRACE_NORMAL, "key: %c value: %s", key[0], value);
@@ -2621,10 +2621,10 @@ int Prefs::loadFromFile(const char *path) {
 /* ******************************************* */
 
 void Prefs::add_network_interface(char *name, char *description) {
-  if (num_interfaces < MAX_NUM_DEFINED_INTERFACES) {
+  if(num_interfaces < MAX_NUM_DEFINED_INTERFACES) {
     int id = Utils::ifname2id(name);
 
-    if (id >= 0) {
+    if(id >= 0) {
       ifNames[num_interfaces].name =
 	strdup(!strncmp(name, "-", 1) ? "stdin" : name);
       ifNames[num_interfaces].description =
@@ -2657,18 +2657,18 @@ void Prefs::add_default_interfaces() {
 /* *************************************** */
 
 void Prefs::bind_http_to_address(const char *addr1, const char *addr2) {
-  if (http_binding_address1) free(http_binding_address1);
+  if(http_binding_address1) free(http_binding_address1);
   http_binding_address1 = strdup(addr1);
 
-  if (http_binding_address2) free(http_binding_address2);
+  if(http_binding_address2) free(http_binding_address2);
   http_binding_address2 = strdup(addr2);
 }
 
 void Prefs::bind_https_to_address(const char *addr1, const char *addr2) {
-  if (https_binding_address1) free(https_binding_address1);
+  if(https_binding_address1) free(https_binding_address1);
   https_binding_address1 = strdup(addr1);
 
-  if (https_binding_address2) free(https_binding_address2);
+  if(https_binding_address2) free(https_binding_address2);
   https_binding_address2 = strdup(addr2);
 }
 
@@ -2709,7 +2709,7 @@ void Prefs::lua(lua_State *vm) {
 
   lua_push_bool_table_entry(vm, "is_dump_flows_to_mysql_enabled",
                             dump_flows_on_mysql);
-  if (mysql_dbname) lua_push_str_table_entry(vm, "mysql_dbname", mysql_dbname);
+  if(mysql_dbname) lua_push_str_table_entry(vm, "mysql_dbname", mysql_dbname);
   lua_push_bool_table_entry(vm, "is_dump_flows_to_es_enabled",
                             dump_flows_on_es);
   lua_push_bool_table_entry(vm, "is_dump_flows_to_syslog_enabled",
@@ -2758,7 +2758,7 @@ void Prefs::lua(lua_State *vm) {
   lua_push_uint64_table_entry(vm, "non_local_host_max_idle",
                               non_local_host_max_idle);
   lua_push_uint64_table_entry(vm, "flow_max_idle", pkt_ifaces_flow_max_idle);
-  if (enable_active_local_hosts_cache)
+  if(enable_active_local_hosts_cache)
     lua_push_uint64_table_entry(vm, "active_local_hosts_cache_interval",
                                 active_local_hosts_cache_interval);
 
@@ -2877,7 +2877,7 @@ void Prefs::lua(lua_State *vm) {
 void Prefs::refreshHostsAlertsPrefs() {
   char rsp[32];
 
-  if (ntop->getRedis()->hashGet(
+  if(ntop->getRedis()->hashGet(
 				(char *)CONST_RUNTIME_PREFS_HOSTS_ALERTS_CONFIG,
 				(char *)CONST_HOST_FLOW_ATTACKER_ALERT_THRESHOLD_KEY, rsp,
 				sizeof(rsp)) == 0)
@@ -2885,7 +2885,7 @@ void Prefs::refreshHostsAlertsPrefs() {
   else
     attacker_max_num_flows_per_sec = CONST_MAX_NEW_FLOWS_SECOND;
 
-  if (ntop->getRedis()->hashGet(
+  if(ntop->getRedis()->hashGet(
 				(char *)CONST_RUNTIME_PREFS_HOSTS_ALERTS_CONFIG,
 				(char *)CONST_HOST_FLOW_VICTIM_ALERT_THRESHOLD_KEY, rsp,
 				sizeof(rsp)) == 0)
@@ -2893,7 +2893,7 @@ void Prefs::refreshHostsAlertsPrefs() {
   else
     victim_max_num_flows_per_sec = CONST_MAX_NEW_FLOWS_SECOND;
 
-  if (ntop->getRedis()->hashGet(
+  if(ntop->getRedis()->hashGet(
 				(char *)CONST_RUNTIME_PREFS_HOSTS_ALERTS_CONFIG,
 				(char *)CONST_HOST_SYN_ATTACKER_ALERT_THRESHOLD_KEY, rsp,
 				sizeof(rsp)) == 0)
@@ -2901,7 +2901,7 @@ void Prefs::refreshHostsAlertsPrefs() {
   else
     attacker_max_num_syn_per_sec = CONST_MAX_NUM_SYN_PER_SECOND;
 
-  if (ntop->getRedis()->hashGet(
+  if(ntop->getRedis()->hashGet(
 				(char *)CONST_RUNTIME_PREFS_HOSTS_ALERTS_CONFIG,
 				(char *)CONST_HOST_SYN_VICTIM_ALERT_THRESHOLD_KEY, rsp,
 				sizeof(rsp)) == 0)
@@ -2931,8 +2931,8 @@ void Prefs::resetDeferredInterfacesToRegister() {
   ntop->getTrace()->traceEvent(TRACE_ERROR, "Reset interfaces");
   for (int i = 0; i < num_deferred_interfaces_to_register; i++) {
     /* Reset network interfaces, excluding event interfaces like syslog/zmq */
-    if (deferred_interfaces_to_register[i] != NULL) {
-      if (strstr(deferred_interfaces_to_register[i], "syslog://") ||
+    if(deferred_interfaces_to_register[i] != NULL) {
+      if(strstr(deferred_interfaces_to_register[i], "syslog://") ||
           strstr(deferred_interfaces_to_register[i], "tcp://"))
         deferred_interfaces_to_register[num++] =
 	  deferred_interfaces_to_register[i];
@@ -2946,7 +2946,7 @@ void Prefs::resetDeferredInterfacesToRegister() {
 /* *************************************** */
 
 bool Prefs::addDeferredInterfaceToRegister(const char *ifname) {
-  if (num_deferred_interfaces_to_register < UNLIMITED_NUM_INTERFACES) {
+  if(num_deferred_interfaces_to_register < UNLIMITED_NUM_INTERFACES) {
     deferred_interfaces_to_register[num_deferred_interfaces_to_register] =
       strdup(ifname);
     num_deferred_interfaces_to_register++;
@@ -2960,7 +2960,7 @@ bool Prefs::addDeferredInterfaceToRegister(const char *ifname) {
 
 void Prefs::registerNetworkInterfaces() {
   for (int i = 0; i < num_deferred_interfaces_to_register; i++) {
-    if (deferred_interfaces_to_register[i] != NULL) {
+    if(deferred_interfaces_to_register[i] != NULL) {
       add_network_interface(deferred_interfaces_to_register[i], NULL);
       free(deferred_interfaces_to_register[i]);
       deferred_interfaces_to_register[i] = NULL;
@@ -3095,10 +3095,10 @@ time_t Prefs::pro_edition_demo_ends_at() {
 void Prefs::validate() {
   /* Perform here post-initialization validations */
 
-  if (is_enterprise_m_edition() /* M or higher */
+  if(is_enterprise_m_edition() /* M or higher */
       || is_nedge_enterprise_edition()) {
     ; /* All good */
-  } else if (dump_flows_on_clickhouse) {
+  } else if(dump_flows_on_clickhouse) {
     ntop->getTrace()->traceEvent(
 				 TRACE_WARNING,
 				 "-F clickhouse is available only on Enterprise");
@@ -3118,7 +3118,7 @@ bool Prefs::isInformativeCaptivePortalEnabled() const {
 /* *************************************** */
 
 const char *Prefs::getCaptivePortalUrl() {
-  if (isInformativeCaptivePortalEnabled()) {
+  if(isInformativeCaptivePortalEnabled()) {
     return CAPTIVE_PORTAL_INFO_URL;
   } else {
     return CAPTIVE_PORTAL_URL;
@@ -3138,24 +3138,24 @@ bool Prefs::isExternalAuthCaptivePortalEnabled() const {
 void Prefs::setIEC104AllowedTypeIDs(const char *type_ids) {
   char *p, *buf, *tmp;
 
-  if (!type_ids) return;
+  if(!type_ids) return;
 
-  if ((strcmp(type_ids, "-1") == 0))
+  if((strcmp(type_ids, "-1") == 0))
     iec104_allowed_typeids[0] = (u_int64_t)-1,
       iec104_allowed_typeids[1] = (u_int64_t)-1; /* All */
-  else if ((buf = strdup(type_ids))) {
+  else if((buf = strdup(type_ids))) {
     iec104_allowed_typeids[0] = (u_int64_t)0,
       iec104_allowed_typeids[1] = (u_int64_t)0;
 
     p = strtok_r(buf, ",", &tmp);
-    while (p != NULL) {
+    while(p != NULL) {
       int type_id = atoi(p);
 
       // ntop->getTrace()->traceEvent(TRACE_WARNING, "-> %d", type_id);
 
-      if (type_id < 64)
+      if(type_id < 64)
         iec104_allowed_typeids[0] |= ((u_int64_t)1 << type_id);
-      else if (type_id < 128)
+      else if(type_id < 128)
         iec104_allowed_typeids[1] |= ((u_int64_t)1 << (type_id - 64));
 
       p = strtok_r(NULL, ",", &tmp);
@@ -3172,14 +3172,14 @@ void Prefs::setIEC104AllowedTypeIDs(const char *type_ids) {
 void Prefs::setModbusAllowedFunctionCodes(const char *function_codes) {
   char *p, *buf, *tmp;
 
-  if (!function_codes) return;
+  if(!function_codes) return;
 
-  if ((strcmp(function_codes, "-1") == 0)) {
+  if((strcmp(function_codes, "-1") == 0)) {
     if(modbus_allowed_function_codes != NULL) {
       ndpi_bitmap_free(modbus_allowed_function_codes);
       modbus_allowed_function_codes = NULL;
     }
-  } else if ((buf = strdup(function_codes))) {
+  } else if((buf = strdup(function_codes))) {
     if(modbus_allowed_function_codes == NULL) {
       if((modbus_allowed_function_codes = ndpi_bitmap_alloc()) == NULL)
 	ntop->getTrace()->traceEvent(TRACE_WARNING, "Unable to allocate bitmap memory");
@@ -3190,7 +3190,7 @@ void Prefs::setModbusAllowedFunctionCodes(const char *function_codes) {
       
       if((modbus_allowed_function_codes = ndpi_bitmap_alloc()) != NULL) {
 	p = strtok_r(buf, ",", &tmp);
-	while (p != NULL) {
+	while(p != NULL) {
 	  int f_code = atoi(p);
 	  
 	  ndpi_bitmap_set(modbus_allowed_function_codes, f_code);
@@ -3234,9 +3234,9 @@ bool Prefs::reloadNetworksPolicyConfiguration() {
     && loadPolicyConfiguration(new_tree, (char *) CONST_CORPORATE_DEVICES_NETWORKS_CONFIGURATION_REDIS_KEY, core_host_network_id)
     && loadPolicyConfiguration(new_tree, (char *) CONST_WHITELISTED_NETWORKS_CONFIGURATION_REDIS_KEY, whitelisted_host_network_id);
 
-  if (new_tree && res) {
-    if (networks_policy_configuration) {
-      if (networks_policy_configuration_shadow) delete networks_policy_configuration_shadow;
+  if(new_tree && res) {
+    if(networks_policy_configuration) {
+      if(networks_policy_configuration_shadow) delete networks_policy_configuration_shadow;
       networks_policy_configuration_shadow = networks_policy_configuration;
     }
 
@@ -3254,7 +3254,7 @@ bool Prefs::loadPolicyConfiguration(AddressTree *tree,
   Redis *redis = ntop->getRedis();
   u_int actual_len = redis->len(key);
 
-  if ((actual_len++ /* ++ for the \0 */ > 0)
+  if((actual_len++ /* ++ for the \0 */ > 0)
       && ((rsp = (char *)malloc(actual_len)) != NULL)) {
     redis->get(key, rsp, actual_len);
 
@@ -3269,7 +3269,7 @@ bool Prefs::loadPolicyConfiguration(AddressTree *tree,
     std::stringstream ipList(ipStr);
     std::string ip;
     
-    while (std::getline(ipList, ip, ',')) {
+    while(std::getline(ipList, ip, ',')) {
       if(!tree->addAddress(ip.c_str(), id)) {
 	ntop->getTrace()->traceEvent(TRACE_WARNING,
 				     "Unable to add tree node in Policy Configuration [Network: %s]",
@@ -3282,12 +3282,11 @@ bool Prefs::loadPolicyConfiguration(AddressTree *tree,
 				   (char *) ip.c_str(),key);
     }
 
-    if (rsp) free(rsp);
+    if(rsp) free(rsp);
   }
   
   return true;
 }
-
 #endif
 
 /* *************************************** */
