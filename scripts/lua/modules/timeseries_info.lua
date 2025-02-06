@@ -1908,7 +1908,8 @@ local community_timeseries = { {
             label = i18n('graphs.metric_labels.writes'),
             color = timeseries_info.get_timeseries_color('bytes')
         }
-    }
+    },
+    always_visibile = false
 }, -- influxdb_monitor.lua (Influx DB): --
     {
         schema = "influxdb:storage_size",
