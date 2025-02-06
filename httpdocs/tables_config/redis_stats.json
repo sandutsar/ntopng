@@ -6,38 +6,53 @@
 	"paging": false,
 	"display_empty_rows": true,
 	"default_sort": {
-        "column_id": "column_command",
-        "sort": 1
-    },
+		"column_id": "command",
+		"sort": 1
+	},
 	"columns": [
 		{
-			"id": "column_command",
-			"title_i18n": "please_wait_page.command",
-			"data_field": "column_command",
-			"sortable": true,
-			"class": [
-				"text-center",
-				"text-nowrap"
-			]
-		},
-		{
-			"id": "column_chart",
-			"title_i18n": "chart",
-			"data_field": "column_chart",
+			"id": "actions",
+			"title_i18n": "actions",
 			"sortable": false,
+			"sticky": true,
+			"max-width": "10px",
 			"class": [
-				"text-center",
+				"text-nowrap",
+				"text-center"
+			],
+			"render_v_node_type": "button_list",
+			"button_def_array": [
+				{
+					"id": "timeseries",
+					"icon": "fas fa-lg fa-chart-area",
+					"title_i18n": "prefs.timeseries",
+					"class": [
+						"link-button",
+						"btn-info"
+					],
+					"event_id": "click_button_timeseries"
+				}
+			]
+		},
+		{
+			"id": "command",
+			"title_i18n": "please_wait_page.command",
+			"data_field": "command",
+            "min-width": "500px",
+			"sortable": true,
+			"class": [
 				"text-nowrap"
 			]
 		},
 		{
-			"id": "column_hits",
+			"id": "hits",
 			"title_i18n": "system_stats.redis.tot_calls",
-			"data_field": "column_hits",
+			"data_field": "hits",
 			"sortable": true,
+            "min-width": "330px",
 			"class": [
-                "text-right",
-				"text-nowrap"
+				"text-nowrap",
+                "text-center"
 			]
 		}
 	]

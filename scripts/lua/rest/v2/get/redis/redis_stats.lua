@@ -1,7 +1,6 @@
 --
 -- (C) 2019-24 - ntop.org
 --
-
 local dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 
@@ -15,26 +14,25 @@ local cmd_ids_filter = _GET["custom_hosts"]
 
 -- ################################################
 
-if(cmd_ids_filter) then
-  cmd_ids_filter = swapKeysValues(string.split(cmd_ids_filter, ",") or {cmd_ids_filter})
+if (cmd_ids_filter) then
+    cmd_ids_filter = swapKeysValues(string.split(cmd_ids_filter, ",") or
+                                        {cmd_ids_filter})
 end
 
 local commands_stats = ntop.getCacheStats() or {}
 local res = {}
 local charts_available = script_manager.systemTimeseriesEnabled()
 for command, hits in pairs(commands_stats) do
-  if(charts_available) then
-    chart = '<a href="?page=historical&redis_command='..command..'&ts_schema=redis:hits"><i class=\'fas fa-chart-area fa-lg\'></i></a>'
-  end
-  res[#res + 1] = {
-    column_command = string.upper(string.sub(command, 5)),
-    column_chart = chart,
-    column_hits = hits,
-  }
+    res[#res + 1] = {
+        command = {
+            key = command,
+            name = string.upper(string.sub(command, 5)),
+        },
+        hits = hits
+    }
 end
 
 -- ################################################
 
-rest_utils.extended_answer(rest_utils.consts.success.ok, res, {
-  ["recordsTotal"] = #res
-})
+rest_utils.extended_answer(rest_utils.consts.success.ok, res,
+                           {["recordsTotal"] = #res})
