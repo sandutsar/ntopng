@@ -444,13 +444,19 @@ function host_pools:hostpool2record(ifid, pool_id, pool)
     record["column_since"] = format_utils.secondsToTime(os.time() - pool["seen.first"] + 1)
     record["column_num_dropped_flows"] = (pool["flows.dropped"] or 0) .. ""
 
-    local sent2rcvd = round((pool["bytes.sent"] * 100) /
-                                (pool["bytes.sent"] + pool["bytes.rcvd"]), 0)
+    local tot_bytes = (pool["bytes.sent"] or 0) + (pool["bytes.rcvd"] or 0)
+    local delta = ((pool["bytes.sent"] * 100) / tot_bytes)
+    local sent2rcvd_pctg = math.floor(delta + 0.5)
+    local rcvd2sent_pctg = 100 - sent2rcvd_pctg
+    if sent2rcvd_pctg ~= sent2rcvd_pctg then -- tot_bytes is 0
+        sent2rcvd_pctg = 0
+        rcvd2sent_pctg = 0
+    end
     record["column_breakdown"] =
         "<div class='progress'><div class='progress-bar bg-warning' style='width: " ..
-            sent2rcvd ..
+            sent2rcvd_pctg ..
             "%;'>Sent</div><div class='progress-bar bg-success' style='width: " ..
-            (100 - sent2rcvd) .. "%;'>Rcvd</div></div>"
+            rcvd2sent_pctg .. "%;'>Rcvd</div></div>"
 
     if (throughput_type == "pps") then
         record["column_thpt"] = format_utils.pktsToSize(pool["throughput_pps"])
