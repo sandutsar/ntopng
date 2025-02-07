@@ -375,7 +375,7 @@ page_utils.menu_entries = {
         section = "health"
     },
     redis_status = {
-        key = "redis_monitor",
+        key = "redis_status",
         i18n_title = "Redis",
         section = "health"
     },
