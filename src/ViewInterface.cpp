@@ -719,13 +719,13 @@ void ViewInterface::viewed_flows_walker(Flow *f, const struct timeval *tv) {
       }
 
       /* In case of View Interface the top sites needs to be handled here */
-      struct ndpi_flow_struct *ndpiFlow = f->get_ndpi_flow();
-      if (ndpiFlow && cli_host) {
+      char *host_server_name = f->getFlowServerInfo();
+      if (host_server_name && cli_host) {
         ntop->getTrace()->traceEvent(TRACE_DEBUG,
                                      "Dumping server name searched [%s]",
-                                     ndpiFlow->host_server_name);
-        if (cli_host->isLocalHost() && ndpiFlow->host_server_name[0] != '\0') {
-          cli_host->incrVisitedWebSite((char *)ndpiFlow->host_server_name);
+                                     host_server_name);
+        if (cli_host->isLocalHost() && host_server_name[0] != '\0') {
+          cli_host->incrVisitedWebSite((char *)host_server_name);
         }
       }
 
