@@ -2804,6 +2804,12 @@ void Flow::luaScore(lua_State *vm) {
   lua_pushstring(vm, "score");
   lua_insert(vm, -2);
   lua_settable(vm, -3);
+
+  /* ***************************************** */
+
+#if defined(NTOPNG_PRO)
+  lua_get_qoe_score(vm);
+#endif
 }
 
 /* *************************************** */

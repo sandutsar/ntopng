@@ -945,6 +945,9 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   void lua_get_port(lua_State *vm, bool client) const;
   void lua_get_geoloc(lua_State *vm, bool client, bool coords,
                       bool country_city) const;
+#if defined(NTOPNG_PRO)
+  void lua_get_qoe_score(lua_State *vm);
+#endif
   void lua_get_risk_info(lua_State *vm);
 
   void getInfo(ndpi_serializer *serializer);
