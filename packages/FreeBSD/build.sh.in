@@ -90,10 +90,10 @@ cd $HERE
 cat >> ${STAGEDIR}/+POST_INSTALL <<EOF
 
 # Add missing libraries symlinks due to invalid shlib verion
-OUT=\`ldd /usr/local/bin/ntopng\`
+OUT=\`ldd /usr/local/bin/ntopng | grep "not found"\`
 
 if [ ! -z "\$OUT" ]; then
-  RES=\`echo \$OUT | grep "not found" | cut -d '=' -f 1 | sed 's/[[:blank:]]//g'\`
+  RES=\`echo \$OUT | cut -d '=' -f 1 | sed 's/[[:blank:]]//g'\`
 
   for LIB in \$RES; do
     BASELIB=\`echo \$LIB|cut -d '.' -f 1\`
