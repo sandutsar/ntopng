@@ -265,7 +265,7 @@ bool ParserInterface::processFlow(ParsedFlow *zflow) {
   }
 
 #ifdef NTOPNG_PRO
-  if ((unique_source_id != 0) && (!isSubInterface())) {
+  if ((unique_source_id != 0)/* && (!isSubInterface())*/) {
 
 #if 0
     ntop->getTrace()->traceEvent(TRACE_NORMAL, "unique_source_id=%u, inIndex=%u, outIndex=%u, exporter_device_ip=%u, nprobe_ip=%u [%u / %u]",
