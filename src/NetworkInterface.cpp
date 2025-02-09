@@ -1359,9 +1359,9 @@ Flow *NetworkInterface::getFlow(int32_t if_index, Mac *src_mac, Mac *dst_mac, u_
     try {
       INTERFACE_PROFILING_SECTION_ENTER("NetworkInterface::getFlow: new Flow", 2);
 
-      ret = new (std::nothrow)Flow(this, if_index, vlan_id, observation_domain_id, private_flow_id, l4_proto,
-				   src_mac, src_ip, src_port, dst_mac, dst_ip, dst_port, icmp_info,
-				   first_seen, last_seen, view_cli_mac, view_srv_mac);
+      ret = new Flow(this, if_index, vlan_id, observation_domain_id, private_flow_id, l4_proto,
+		     src_mac, src_ip, src_port, dst_mac, dst_ip, dst_port, icmp_info,
+		     first_seen, last_seen, view_cli_mac, view_srv_mac);
       INTERFACE_PROFILING_SECTION_EXIT(2);
     } catch (std::bad_alloc &ba) {
       static bool oom_warning_sent = false;
@@ -1591,8 +1591,7 @@ NetworkInterface *NetworkInterface::getDynInterface(u_int64_t criteria,
     sub_iface = new (std::nothrow) NetworkInterface(buf, vIface_type);
 
   if (sub_iface == NULL) {
-    ntop->getTrace()->traceEvent(
-				 TRACE_WARNING, "Failure allocating interface: not enough memory?");
+    ntop->getTrace()->traceEvent(TRACE_WARNING, "Failure allocating interface: not enough memory?");
     return (NULL);
   }
 
@@ -1865,14 +1864,12 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
 #ifndef HAVE_NEDGE
 #ifdef IMPLEMENT_SMART_FRAGMENTS
       if (is_fragment)
-        fragment_extra_overhead =
-	  ntohs(udph->len) - l4_len + sizeof(struct ndpi_iphdr);
+        fragment_extra_overhead = ntohs(udph->len) - l4_len + sizeof(struct ndpi_iphdr);
 #endif
 #endif
     } else {
       /* Packet too short: this is a faked packet */
-      ntop->getTrace()->traceEvent(
-				   TRACE_INFO, "Invalid UDP packet received [%u bytes long]",
+      ntop->getTrace()->traceEvent(TRACE_INFO, "Invalid UDP packet received [%u bytes long]",
 				   trusted_l4_packet_len);
       incStats(*ingressPacket, when->tv_sec, iph ? ETHERTYPE_IP : ETHERTYPE_IPV6,
                NDPI_PROTOCOL_UNKNOWN, NDPI_PROTOCOL_CATEGORY_UNSPECIFIED, 0,
@@ -1889,8 +1886,7 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
       trusted_payload_len = trusted_l4_packet_len - sizeof(struct sctphdr);
     } else {
       /* Packet too short: this is a faked packet */
-      ntop->getTrace()->traceEvent(
-				   TRACE_INFO, "Invalid SCTP packet received [%u bytes long]",
+      ntop->getTrace()->traceEvent(TRACE_INFO, "Invalid SCTP packet received [%u bytes long]",
 				   trusted_l4_packet_len);
       incStats(*ingressPacket, when->tv_sec, iph ? ETHERTYPE_IP : ETHERTYPE_IPV6,
                NDPI_PROTOCOL_UNKNOWN, NDPI_PROTOCOL_CATEGORY_UNSPECIFIED, 0,
@@ -2026,6 +2022,12 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
 			    l4_len - (4 * tcph->doff), src2dst_direction);
       break;
 
+    case IPPROTO_UDP:
+#ifdef NTOPNG_PRO
+      flow->updateUDPTimestamp(src2dst_direction, &h->ts);
+#endif
+      break;
+      
     case IPPROTO_ICMP:
     case IPPROTO_ICMPV6:
       if (trusted_l4_packet_len > 2) {
@@ -2106,7 +2108,7 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
         || (fragment_offset == 0)
 #endif
 	)
-      flow->processPacket(h, ip, trusted_ip_len, packet_time, payload,
+      flow->processPacket(src2dst_direction, h, ip, trusted_ip_len, packet_time, payload,
                           trusted_payload_len, src_port);
     else {
       // FIX - only handle unfragmented packets
@@ -2357,6 +2359,11 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
     }
 #endif
   }
+
+#ifdef NTOPNG_PRO
+  if(flow && flow->isQUIC() && (trusted_payload_len > 0))
+     flow->updateQUICStats(src2dst_direction, &h->ts, payload, trusted_payload_len);
+#endif
 
   // ntop->getTrace()->traceEvent(TRACE_NORMAL, "direction: %s / len: %u", *ingressPacket ? "IN" : "OUT", len_on_wire);
 
@@ -5977,8 +5984,7 @@ int NetworkInterface::sortFlows(u_int32_t *begin_slot, bool walk_all,
   retriever->actNumEntries = 0, retriever->maxNumEntries = getFlowsHashSize(),
     retriever->allowed_hosts = allowed_hosts;
 
-  retriever->elems = (struct flowHostRetrieveList *)calloc(
-							   sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
+  retriever->elems = (struct flowHostRetrieveList *)calloc(sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
 
   if (retriever->elems == NULL) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory :-(");
@@ -6337,8 +6343,7 @@ int NetworkInterface::sortHosts(u_int32_t *begin_slot, bool walk_all, struct flo
     retriever->device_ip = device_ip,
     retriever->maxNumEntries = getHostsHashSize();
 
-  retriever->elems = (struct flowHostRetrieveList *)calloc(
-							   sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
+  retriever->elems = (struct flowHostRetrieveList *)calloc(sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
 
   if (retriever->elems == NULL) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory :-(");
@@ -6454,8 +6459,7 @@ int NetworkInterface::sortMacs(u_int32_t *begin_slot, bool walk_all,
   retriever->devtypeFilter = devtype_filter,
     retriever->locationFilter = location_filter,
     retriever->min_first_seen = min_first_seen, retriever->ndpi_proto = -1,
-    retriever->elems = (struct flowHostRetrieveList *)calloc(
-							     sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
+    retriever->elems = (struct flowHostRetrieveList *)calloc(sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
 
   if (retriever->elems == NULL) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory :-(");
@@ -6508,8 +6512,7 @@ int NetworkInterface::sortASes(struct flowHostRetriever *retriever,
   if (retriever == NULL) return (-1);
 
   retriever->actNumEntries = 0, retriever->maxNumEntries = getASesHashSize();
-  retriever->elems = (struct flowHostRetrieveList *)calloc(
-							   sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
+  retriever->elems = (struct flowHostRetrieveList *)calloc(sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
 
   if (retriever->elems == NULL) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory :-(");
@@ -6558,8 +6561,7 @@ int NetworkInterface::sortObsPoints(struct flowHostRetriever *retriever,
   if (retriever == NULL) return (-1);
 
   retriever->actNumEntries = 0, retriever->maxNumEntries = getObsHashSize();
-  retriever->elems = (struct flowHostRetrieveList *)calloc(
-							   sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
+  retriever->elems = (struct flowHostRetrieveList *)calloc(sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
 
   if (retriever->elems == NULL) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory :-(");
@@ -6606,8 +6608,7 @@ int NetworkInterface::sortCountries(struct flowHostRetriever *retriever,
 
   retriever->actNumEntries = 0,
     retriever->maxNumEntries = getCountriesHashSize();
-  retriever->elems = (struct flowHostRetrieveList *)calloc(
-							   sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
+  retriever->elems = (struct flowHostRetrieveList *)calloc(sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
 
   if (retriever->elems == NULL) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory :-(");
@@ -6653,8 +6654,7 @@ int NetworkInterface::sortVLANs(struct flowHostRetriever *retriever,
   if (retriever == NULL) return (-1);
 
   retriever->actNumEntries = 0, retriever->maxNumEntries = getVLANsHashSize();
-  retriever->elems = (struct flowHostRetrieveList *)calloc(
-							   sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
+  retriever->elems = (struct flowHostRetrieveList *)calloc(sizeof(struct flowHostRetrieveList), retriever->maxNumEntries);
 
   if (retriever->elems == NULL) {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Out of memory :-(");
@@ -7243,7 +7243,7 @@ void NetworkInterface::getnDPIFlowsCount(lua_State *vm) {
     ndpi_get_proto_defaults(get_ndpi_struct());
 
   /*
-  ntop->getTrace()->traceEvent(TRACE_NORMAL,
+    ntop->getTrace()->traceEvent(TRACE_NORMAL,
     "Allocating space for %d protocols", num_supported_protocols);
   */
   num_flows = (u_int32_t *)calloc(num_supported_protocols, sizeof(u_int32_t));
@@ -8311,11 +8311,9 @@ void NetworkInterface::allocateStructures(bool disable_dump) {
 
   try {
     if (get_id() >= 0) {
-      u_int32_t num_hashes =
-	max_val(4096, ntop->getPrefs()->get_max_num_flows() / 4);
+      u_int32_t num_hashes = max_val(4096, ntop->getPrefs()->get_max_num_flows() / 4);
 
-      flows_hash =
-	new FlowHash(this, num_hashes, ntop->getPrefs()->get_max_num_flows());
+      flows_hash = new FlowHash(this, num_hashes, ntop->getPrefs()->get_max_num_flows());
 
       if(!flowsOnlyInterface() /* Do not allocate HTs when the interface should only have flows */
 	 && !isViewed() /* Do not allocate HTs when the interface is viewed, HTs are allocated in the corresponding ViewInterface */)
@@ -8327,6 +8325,7 @@ void NetworkInterface::allocateStructures(bool disable_dump) {
 	  ases_hash = new AutonomousSystemHash(this, ndpi_min(num_hashes, 4096), 32768);
 	  if (!isPacketInterface())
 	    obs_hash = new ObservationPointHash(this, ndpi_min(num_hashes, 4096), 32768);
+	  
 	  countries_hash = new CountriesHash(this, ndpi_min(num_hashes, 1024), 32768);
 	  vlans_hash = new VLANHash(this, 1024, 2048);
 	  macs_hash = new MacHash(this, ndpi_min(num_hashes, 8192), 32768);

@@ -40,7 +40,7 @@ typedef struct {
   TCPSeqNum tcp_seq_s2d, tcp_seq_d2s;
   u_int16_t cli2srv_window, srv2cli_window;
   struct timeval synTime, synAckTime, ackTime; /* network Latency (3-way handshake) */
-  struct timeval clientRTT3WH, serverRTT3WH; /* Computed at 3WH */
+  float clientRTT3WH, serverRTT3WH; /* Computed at 3WH (msec) */
 
   struct {
     u_int32_t last_cli_ack, last_srv_ack;
@@ -49,6 +49,16 @@ typedef struct {
   } rtt; /* Computed continuously */
 } FlowTCP;
 
+typedef struct {
+  struct timeval first_cli_to_srv, first_srv_to_cli, second_cli_to_srv; /* Time of the first packet in each direction */
+  float clientRTT3WH, serverRTT3WH; /* Computed at 3WH (msec) */
+  struct {
+    bool last_spin_set;
+    struct timeval last_ts;
+    struct ndpi_analyze_struct cli_min_rtt /* cli <-> ntopng RTT */, srv_min_rtt /* ntopng <-> dst RTT */;
+  } rtt;
+} FlowUDP;
+  
 typedef struct {
   u_int32_t prevAdjacentAS, nextAdjacentAS;
   u_int32_t vrfId;
@@ -77,6 +87,7 @@ class Flow : public GenericHashEntry {
   Host *cli_host, *srv_host; /* They are ALWAYS NULL on ViewInterfaces. For shared hosts see below viewFlowStats */
   IpAddress *cli_ip_addr, *srv_ip_addr;
   FlowTCP *tcp;
+  FlowUDP *udp;
   FlowCollectionInfo *collection;
   
   /* Data collected from nProbe */
@@ -481,22 +492,23 @@ public:
     return (ndpi_is_encrypted_proto(iface->get_ndpi_struct(),
                                     ndpiDetectedProtocol));
   }
-  inline bool isSSH() const     { return (isProto(NDPI_PROTOCOL_SSH)); }
-  inline bool isMining() const  { return (isProto(NDPI_PROTOCOL_MINING));}
-  inline bool isDNS() const     { return (isProto(NDPI_PROTOCOL_DNS)); }
-  inline bool isSTUN() const    { return (isProto(NDPI_PROTOCOL_STUN)); }
+  inline bool isSSH() const     { return (isProto(NDPI_PROTOCOL_SSH));            }
+  inline bool isMining() const  { return (isProto(NDPI_PROTOCOL_MINING));         }
+  inline bool isDNS() const     { return (isProto(NDPI_PROTOCOL_DNS));            }
+  inline bool isSTUN() const    { return (isProto(NDPI_PROTOCOL_STUN));           }
+  inline bool isQUIC() const    { return (isProto(NDPI_PROTOCOL_QUIC));           }
   inline bool isZoomRTP() const {
     return (isProto(NDPI_PROTOCOL_ZOOM) && (isProto(NDPI_PROTOCOL_RTP) || isProto(NDPI_PROTOCOL_SRTP)) );
   }
-  inline bool isIEC60870() const { return (isProto(NDPI_PROTOCOL_IEC60870)); }
-  inline bool isModbus()   const { return (isProto(NDPI_PROTOCOL_MODBUS));   }
-  inline bool isMDNS() const     { return (isProto(NDPI_PROTOCOL_MDNS));     }
-  inline bool isSSDP() const     { return (isProto(NDPI_PROTOCOL_SSDP));     }
-  inline bool isNetBIOS() const  { return (isProto(NDPI_PROTOCOL_NETBIOS));  }
-  inline bool isSIP() const      { return (isProto(NDPI_PROTOCOL_SIP));      }
-  inline bool isDHCP() const     { return (isProto(NDPI_PROTOCOL_DHCP));     }
-  inline bool isNTP() const      { return (isProto(NDPI_PROTOCOL_NTP));      }
-  inline bool isSMTPorSMTPS() const { return (isSMTP() || isSMTPS());        }
+  inline bool isIEC60870() const { return (isProto(NDPI_PROTOCOL_IEC60870));      }
+  inline bool isModbus()   const { return (isProto(NDPI_PROTOCOL_MODBUS));        }
+  inline bool isMDNS() const     { return (isProto(NDPI_PROTOCOL_MDNS));          }
+  inline bool isSSDP() const     { return (isProto(NDPI_PROTOCOL_SSDP));          }
+  inline bool isNetBIOS() const  { return (isProto(NDPI_PROTOCOL_NETBIOS));       }
+  inline bool isSIP() const      { return (isProto(NDPI_PROTOCOL_SIP));           }
+  inline bool isDHCP() const     { return (isProto(NDPI_PROTOCOL_DHCP));          }
+  inline bool isNTP() const      { return (isProto(NDPI_PROTOCOL_NTP));           }
+  inline bool isSMTPorSMTPS() const { return (isSMTP() || isSMTPS());             }
   inline bool isSMTP() const        { return (isProto(NDPI_PROTOCOL_MAIL_SMTP));  }
   inline bool isSMTPS() const       { return (isProto(NDPI_PROTOCOL_MAIL_SMTPS)); }
   inline bool isHTTP() const        { return (isProto(NDPI_PROTOCOL_HTTP));       }
@@ -634,7 +646,7 @@ public:
 
   void updateSeqNum(time_t when, u_int32_t sN, u_int32_t aN);
   void setDetectedProtocol(ndpi_protocol proto_id);
-  void processPacket(const struct pcap_pkthdr *h, const u_char *ip_packet,
+  void processPacket(bool src2dst_direction, const struct pcap_pkthdr *h, const u_char *ip_packet,
                      u_int16_t ip_len, u_int64_t packet_time, u_int8_t *payload,
                      u_int16_t payload_len, u_int16_t src_port);
   void processDNSPacket(const u_char *ip_packet, u_int16_t ip_len,
@@ -646,6 +658,9 @@ public:
   void processModbusPacket(bool is_query, const u_char *payload,
 			   u_int16_t payload_len,
 			   const struct pcap_pkthdr *h);
+  void updateQUICStats(bool src2dst_direction, const struct timeval *tv,
+		       u_int8_t *payload, u_int16_t payload_len);
+  void updateUDPTimestamp(bool src2dst_direction, const struct timeval *tv);
 #endif
   void endProtocolDissection();
   inline void setCustomApp(custom_app_t ca) {
@@ -1210,7 +1225,7 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
     if(tcp == NULL)
       return(0.0);
     else
-      return client ? Utils::timeval2ms(&tcp->clientRTT3WH) : Utils::timeval2ms(&tcp->serverRTT3WH);
+      return client ? tcp->clientRTT3WH : tcp->serverRTT3WH;
   };
   
   inline void setFlowRTT(const struct timeval *const tv, bool client) {
@@ -1219,12 +1234,12 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
 	memcpy(&tcp->clientRTT3WH, tv, sizeof(*tv));
 
 	if (cli_host)
-	  cli_host->updateNetworkRTT(Utils::timeval2ms(&tcp->clientRTT3WH));
+	  cli_host->updateNetworkRTT(tcp->clientRTT3WH);
       } else {
 	memcpy(&tcp->serverRTT3WH, tv, sizeof(*tv));
 
 	if (srv_host)
-	  srv_host->updateNetworkRTT(Utils::timeval2ms(&tcp->serverRTT3WH));
+	  srv_host->updateNetworkRTT(tcp->serverRTT3WH);
       }
     }
   }
@@ -1238,9 +1253,7 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   }
   inline void setRTT() {
     if(tcp != NULL)
-      rttSec = ((float)(tcp->serverRTT3WH.tv_sec + tcp->clientRTT3WH.tv_sec)) +
-	((float)(tcp->serverRTT3WH.tv_usec + tcp->clientRTT3WH.tv_usec)) /
-	(float)1000000;
+      rttSec = (tcp->serverRTT3WH + tcp->clientRTT3WH)/1000.;
   }
   inline void setFlowApplLatency(float latency_msecs) {
     applLatencyMsec = latency_msecs;

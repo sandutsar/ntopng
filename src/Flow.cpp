@@ -54,13 +54,23 @@ Flow::Flow(NetworkInterface *_iface,
   srcAS = dstAS = 0, rttSec = 0;
 
   if(_protocol == IPPROTO_TCP) {
-    tcp = (FlowTCP*)calloc(1, sizeof(FlowTCP));
+    tcp = (FlowTCP*)calloc(1, sizeof(FlowTCP)), udp = NULL;
 
     if(tcp != NULL)
       ndpi_init_data_analysis(&tcp->rtt.cli_to_srv, 4),
-	ndpi_init_data_analysis(&tcp->rtt.srv_to_cli, 4);	    
-  } else
+	ndpi_init_data_analysis(&tcp->rtt.srv_to_cli, 4);
+  } else {
+    if(protocol == IPPROTO_UDP) {
+      udp = (FlowUDP*)calloc(1, sizeof(FlowUDP));
+
+      if(udp != NULL)
+	ndpi_init_data_analysis(&udp->rtt.cli_min_rtt, 4),
+	  ndpi_init_data_analysis(&udp->rtt.srv_min_rtt, 4);
+    } else
+      udp = NULL;
+
     tcp = NULL;
+  }
 
   collection = NULL;
 
@@ -504,6 +514,12 @@ Flow::~Flow() {
 
     ndpi_free_data_analysis(&tcp->rtt.cli_to_srv, 0), ndpi_free_data_analysis(&tcp->rtt.srv_to_cli, 0);
     free(tcp);
+  }
+
+  if(udp != NULL) {
+    ndpi_free_data_analysis(&udp->rtt.cli_min_rtt, 0),
+      ndpi_free_data_analysis(&udp->rtt.srv_min_rtt, 0);
+    free(udp);
   }
 
   if(riskInfo) free(riskInfo);
@@ -1039,7 +1055,8 @@ bool Flow::needsExtraDissection() {
 /* *************************************** */
 
 /* Process a packet and advance the flow detection state. */
-void Flow::processPacket(const struct pcap_pkthdr *h, const u_char *ip_packet,
+void Flow::processPacket(bool src2dst_direction,
+			 const struct pcap_pkthdr *h, const u_char *ip_packet,
                          u_int16_t ip_len, u_int64_t packet_time,
                          u_int8_t *payload, u_int16_t payload_len,
                          u_int16_t src_port) {
@@ -2435,9 +2452,9 @@ void Flow::periodic_stats_update(const struct timeval *tv) {
   /*
     Do the stats update on the actual peers, i.e.,
     peers possibly swapped due to the heuristic
-  */  
+  */
   get_actual_peers(&cli_h, &srv_h);
-  
+
   Mac *cli_mac = cli_h ? cli_h->getMac() : NULL;
   Mac *srv_mac = srv_h ? srv_h->getMac() : NULL;
 
@@ -2446,7 +2463,7 @@ void Flow::periodic_stats_update(const struct timeval *tv) {
   if(cli_h && srv_h) {
     if(diff_sent_bytes || diff_rcvd_bytes) {
       /* Update L2 Device stats */
-      
+
       if(srv_mac) {
 	//#ifdef HAVE_NEDGE
         srv_mac->incSentStats(tv->tv_sec, diff_rcvd_packets, diff_rcvd_bytes);
@@ -3780,7 +3797,7 @@ void Flow::formatECSHost(json_object *my_object, bool is_client,
       json_object_object_add(host_object,
 			     Utils::jsonLabel(is_client ? CLIENT_NW_LATENCY_MS : SERVER_NW_LATENCY_MS,
 					      "latency", jsonbuf, sizeof(jsonbuf)),
-			     json_object_new_double(toMs(&tcp->clientRTT3WH)/2));
+			     json_object_new_double(tcp->clientRTT3WH/2.));
 
     json_object_object_add(my_object, is_client ? "client" : "server", host_object);
   }
@@ -4080,11 +4097,11 @@ void Flow::formatGenericFlow(json_object *my_object) {
     json_object_object_add(my_object,
 			   Utils::jsonLabel(CLIENT_NW_LATENCY_MS, "CLIENT_NW_LATENCY_MS", jsonbuf,
 					    sizeof(jsonbuf)),
-			   json_object_new_double(toMs(&tcp->clientRTT3WH)/2));
+			   json_object_new_double(tcp->clientRTT3WH/2.));
     json_object_object_add(my_object,
 			   Utils::jsonLabel(SERVER_NW_LATENCY_MS, "SERVER_NW_LATENCY_MS", jsonbuf,
 					    sizeof(jsonbuf)),
-			   json_object_new_double(toMs(&tcp->serverRTT3WH)/2));
+			   json_object_new_double(tcp->serverRTT3WH/2.));
   }
 
   c = cli_host ? cli_host->get_country(buf, sizeof(buf)) : NULL;
@@ -5436,36 +5453,42 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
 	}
       } else if(flags_3wh == (TH_SYN | TH_ACK)) {
         if((tcp->synAckTime.tv_sec == 0) && (tcp->synTime.tv_sec > 0)) {
+	  struct timeval t;
+	  
           memcpy(&tcp->synAckTime, when, sizeof(struct timeval));
-          timeval_diff(&tcp->synTime, (struct timeval *)when, &tcp->serverRTT3WH, 0);
+          timeval_diff(&tcp->synTime, (struct timeval *)when, &t, 0);
+	  tcp->serverRTT3WH = Utils::timeval2ms(&t);
 
           /* Coherence check */
-          if(tcp->serverRTT3WH.tv_sec > 5)
-            memset(&tcp->serverRTT3WH, 0, sizeof(tcp->serverRTT3WH));
+          if(tcp->serverRTT3WH > 5000 /* 5 sec */ )
+            tcp->serverRTT3WH = 0;
           else if(srv_host)
-            srv_host->updateNetworkRTT(Utils::timeval2ms(&tcp->serverRTT3WH));
+            srv_host->updateNetworkRTT(tcp->serverRTT3WH);
         }
       } else if((flags_3wh == TH_ACK) ||
                  (flags_3wh == (TH_ACK | TH_PUSH)) /* TCP Fast Open may contain data and PSH
 						      in the final TWH ACK */) {
         if((tcp->ackTime.tv_sec == 0) && (tcp->synAckTime.tv_sec > 0)) {
+	  struct timeval t;
+	  
           memcpy(&tcp->ackTime, when, sizeof(struct timeval));
-          timeval_diff(&tcp->synAckTime, (struct timeval *)when, &tcp->clientRTT3WH, 0);
+          timeval_diff(&tcp->synAckTime, (struct timeval *)when, &t, 0);
 
+	  tcp->clientRTT3WH = Utils::timeval2ms(&t);
 #ifdef DEBUG
-	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Client RTT: %.1f ms", toMs(&tcp->clientRTT3WH));
+	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Client RTT: %.1f ms", tcp->clientRTT3WH);
 #endif
-	  
+
           /* Coherence check */
-          if(tcp->clientRTT3WH.tv_sec > 5)
-            memset(&tcp->clientRTT3WH, 0, sizeof(tcp->clientRTT3WH));
+          if(tcp->clientRTT3WH > 5000 /* 5 sec */)
+            tcp->clientRTT3WH = 0;
           else if(cli_host)
-            cli_host->updateNetworkRTT(Utils::timeval2ms(&tcp->clientRTT3WH));
+            cli_host->updateNetworkRTT(tcp->clientRTT3WH);
 
 #ifdef DEBUG
-	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Server RTT: %.1f ms", toMs(&tcp->serverRTT3WH));
+	  ntop->getTrace()->traceEvent(TRACE_WARNING, "Server RTT: %.1f ms", tcp->serverRTT3WH);
 #endif
-	  
+
           setRTT();
           iface->getTcpFlowStats()->incEstablished();
         }
@@ -6810,7 +6833,7 @@ void Flow::setPacketsBytes(time_t now, u_int32_t s2d_pkts, u_int32_t d2s_pkts,
 				 s2d_pkts, d2s_pkts,
 				 s2d_pkts_delta, d2s_pkts_delta,
 				 get_bytes_cli2srv(), get_bytes_srv2cli(),
-				 s2d_bytes, d2s_bytes, 
+				 s2d_bytes, d2s_bytes,
 				 s2d_bytes_delta, d2s_bytes_delta);
   }
 #endif
@@ -6836,7 +6859,7 @@ void Flow::setPacketsBytes(time_t now, u_int32_t s2d_pkts, u_int32_t d2s_pkts,
     the conntrack handler, and thus the flow is still alive.
   */
   last_conntrack_update = now;
-    
+
   if(s2d_set) {
     static_cast<NetfilterInterface *>(iface)->incStatsConntrack(isIngress2EgressDirection(),
 							        now, eth_proto, getStatsProtocol(),
@@ -7778,10 +7801,10 @@ void Flow::lua_get_tcp_info(lua_State *vm) const {
 			      ? true
 			      : false);
 
-    
-    lua_push_float_table_entry(vm, "tcp.nw_latency.3wh_client_rtt", toMs(&tcp->clientRTT3WH));
-    lua_push_float_table_entry(vm, "tcp.nw_latency.3wh_server_rtt", toMs(&tcp->serverRTT3WH));
-    
+
+    lua_push_float_table_entry(vm, "tcp.nw_latency.3wh_client_rtt", tcp->clientRTT3WH);
+    lua_push_float_table_entry(vm, "tcp.nw_latency.3wh_server_rtt", tcp->serverRTT3WH);
+
     lua_push_float_table_entry(vm, "tcp.appl_latency", applLatencyMsec);
     lua_push_float_table_entry(vm, "tcp.max_thpt.cli2srv", getCli2SrvMaxThpt());
     lua_push_float_table_entry(vm, "tcp.max_thpt.srv2cli", getSrv2CliMaxThpt());
