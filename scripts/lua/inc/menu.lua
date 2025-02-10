@@ -1029,7 +1029,7 @@ print(template_utils.gen("pages/components/ifaces-dropdown.template", context))
 
 -- ##############################################
 -- Up/Down info
-if not is_pcap_dump and not is_system_interface then
+if not is_pcap_dump and not is_system_interface and not infrastructure_view then
 
     print([[
       <li class='nav-item d-none d-sm-done d-md-flex d-lg-flex p-2'>
@@ -1075,10 +1075,15 @@ if (_POST["ntopng_license"] == nil) and
 end
 
 -- ########################################
+
+if not infrastructure_view then
+
 -- Network Load
 print([[
    <li class="network-load d-none d-lg-inline py-2"></li>
 ]])
+
+end
 
 -- ########################################
 -- end of navbar-nav
@@ -1091,6 +1096,8 @@ print([[
 -- ########################################
 -- Searchbox hosts
 -- append searchbox
+
+if not infrastructure_view then
 
 print("<li class='nav-item'>")
 print(template_utils.gen("typeahead_input.html", {
@@ -1112,6 +1119,8 @@ print(template_utils.gen("typeahead_input.html", {
     }
 }))
 print("</li>")
+
+end
 
 -- #########################################
 -- User Navbar Menu
