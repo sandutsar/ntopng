@@ -5056,24 +5056,24 @@ local lang = {
   ["icmp_info"] = {
     ["type"] = {
       ["0"] = {
-        ["info"] = "Echo reply",
+        ["info"] = "Echo Reply",
         ["code"] = {
         },
       },
       ["10"] = {
-        ["info"] = "Router selection",
+        ["info"] = "Router Selection",
         ["code"] = {
         },
       },
       ["11"] = {
-        ["info"] = "Time exceeded",
+        ["info"] = "Time Exceeded",
         ["code"] = {
           ["0"] = "Time to live exceeded in transit",
           ["1"] = "Fragment reassembly time exceeded",
         },
       },
       ["12"] = {
-        ["info"] = "Parameter problem",
+        ["info"] = "Parameter Problem",
         ["code"] = {
           ["0"] = "Pointer indicates the error",
         },
@@ -5084,32 +5084,32 @@ local lang = {
         },
       },
       ["14"] = {
-        ["info"] = "Timestamp reply",
+        ["info"] = "Timestamp Reply",
         ["code"] = {
         },
       },
       ["15"] = {
-        ["info"] = "Information request",
+        ["info"] = "Information Request",
         ["code"] = {
         },
       },
       ["16"] = {
-        ["info"] = "Information reply",
+        ["info"] = "Information Reply",
         ["code"] = {
         },
       },
       ["17"] = {
-        ["info"] = "Address mask request",
+        ["info"] = "Address mask Request",
         ["code"] = {
         },
       },
       ["18"] = {
-        ["info"] = "Address mask reply",
+        ["info"] = "Address Mask Reply",
         ["code"] = {
         },
       },
       ["3"] = {
-        ["info"] = "Destination unreachable",
+        ["info"] = "Destination Unreachable",
         ["code"] = {
           ["0"] = "Net unreachable",
           ["1"] = "Host unreachable",
@@ -5127,7 +5127,7 @@ local lang = {
         },
       },
       ["4"] = {
-        ["info"] = "Source quench",
+        ["info"] = "Source Quench",
         ["code"] = {
         },
       },
@@ -5146,7 +5146,27 @@ local lang = {
         },
       },
       ["9"] = {
-        ["info"] = "Router advertisement",
+        ["info"] = "Router Advertisement",
+        ["code"] = {
+        },
+      },
+      ["131"] = {
+        ["info"] = "Multicast Listener Report",
+        ["code"] = {
+        },
+      },
+      ["134"] = {
+        ["info"] = "Router Advertisement",
+        ["code"] = {
+        },
+      },
+      ["135"] = {
+        ["info"] = "Neighbor Solicitation",
+        ["code"] = {
+        },
+      },
+      ["136"] = {
+        ["info"] = "Neighbour Advertisement",
         ["code"] = {
         },
       },
