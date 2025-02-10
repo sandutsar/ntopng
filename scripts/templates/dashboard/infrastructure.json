@@ -158,6 +158,70 @@
 		},
 		{
 			"component" : "table",
+			"id" : "top_alerted",
+			"i18n_name" : "report.top_alerted_instances",
+			"width" : 4,
+			"height" : 3,
+			"time_window" : "",
+			"time_offset" : "",
+			"params" : {
+				"url" : "/lua/pro/rest/v2/get/infrastructure/top.lua",
+				"url_params" : {
+					"top_field" : "engaged_alerts"
+				},
+				"no_bg" : true,
+				"table_type" : "alert_count",
+				"columns" : [
+					{ "id" : "name" },
+					{ "id" : "counters", "style" : "text-align: right" }
+				]
+			}
+		},
+		{
+			"component" : "table",
+			"id" : "top_by_throughput",
+			"i18n_name" : "report.top_by_throughput",
+			"width" : 4,
+			"height" : 3,
+			"time_window" : "",
+			"time_offset" : "",
+			"params" : {
+				"url" : "/lua/pro/rest/v2/get/infrastructure/top.lua",
+				"url_params" : {
+					"top_field" : "throughput_bps"
+				},
+				"no_bg" : true,
+				"table_type" : "total_throughput",
+				"columns" : [
+					{ "id" : "name" },
+					{ "id" : "counters", "style" : "text-align: right" }
+				]
+			}
+		},
+		{
+			"component" : "table",
+			"id" : "by_uptime",
+			"i18n_name" : "report.by_uptime",
+			"width" : 4,
+			"height" : 3,
+			"time_window" : "",
+			"time_offset" : "",
+			"params" : {
+				"url" : "/lua/pro/rest/v2/get/infrastructure/top.lua",
+				"url_params" : {
+					"top_field" : "uptime_sec",
+					"order" : "asc"
+				},
+				"no_bg" : true,
+				"table_type" : "uptime",
+				"columns" : [
+					{ "id" : "name" },
+					{ "id" : "counters", "style" : "text-align: right" }
+				]
+			}
+		},
+		{
+			"component" : "table",
 			"id" : "top_local_talkers",
 			"i18n_name" : "report.top_local_hosts",
 			"width" : 4,

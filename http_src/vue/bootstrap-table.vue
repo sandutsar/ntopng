@@ -3,8 +3,8 @@
 -->
 <template>
   <!-- Normal table -->
-  <table v-if="!(horizontal) || (horizontal == false)" class="table table-striped table-bordered col-sm-12" style="">
-    <thead>
+  <table v-if="!(horizontal) || (horizontal == false)" class="table col-sm-12" :class="[no_background ? 'table-borderless' : 'table-striped table-bordered' ]" style="">
+    <thead v-if="!hide_head">
       <tr>
         <th v-for="col in columns" scope="col" :class="col.class" v-html="print_html_column(col)"></th>
       </tr>
@@ -47,6 +47,8 @@ const props = defineProps({
   print_html_title: Function,
   horizontal: Boolean,
   wrap_columns: Boolean,
+  hide_head: Boolean,
+  no_background: Boolean,
   head_width: Number,
   row_width: Number,
   text_align: String

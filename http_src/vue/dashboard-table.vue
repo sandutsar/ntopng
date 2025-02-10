@@ -8,6 +8,8 @@
     :id="table_id" 
     :columns="columns"
     :rows="table_rows"
+    :hide_head="hide_head"
+    :no_background="no_background"
     :print_html_column="render_column"
     :print_html_row="render_row"
     :wrap_columns="true">
@@ -39,6 +41,14 @@ const props = defineProps({
     params: Object,      /* Component-specific parameters from the JSON template definition */
     get_component_data: Function, /* Callback to request data (REST) */
     filters: Object
+});
+
+const hide_head = computed(() => {
+    return props.params.no_bg;
+});
+
+const no_background = computed(() => {
+    return props.params.no_bg;
 });
 
 const columns = computed(() => {
@@ -84,6 +94,7 @@ const render_column = function (column) {
 }
 
 const row_render_functions = {
+
   /* Render function for 'throughput' table type */
   throughput: function (column, row) {
     if (column.id == 'name') {
@@ -102,6 +113,30 @@ const row_render_functions = {
       } else {
         return row['throughput'];
       }
+    } else {
+      return "";
+    }
+  },
+
+  /* Render function for 'total_throughput' table type */
+  total_throughput: function (column, row) {
+    if (column.id == 'name') {
+      let name = row.name;
+      if (row['url'])
+        return `<a href='${row.url}'>${name}</a>`;
+      else
+        return name;
+    } else if (column.id == 'counters') {
+        let label = '';
+        if (row.counters) {
+          if (row.counters.throughput) {
+            label += `<i class="fas fa-arrow-up"></i> ${ NtopUtils.bitsToSize(row.counters.throughput.upload || 0) }</span></a> `;      
+            label += `<i class="fas fa-arrow-down"></i> ${ NtopUtils.bitsToSize(row.counters.throughput.download || 0) }</span></a> `;
+          } else {
+            label += NtopUtils.bitsToSize(row.counters.throughput_bps || 0);
+          }
+        }
+        return label;
     } else {
       return "";
     }
@@ -162,7 +197,51 @@ const row_render_functions = {
     } else {
       return row[column.id];
     }
+  },
+
+  /* Render function for 'alert_count' table type */
+  alert_count: function (column, row) {
+    if (column.id == 'name') {
+      let name = row.name;
+      if (row['url'])
+        return `<a href='${row.url}'>${name}</a>`;
+      else
+        return name;
+    } else if (column.id == 'counters') {
+      let total = row.counters.engaged_alerts || 0;
+      let errors = row.counters.engaged_alerts_error || 0;
+      let warnings = row.counters.engaged_alerts_warning || 0;
+      let infos = 0;
+      if (total > errors + warnings) infos = total - (errors + warnings);
+      let label = '';
+      if (infos > 0)
+        label += `<a href="${row.url}"><span class="badge bg-success"><i class="fas fa-exclamation-triangle"></i> ${infos}</span></a> `;
+      if (warnings > 0)
+        label += `<a href="${row.url}"><span class="badge bg-warning"><i class="fas fa-exclamation-triangle"></i> ${warnings}</span></a> `;
+      if (errors > 0)
+        label += `<a href="${row.url}"><span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> ${errors}</span></a> `;
+      return label;
+    } else {
+      return "";
+    }
+  },
+
+  /* Render function for 'uptime' table type */
+  uptime: function (column, row) {
+    if (column.id == 'name') {
+      let name = row.name;
+      if (row['url'])
+        return `<a href='${row.url}'>${name}</a>`;
+      else
+        return name;
+    } else if (column.id == 'counters') {
+      let label = `${ NtopUtils.secondsToTime(row.counters.uptime_sec || 0) }`;
+      return label;
+    } else {
+      return "";
+    }
   }
+
 };
 
 const render_row = function (column, row) {
@@ -196,7 +275,7 @@ async function refresh_table() {
     rows = data; /* default: data is the array of records */
   }
 
-  if ( props.params.table_type != 'vs_scan_result') {
+  if (props.params.table_type != 'vs_scan_result') {
     const max_rows = props.max_height ? ((props.max_height/4) * 6) : 6;
     rows = rows.slice(0, max_rows);
   } 

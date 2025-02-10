@@ -182,6 +182,7 @@ function dumpInterfaceStats(ifid)
 
         res["epoch"] = os.time()
         res["localtime"] = os.date("%H:%M:%S %z", res["epoch"])
+        res["uptime_sec"] = uptime
         res["uptime"] = secondsToTime(uptime)
         if ntop.isPro() then
             local product_info = ntop.getInfo(true)
@@ -382,8 +383,10 @@ function dumpBriefInterfaceStats(ifid)
             res["dropped_flows"] = ifstats.zmqRecvStats_since_reset.dropped_flows
         end
 
+        res["epoch"] = os.time()
         res["localtime"] = os.date("%H:%M:%S %z", res["epoch"])
         res["uptime"] = secondsToTime(uptime)
+        res["uptime_sec"] = uptime
         if ntop.isPro() then
             local product_info = ntop.getInfo(true)
 

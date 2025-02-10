@@ -1852,6 +1852,7 @@ local known_parameters = {
     ["component_time_window"] = validateSingleWord,
     ["component_params"] = {jsonCleanup, validateJSON},
     ["components"] = validateColumnsIds, -- Comma separated list of component ids
+    ["top_field"] = validateSingleWord,
     ["system_interface"] = validateBool,
 
     -- CONFIGSETS
