@@ -60,7 +60,7 @@ end
 -- Infrastructure
 local infrastructure_view = false
 local infrastructure_instances = {}
-if ntop.isEnterpriseM() then
+if ntop.isEnterpriseL() then
     local infrastructure_utils = require("infrastructure_utils")
     for _, v in pairs(infrastructure_utils.get_all_instances()) do
         infrastructure_instances[v.id] = {

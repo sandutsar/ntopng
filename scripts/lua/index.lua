@@ -23,7 +23,7 @@ local view = _GET["view"]
 
 -- ######################################
 
-local infrastructure_view = view and view == 'infrastructure' and ntop.isEnterpriseM() 
+local infrastructure_view = view and view == 'infrastructure' and ntop.isEnterpriseL() 
 
 local is_system_interface = page_utils.is_system_view()
 if is_system_interface and not infrastructure_view then
