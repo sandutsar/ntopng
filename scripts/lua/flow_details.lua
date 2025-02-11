@@ -998,14 +998,14 @@ else
       print("<tr><th>" .. i18n("download") .. "&nbsp;<i class=\"fas fa-download fa-lg\"></i></th><td><A HREF=\"" ..
          url .. "\" download=\"iec104-" .. flow_key .. ".json\">JSON</A></td></tr>")
    end
-
-   print("<tr><th width=10%>" .. i18n("flow_details.tos") .. "</th>")
-   print("<td>" .. (dscp_consts.dscp_descr(flow.tos.client.DSCP)) .. " / " ..
-      (dscp_consts.ecn_descr(flow.tos.client.ECN)) .. "</td>")
-   print("<td>" .. (dscp_consts.dscp_descr(flow.tos.server.DSCP)) .. " / " ..
-      (dscp_consts.ecn_descr(flow.tos.server.ECN)) .. "</td>")
-   print("</tr>")
-
+   
+   if((flow.qoe ~= nil) and (flow.qoe.score ~= nil)) then
+      print("<tr><th width=10%>" .. i18n("flow_details.qoe") .. "</th>")
+      print("<td>" .. formatQoE(flow.qoe.score.cli_to_srv) .. "</td>")
+      print("<td>" .. formatQoE(flow.qoe.score.srv_to_cli) .. "</td>")
+      print("</tr>")
+   end
+   
    if (flow["tcp.nw_latency.3wh_client_rtt"] ~= nil) then
       local rtt = flow["tcp.nw_latency.3wh_client_rtt"] + flow["tcp.nw_latency.3wh_server_rtt"]
 

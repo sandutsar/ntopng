@@ -342,9 +342,20 @@ function print_copy_button(id, data)
    print("<script>$('#btn-copy-" .. id .. "').click(function(e) { NtopUtils.copyToClipboard($(this).attr('data'), '" .. i18n('copied') .. "', '" .. i18n('request_failed_message') .. "', $(this));});</script>")
 end
 
+-- ##############################################
 
+function formatQoE(value)
+   if(value >     90) then label = i18n("flow_details.qoe_excellent", { value = value })
+   elseif(value > 75) then label = i18n("flow_details.qoe_good",      { value = value })
+   elseif(value > 60) then label = i18n("flow_details.qoe_fair",      { value = value })
+   elseif(value > 50) then label = i18n("flow_details.qoe_degraded",  { value = value })
+   else label = i18n("flow_details.qoe_poor",                         { value = value })
+   end
 
+   return(label)
+end
 
+-- ##############################################
 
 if(trace_script_duration ~= nil) then
    io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")

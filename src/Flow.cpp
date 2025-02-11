@@ -2821,12 +2821,6 @@ void Flow::luaScore(lua_State *vm) {
   lua_pushstring(vm, "score");
   lua_insert(vm, -2);
   lua_settable(vm, -3);
-
-  /* ***************************************** */
-
-#if defined(NTOPNG_PRO)
-  lua_get_qoe_score(vm);
-#endif
 }
 
 /* *************************************** */
@@ -3162,6 +3156,10 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
 
     if(riskInfo)
       lua_push_str_table_entry(vm, "riskInfo", riskInfo);
+
+#if defined(NTOPNG_PRO)
+    lua_get_qoe_score(vm);
+#endif    
   }
 
   lua_get_status(vm);

@@ -1229,4 +1229,8 @@ typedef enum {
   core_host_connected_to_non_whitelisted_server
 } HostPolicyAlertReason;
 
+typedef struct {
+  u_int16_t max_rtt, ideal_rtt, max_jitter, ideal_jitter;
+} QoELimits;
+
 #endif /* _NTOP_TYPEDEFS_H_ */

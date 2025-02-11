@@ -661,13 +661,9 @@ public:
   void updateQUICStats(bool src2dst_direction, const struct timeval *tv,
 		       u_int8_t *payload, u_int16_t payload_len);
   void updateUDPTimestamp(bool src2dst_direction, const struct timeval *tv);
-  u_int8_t computeQoEscore(u_int8_t  l4_protocol,
-			   u_int16_t ndpi_protocol,
-			   float live_rtt_average,
-			   float live_rtt_stddev,
-			   float live_rtt_jitter,
-			   float percentage_pkts_ooo,
-			   float percentage_pkts_retransmissions);
+  void computeQoEscore(u_int8_t *cli_to_srv_qoe, u_int8_t *srv_to_cli_qoe);
+  u_int8_t computeQoETCPscore(QoELimits *l, bool cli_to_srv);
+  u_int8_t computeQoEUDPscore(QoELimits *l, bool cli_to_srv);
 #endif
   void endProtocolDissection();
   inline void setCustomApp(custom_app_t ca) {
@@ -1139,7 +1135,6 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
 #if defined(NTOPNG_PRO)
   void updateTCPAck(const struct bpf_timeval *when,
 		    bool src2dst_direction, u_int32_t ack_id);
-  u_int8_t getNetworkQOEScore();
 
 #if !defined(HAVE_NEDGE)
   inline void updateProfile() { trafficProfile = iface->getFlowProfile(this); }
