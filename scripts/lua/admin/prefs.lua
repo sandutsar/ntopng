@@ -822,7 +822,7 @@ if auth.has_capability(auth.capabilities.preferences) then
 
         local elementToSwitch = { "row_multiple_ldap_account_type", "row_toggle_ldap_anonymous_bind", "server",
             "bind_dn", "bind_pwd", "ldap_server_address", "search_path", "user_group",
-            "admin_group", "row_toggle_ldap_referrals", "row_toggle_ldap_debug" }
+            "admin_group", "row_toggle_ldap_ext_user_cap", "row_toggle_ldap_referrals", "row_toggle_ldap_debug" }
 
         prefsToggleButton(subpage_active, {
             field = auth_toggles.ldap,
@@ -896,12 +896,14 @@ if auth.has_capability(auth.capabilities.preferences) then
                     maxlength = 255
                 }
             })
+
         prefsInputFieldPrefs(subpage_active.entries["bind_pwd"].title, subpage_active.entries["bind_pwd"].description,
             "ntopng.prefs.ldap", "bind_pwd", "", "password", showElementsBind, true, false, {
                 attributes = {
                     maxlength = 255
                 }
             })
+
         prefsInputFieldPrefs(subpage_active.entries["search_path"].title,
             subpage_active.entries["search_path"].description, "ntopng.prefs.ldap", "search_path", "", "text",
             showElements, nil, nil, {
@@ -910,16 +912,18 @@ if auth.has_capability(auth.capabilities.preferences) then
                     maxlength = 255
                 }
             })
-        prefsInputFieldPrefs(subpage_active.entries["user_group"].title,
-            subpage_active.entries["user_group"].description, "ntopng.prefs.ldap", "user_group", "", "text",
+
+        prefsInputFieldPrefs(subpage_active.entries["admin_group"].title,
+            subpage_active.entries["admin_group"].description, "ntopng.prefs.ldap", "admin_group", "", "text",
             showElements, nil, nil, {
                 attributes = {
                     spellcheck = "false",
                     maxlength = 255
                 }
             })
-        prefsInputFieldPrefs(subpage_active.entries["admin_group"].title,
-            subpage_active.entries["admin_group"].description, "ntopng.prefs.ldap", "admin_group", "", "text",
+
+        prefsInputFieldPrefs(subpage_active.entries["user_group"].title,
+            subpage_active.entries["user_group"].description, "ntopng.prefs.ldap", "user_group", "", "text",
             showElements, nil, nil, {
                 attributes = {
                     spellcheck = "false",
@@ -932,6 +936,13 @@ if auth.has_capability(auth.capabilities.preferences) then
             default = "1",
             pref = "ldap.follow_referrals",
             reverse_switch = true,
+            hidden = not showElements
+        })
+
+        prefsToggleButton(subpage_active, {
+            field = "toggle_ldap_ext_user_cap",
+            default = "0",
+            pref = "ldap.ext_user_cap",
             hidden = not showElements
         })
 

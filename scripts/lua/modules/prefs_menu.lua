@@ -760,6 +760,11 @@ local menu_subpages = {{
             description = i18n("prefs.admin_group_description"),
             hidden = (not hasLdap)
         },
+        toggle_ldap_ext_user_cap = {
+            title = i18n("prefs.toggle_ldap_ext_user_cap_title"),
+            description = i18n("prefs.toggle_ldap_ext_user_cap_description"),
+            hidden = (not hasLdap)
+        },
         toggle_ldap_anonymous_bind = {
             title = i18n("prefs.toggle_ldap_anonymous_bind_title"),
             description = i18n("prefs.toggle_ldap_anonymous_bind_description"),

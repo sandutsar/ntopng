@@ -525,6 +525,7 @@ class Ntop {
       u_int32_t ttl = 0 /* Forever */) const;
   bool changeUserAlertsPermission(const char *username, bool allow_alerts,
                                   u_int32_t ttl = 0 /* Forever */) const;
+  void resetUserPermissions(const char *user) const;
   bool hasCapability(lua_State *vm, UserCapabilities capability);
   bool getUserCapabilities(const char *username, bool *allow_pcap_download,
                            bool *allow_historical_flows,
