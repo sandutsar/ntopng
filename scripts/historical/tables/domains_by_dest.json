@@ -1,11 +1,17 @@
 {
-	"name" : "Top Domains",
+	"name" : "Top Domains By Destination",
 	"data_source" : "flows",
 	"show_in_page" : "overview",
 	"hourly": false,
 	"visualization_type" : "table",
 	"select" : {
 		"items" : [
+			{
+				"name" : "IPV4_DST_ADDR"
+			},
+			{
+				"name" : "IPV6_DST_ADDR"
+			},
 			{
 				"name" : "DOMAIN_NAME"
 			},
@@ -25,11 +31,24 @@
 				"value": "",
 				"value_type": "string",
 				"input": "fixed"
+			},
+			{
+				"name": "L7_PROTO_MASTER",
+				"op": "neq",
+				"value": "5",
+				"value_type": "number",
+				"input": "fixed"
 			}
 		]
 	},
 	"groupby" : {
 		"items" : [
+			{
+				"name" : "IPV4_DST_ADDR"
+			},
+			{
+				"name" : "IPV6_DST_ADDR"
+			},
 			{
 				"name" : "DOMAIN_NAME"
 			}
