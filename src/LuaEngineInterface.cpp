@@ -2092,7 +2092,7 @@ static int ntop_interface_insert_ip_acl(lua_State *vm) {
   u_int8_t protocol = 0;
   u_int16_t l7_proto = 0;
   bool is_allowed = true;
-  char *src, *dst, *port;
+  char *src, *dst, *port = NULL;
   
   if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
     return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));  
@@ -2133,7 +2133,7 @@ static int ntop_interface_remove_ip_acl(lua_State *vm) {
   NetworkInterface *curr_iface = getCurrentInterface(vm);
   u_int8_t protocol = 0;
   u_int16_t l7_proto = 0;
-  char *src, *dst, *port;
+  char *src, *dst, *port = NULL;
   
   if (ntop_lua_check(vm, __FUNCTION__, 1, LUA_TNUMBER) != CONST_LUA_OK)
     return (ntop_lua_return_value(vm, __FUNCTION__, CONST_LUA_ERROR));
