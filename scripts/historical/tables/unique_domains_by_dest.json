@@ -1,5 +1,5 @@
 {
-	"name" : "Top Domains By Destination",
+	"name" : "Num Unique Domains By Destination",
 	"data_source" : "flows",
 	"show_in_page" : "overview",
 	"hourly": false,
@@ -16,12 +16,11 @@
 				"name" : "DST_LABEL"
 			},
 			{
-				"name" : "DOMAIN_NAME"
-			},
-			{
+
+
 				"name" : "count",
 				"func" : "COUNT",
-				"param" : "*",
+				"param" : "DISTINCT DOMAIN_NAME",
 				"value_type" : "number"
 			}
 		]
@@ -61,9 +60,6 @@
 			},
 			{
 				"name" : "DST_LABEL"
-			},
-			{
-				"name" : "DOMAIN_NAME"
 			}
 		]
 	},
