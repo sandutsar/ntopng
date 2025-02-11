@@ -13,6 +13,9 @@
 				"name" : "IPV6_DST_ADDR"
 			},
 			{
+				"name" : "DST_LABEL"
+			},
+			{
 				"name" : "DOMAIN_NAME"
 			},
 			{
@@ -48,6 +51,9 @@
 			},
 			{
 				"name" : "IPV6_DST_ADDR"
+			},
+			{
+				"name" : "DST_LABEL"
 			},
 			{
 				"name" : "DOMAIN_NAME"
