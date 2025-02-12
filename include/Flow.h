@@ -41,7 +41,11 @@ typedef struct {
   u_int16_t cli2srv_window, srv2cli_window;
   struct timeval synTime, synAckTime, ackTime; /* network Latency (3-way handshake) */
   float clientRTT3WH, serverRTT3WH; /* Computed at 3WH (msec) */
-
+  struct {
+    u_int8_t cli_to_srv_winscale, srv_to_cli_winscale;
+    struct ndpi_analyze_struct cli_to_srv, srv_to_cli;
+  } tcpWin;
+  
   struct {
     u_int32_t last_cli_ack, last_srv_ack;
     struct bpf_timeval last_cli_ts, last_srv_ts;
@@ -86,8 +90,10 @@ class Flow : public GenericHashEntry {
   int32_t iface_index;  /* Interface index on which this flow has been first observed */
   Host *cli_host, *srv_host; /* They are ALWAYS NULL on ViewInterfaces. For shared hosts see below viewFlowStats */
   IpAddress *cli_ip_addr, *srv_ip_addr;
+#ifdef NTOPNG_PRO
   FlowTCP *tcp;
   FlowUDP *udp;
+#endif
   FlowCollectionInfo *collection;
 
   /* Data collected from nProbe */
@@ -1136,7 +1142,9 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
 #if defined(NTOPNG_PRO)
   void updateTCPAck(const struct bpf_timeval *when,
 		    bool src2dst_direction, u_int32_t ack_id);
-
+  void updateTCPWinScale(bool src2dst_direction, u_int8_t winscale);
+  void updateTCPWin(bool src2dst_direction, u_int16_t win);
+  
 #if !defined(HAVE_NEDGE)
   inline void updateProfile() { trafficProfile = iface->getFlowProfile(this); }
 #endif

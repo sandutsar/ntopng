@@ -1641,7 +1641,7 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
   u_int16_t fragment_extra_overhead = 0;
 #endif
 #endif
-  u_int8_t tos;
+  u_int8_t tos, tcp_window_scale = 0;
 
   *hostFlow = NULL;
 
@@ -1841,9 +1841,39 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
       tcp_len = min_val(4 * tcph->doff, trusted_l4_packet_len);
       payload = &l4[tcp_len];
       trusted_payload_len = trusted_l4_packet_len - tcp_len;      
+
+      if(tcp_flags & TH_SYN) {
+	if(tcp_len > sizeof(struct ndpi_tcphdr)) {
+	  u_int8_t *options = (u_int8_t*)(&l4[sizeof(struct ndpi_tcphdr)]);
+	  u_int8_t options_len = tcp_len - sizeof(struct ndpi_tcphdr);
+
+	  for(u_int i=0; i<options_len; ) {
+	    u_int8_t kind = options[i];
+
+	    if(kind == 0) /* EOL */ {
+	      i++;
+	      continue;
+	    } else if(kind == 1) /* NOP */
+	      i++;
+	    else if((i+1) < options_len) {
+	      u_int8_t len = options[i+1];
+
+	      if(len == 0)
+		continue;
+	      else if(kind == 3 /* Window Scale */) {
+		if(len == 3)
+		  tcp_window_scale = options[i+2];		
+		
+		break;
+	      }
+
+	      i += len;
+	    }
+	  } /* for */
+	}
+      }
       
-      // TODO: check if payload should be set to NULL when trusted_payload_len
-      // == 0
+      // TODO: check if payload should be set to NULL when trusted_payload_len == 0
     } else {
       /* Packet too short: this is a faked packet */
       ntop->getTrace()->traceEvent(TRACE_INFO, "Invalid TCP packet received [%u bytes long]",
@@ -1994,6 +2024,11 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
     case IPPROTO_TCP:
 #if defined(NTOPNG_PRO)
       flow->updateTCPAck(when, src2dst_direction, ntohl(tcph->ack_seq));
+
+      if((tcp_flags & TH_SYN) == 0)
+	flow->updateTCPWin(src2dst_direction, ntohs(tcph->window));
+      else
+	flow->updateTCPWinScale(src2dst_direction, tcp_window_scale);
 #endif
       flow->updateTcpFlags(when, tcp_flags, src2dst_direction, new_flow);
 

@@ -52,6 +52,8 @@ Flow::Flow(NetworkInterface *_iface,
     srv_port = _srv_port, privateFlowId = _private_flow_id;
   flow_dropped_counts_increased = 0, protocolErrorCode = 0;
   srcAS = dstAS = 0, rttSec = 0;
+
+#ifdef NTOPNG_PRO
   tcp = NULL, udp = NULL;
     
   if(_protocol == IPPROTO_TCP) {
@@ -59,7 +61,9 @@ Flow::Flow(NetworkInterface *_iface,
 
     if(tcp != NULL)
       ndpi_init_data_analysis(&tcp->rtt.cli_to_srv, 4),
-	ndpi_init_data_analysis(&tcp->rtt.srv_to_cli, 4);
+	ndpi_init_data_analysis(&tcp->rtt.srv_to_cli, 4),
+	ndpi_init_data_analysis(&tcp->tcpWin.cli_to_srv, 4),
+	ndpi_init_data_analysis(&tcp->tcpWin.srv_to_cli, 4);
   } else {
     if(protocol == IPPROTO_UDP) {
       udp = (FlowUDP*)calloc(1, sizeof(FlowUDP));
@@ -69,7 +73,8 @@ Flow::Flow(NetworkInterface *_iface,
 	  ndpi_init_data_analysis(&udp->rtt.srv_min_rtt, 4);
     }
   }
-
+#endif
+  
   collection = NULL;
 
   predominant_alert.id = flow_alert_normal,
@@ -507,10 +512,14 @@ Flow::~Flow() {
 
   freeDPIMemory();
 
+#ifdef NTOPNG_PRO
   if(tcp != NULL) {
     if(tcp->tcp_fingerprint) free(tcp->tcp_fingerprint);
 
-    ndpi_free_data_analysis(&tcp->rtt.cli_to_srv, 0), ndpi_free_data_analysis(&tcp->rtt.srv_to_cli, 0);
+    ndpi_free_data_analysis(&tcp->rtt.cli_to_srv, 0),
+      ndpi_free_data_analysis(&tcp->rtt.srv_to_cli, 0),
+      ndpi_free_data_analysis(&tcp->tcpWin.cli_to_srv, 0),
+      ndpi_free_data_analysis(&tcp->tcpWin.srv_to_cli, 0);
     free(tcp);
   }
 
@@ -519,7 +528,8 @@ Flow::~Flow() {
       ndpi_free_data_analysis(&udp->rtt.srv_min_rtt, 0);
     free(udp);
   }
-
+#endif
+  
   if(riskInfo) free(riskInfo);
   if(end_reason) free(end_reason);
 
@@ -1998,32 +2008,26 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
 	*srv_as = srv_host ? srv_host->get_as() : NULL;
 
       if(cli_as)
-        cli_as->incStats(
-			 tv->tv_sec, stats_protocol, partial->get_cli2srv_packets(),
+        cli_as->incStats(tv->tv_sec, stats_protocol, partial->get_cli2srv_packets(),
 			 partial->get_cli2srv_bytes(), partial->get_srv2cli_packets(),
 			 partial->get_srv2cli_bytes());
       if(srv_as)
-        srv_as->incStats(
-			 tv->tv_sec, stats_protocol, partial->get_srv2cli_packets(),
+        srv_as->incStats(tv->tv_sec, stats_protocol, partial->get_srv2cli_packets(),
 			 partial->get_srv2cli_bytes(), partial->get_cli2srv_packets(),
 			 partial->get_cli2srv_bytes());
     }
 
     if(cli_host->get_observation_point_id() &&
         srv_host->get_observation_point_id()) {
-      ObservationPoint *cli_obs_point =
-	cli_host ? cli_host->get_obs_point() : NULL,
-	*srv_obs_point =
-	srv_host ? srv_host->get_obs_point() : NULL;
+      ObservationPoint *cli_obs_point = cli_host ? cli_host->get_obs_point() : NULL,
+	*srv_obs_point = srv_host ? srv_host->get_obs_point() : NULL;
 
       if(cli_obs_point)
-        cli_obs_point->incStats(
-				tv->tv_sec, stats_protocol, partial->get_cli2srv_packets(),
+        cli_obs_point->incStats(tv->tv_sec, stats_protocol, partial->get_cli2srv_packets(),
 				partial->get_cli2srv_bytes(), partial->get_srv2cli_packets(),
 				partial->get_srv2cli_bytes());
       if(srv_obs_point)
-        srv_obs_point->incStats(
-				tv->tv_sec, stats_protocol, partial->get_srv2cli_packets(),
+        srv_obs_point->incStats(tv->tv_sec, stats_protocol, partial->get_srv2cli_packets(),
 				partial->get_srv2cli_bytes(), partial->get_cli2srv_packets(),
 				partial->get_cli2srv_bytes());
     }
@@ -2060,8 +2064,7 @@ void Flow::hosts_periodic_stats_update(NetworkInterface *iface, Host *cli_host,
       } else  // client and server ARE in the same country
         // need to update the inner counter (just one time, will intentionally
         // skip this for srv_host)
-        cli_country_stats->incInner(
-				    tv->tv_sec,
+        cli_country_stats->incInner(tv->tv_sec,
 				    partial->get_cli2srv_packets() + partial->get_srv2cli_packets(),
 				    partial->get_cli2srv_bytes() + partial->get_srv2cli_bytes(),
 				    srv_host->get_ip()->isBroadcastAddress() ||
@@ -4717,8 +4720,7 @@ void Flow::housekeep(time_t t) {
 
     switch (protocol) {
     case IPPROTO_TCP:
-      if(cli_host && ((getTcpFlagsCli2Srv() == TH_SYN) ||
-		       (!non_zero_payload_observed)))
+      if(cli_host && ((getTcpFlagsCli2Srv() == TH_SYN) || (!non_zero_payload_observed)))
 	cli_host->incIncompleteFlows();
       break;
 
