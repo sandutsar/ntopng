@@ -90,8 +90,8 @@ class Flow : public GenericHashEntry {
   int32_t iface_index;  /* Interface index on which this flow has been first observed */
   Host *cli_host, *srv_host; /* They are ALWAYS NULL on ViewInterfaces. For shared hosts see below viewFlowStats */
   IpAddress *cli_ip_addr, *srv_ip_addr;
-#ifdef NTOPNG_PRO
   FlowTCP *tcp;
+#ifdef NTOPNG_PRO
   FlowUDP *udp;
 #endif
   FlowCollectionInfo *collection;

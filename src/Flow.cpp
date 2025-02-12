@@ -53,9 +53,12 @@ Flow::Flow(NetworkInterface *_iface,
   flow_dropped_counts_increased = 0, protocolErrorCode = 0;
   srcAS = dstAS = 0, rttSec = 0;
 
+  tcp = NULL;
+  
 #ifdef NTOPNG_PRO
-  tcp = NULL, udp = NULL;
-    
+  udp = NULL;
+#endif
+  
   if(_protocol == IPPROTO_TCP) {
     tcp = (FlowTCP*)calloc(1, sizeof(FlowTCP));
 
@@ -64,7 +67,9 @@ Flow::Flow(NetworkInterface *_iface,
 	ndpi_init_data_analysis(&tcp->rtt.srv_to_cli, 4),
 	ndpi_init_data_analysis(&tcp->tcpWin.cli_to_srv, 4),
 	ndpi_init_data_analysis(&tcp->tcpWin.srv_to_cli, 4);
-  } else {
+  }
+#ifdef NTOPNG_PRO
+  else {
     if(protocol == IPPROTO_UDP) {
       udp = (FlowUDP*)calloc(1, sizeof(FlowUDP));
 
@@ -512,7 +517,6 @@ Flow::~Flow() {
 
   freeDPIMemory();
 
-#ifdef NTOPNG_PRO
   if(tcp != NULL) {
     if(tcp->tcp_fingerprint) free(tcp->tcp_fingerprint);
 
@@ -523,6 +527,7 @@ Flow::~Flow() {
     free(tcp);
   }
 
+#ifdef NTOPNG_PRO
   if(udp != NULL) {
     ndpi_free_data_analysis(&udp->rtt.cli_min_rtt, 0),
       ndpi_free_data_analysis(&udp->rtt.srv_min_rtt, 0);
