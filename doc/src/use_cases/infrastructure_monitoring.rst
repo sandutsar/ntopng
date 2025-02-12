@@ -49,7 +49,7 @@ Infrastructure Dashboard
 ========================
 
 
-.. figure:: ../img/infrastructure_dashboard.png
+.. figure:: ../img/infrastructure-dashboard.png
   :align: center
   :alt: Infrastructure Dashboard
 
