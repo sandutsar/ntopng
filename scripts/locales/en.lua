@@ -569,6 +569,7 @@ local lang = {
   ["offline"] = "Offline (No Internet Connectivity)",
   ["ok"] = "OK",
   ["on_interface"] = "on interface",
+  ["qoe"] = "QoE",
   ["on_release"] = " The alert is released",
   ["on_trigger"] = "The alert is triggered",
   ["only_traffic"] = "Hosts with traffic",
