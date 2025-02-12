@@ -43,7 +43,21 @@ const props = defineProps({
 
 /* ************************************** */
 
-const table_id = props.context?.has_exporters ? ref('flows_list_with_exporters') : ref('flows_list');
+const table_id = ref(null);
+if (props.context?.is_enterprise_l) {
+    if (props.context?.has_exporters) {
+        table_id.value = 'flows_list_with_exporters_enterprise_l'
+    } else {
+        table_id.value = 'flows_list_enterprise_l'
+    }
+} else {
+    if (props.context?.has_exporters) {
+        table_id.value = 'flows_list_with_exporters'
+    } else {
+        table_id.value = 'flows_list'
+    }
+}
+
 const table_flows_list = ref(null);
 const csrf = props.context.csrf;
 //const chart = ref(null);
@@ -254,6 +268,9 @@ const map_table_def_columns = (columns) => {
                 return `<a href="${flow_exporter_url}?ip=${value.device.ip}${ifid}">${flow_exporter_icon}</a> <a href="#" class="tableFilter" tag-filter="deviceIP" tag-value="${value.device.ip}" ${tag_filter2}>${value.device.name}${ifid_name}</a>`
             }
             return ''
+        },
+        "qoe": (value) => {
+            return value;
         },
         "in_index": (value, row) => {
             if (!dataUtils.isEmptyOrNull(row.flow_exporter)) {

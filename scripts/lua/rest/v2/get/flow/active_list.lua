@@ -277,7 +277,11 @@ for _, value in ipairs(flows_stats.flows) do
         record["application"]["rsp_status_code"] = http_utils.getResponseStatusCode(
             value["protos.http.last_return_code"])
     end
-
+--[[
+    if value["qoe_score"] and value["qoe_score"]["rtt"] then
+        record["qoe"] = value["qoe_score"]["rtt"]["srv_to_cli_jitter"]
+    end
+    ]]
     rsp[#rsp + 1] = record
 end
 
