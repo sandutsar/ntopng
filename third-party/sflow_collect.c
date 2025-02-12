@@ -47,8 +47,9 @@
 #define SFLOW_IF_OUT_ERRORS             14
 #define SFLOW_IF_PROMISCUOUS_MODE       15
 
-
+#ifndef INET6
 #define INET6 1
+#endif
 
 #define MAX_NUM_SFLOW_POOLMAP_ENTRIES  32768
 
