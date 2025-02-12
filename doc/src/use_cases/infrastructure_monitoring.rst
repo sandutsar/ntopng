@@ -44,3 +44,13 @@ It's possible add an instance to monitor by clicking the `+` symbol above the ta
   users need the User Authentication Token of the remote ntopng to monitor the remote instance, check `here <https://www.ntop.org/guides/ntopng/advanced_features/authentication.html?highlight=token#token-based-authentication>`_.
 
 This `blog post <https://www.ntop.org/ntopng/infrastructure-monitoring-observing-the-health-and-status-of-multiple-ntopng-instances//>`_ describes in detail this capability.
+
+Infrastructure Dashboard
+========================
+
+
+.. figure:: ../img/infrastructure_dashboard.png
+  :align: center
+  :alt: Infrastructure Dashboard
+
+  Infrastructure Dashboard
