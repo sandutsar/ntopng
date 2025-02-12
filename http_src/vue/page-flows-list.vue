@@ -29,6 +29,7 @@ import { default as TableWithConfig } from "./table-with-config.vue";
 import { default as SelectSearch } from "./select-search.vue";
 import { default as protocolUtils } from "../utilities/map/protocol-utils.js";
 import { default as dataUtils } from "../utilities/data-utils.js";
+import { default as QoEUtils } from "../utilities/qoe-utils.js";
 import { default as Spinner } from "./spinner.vue";
 import formatterUtils from "../utilities/formatter-utils";
 import NtopUtils from "../utilities/ntop-utils.js";
@@ -270,7 +271,10 @@ const map_table_def_columns = (columns) => {
             return ''
         },
         "qoe": (value) => {
-            return value;
+            if (value && value > 0) {
+                return `<span class='badge ${QoEUtils.QoEQualityBadge(value)}'>${QoEUtils.QoEQualityLabel(value)} (${value} %)</span>`
+            }
+            return '';
         },
         "in_index": (value, row) => {
             if (!dataUtils.isEmptyOrNull(row.flow_exporter)) {
