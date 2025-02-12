@@ -13,23 +13,18 @@ ntopng can be used in combination with other ntop tools. Documentation to use nt
    how_to_start/index
    adding_a_license/index
    cli_options/index
-   web_gui/index
-   snmp/index
+   user_interface/index
    interfaces/index
    alerts/index
    using_with_other_tools/index
-   clickhouse/index
-   historical_flows
-   reports/index
+   flow_dump/index
    containers   
    scada/index
-   kafka/index
    advanced_features/index
    operating_ntopng_on_large_networks
    third_party_integrations/index
    faq
    performances/index
-   vulnerability_scan/index
 
 .. toctree::
    :caption: Developer's Guide

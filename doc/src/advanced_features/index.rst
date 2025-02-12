@@ -9,16 +9,13 @@ section.
     :numbered:
 
     authentication
-    behavior_analysis
     bridging_and_policing
     category_lists
     dynamic_interfaces_disaggregation
-    flows_dump
     ids_acceleration
     live_pcap_download
     multitenancy
     oem
-    sflow_collection
     snapshots
     syslog
     view_interfaces

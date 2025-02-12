@@ -295,23 +295,25 @@ else
         hidden = is_system_interface or not is_admin,
         entries = {
             {
-                entry = page_utils.menu_entries.snmp_monitoring,
-                hidden = (not ntop.isEnterpriseM() and
-                    not ntop.isnEdgeEnterprise()),
-                url = "/lua/pro/enterprise/snmpdevices_stats.lua"
-            }, {
                 entry = page_utils.menu_entries.active_monitoring,
                 url = "/lua/active_monitoring.lua"
-            }, {
-                entry = page_utils.menu_entries.vulnerability_scan,
-                url = '/lua/vulnerability_scan.lua',
-                hidden = not vs_utils.is_available()
             },
             {
                 entry = page_utils.menu_entries.infrastructure_dashboard,
                 hidden = (not ntop.isEnterpriseL() and not ntop.isnEdgeEnterprise()) or
                          not is_admin,
                 url = '/lua/pro/enterprise/infrastructure_dashboard.lua'
+            },
+            {
+                entry = page_utils.menu_entries.snmp_monitoring,
+                hidden = (not ntop.isEnterpriseM() and
+                    not ntop.isnEdgeEnterprise()),
+                url = "/lua/pro/enterprise/snmpdevices_stats.lua"
+            }, 
+            {
+                entry = page_utils.menu_entries.vulnerability_scan,
+                url = '/lua/vulnerability_scan.lua',
+                hidden = not vs_utils.is_available()
             }
         }
     })
