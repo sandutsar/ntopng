@@ -2757,20 +2757,19 @@ static int ntop_get_interface_flows_info(lua_State *vm) {
     get_host_vlan_info((char *)lua_tostring(vm, 1), &host_ip, &vlan_id, buf,
                        sizeof(buf));
     host = curr_iface->getHost(host_ip, vlan_id,
-                                   getLuaVMUservalue(vm, observationPointId),
-                                   false /* Not an inline call */);
+			       getLuaVMUservalue(vm, observationPointId),
+			       false /* Not an inline call */);
   }
 
   if (lua_type(vm, 2) == LUA_TTABLE) p->readOptions(vm, 2);
-
+  
   if (lua_type(vm, 3) == LUA_TSTRING) {
     get_host_vlan_info((char *)lua_tostring(vm, 3), &talking_with_ip, &vlan_id,
                        buf, sizeof(buf));
-    talking_with_host = curr_iface->getHost(
-        talking_with_ip, vlan_id, getLuaVMUservalue(vm, observationPointId),
-        false /* Not an inline call */);
+    talking_with_host = curr_iface->getHost(talking_with_ip, vlan_id, getLuaVMUservalue(vm, observationPointId),
+					    false /* Not an inline call */);
   }
-
+  
   if (lua_type(vm, 4) == LUA_TSTRING) {
     get_host_vlan_info((char *)lua_tostring(vm, 4), &client_ip, &vlan_id, buf,
                        sizeof(buf));

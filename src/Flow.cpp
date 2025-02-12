@@ -52,9 +52,10 @@ Flow::Flow(NetworkInterface *_iface,
     srv_port = _srv_port, privateFlowId = _private_flow_id;
   flow_dropped_counts_increased = 0, protocolErrorCode = 0;
   srcAS = dstAS = 0, rttSec = 0;
-
+  tcp = NULL, udp = NULL;
+    
   if(_protocol == IPPROTO_TCP) {
-    tcp = (FlowTCP*)calloc(1, sizeof(FlowTCP)), udp = NULL;
+    tcp = (FlowTCP*)calloc(1, sizeof(FlowTCP));
 
     if(tcp != NULL)
       ndpi_init_data_analysis(&tcp->rtt.cli_to_srv, 4),
@@ -66,10 +67,7 @@ Flow::Flow(NetworkInterface *_iface,
       if(udp != NULL)
 	ndpi_init_data_analysis(&udp->rtt.cli_min_rtt, 4),
 	  ndpi_init_data_analysis(&udp->rtt.srv_min_rtt, 4);
-    } else
-      udp = NULL;
-
-    tcp = NULL;
+    }
   }
 
   collection = NULL;

@@ -5305,6 +5305,14 @@ static bool flow_search_walker(GenericHashEntry *h, void *user_data,
     case column_score:
       retriever->elems[retriever->actNumEntries++].numericValue = f->getScore();
       break;
+    case column_qoe:
+      retriever->elems[retriever->actNumEntries++].numericValue =
+#ifdef NTOPNG_PRO
+	f->getQoEScore();
+#else
+	0;
+#endif
+      break;
     case column_thpt:
       retriever->elems[retriever->actNumEntries++].numericValue = f->get_bytes_thpt();
       break;
@@ -6009,6 +6017,8 @@ int NetworkInterface::sortFlows(u_int32_t *begin_slot, bool walk_all,
     retriever->sorter = column_duration, sorter = numericSorter;
   else if (!strcmp(sortColumn, "column_score"))
     retriever->sorter = column_score, sorter = numericSorter;
+  else if (!strcmp(sortColumn, "column_score"))
+    retriever->sorter = column_score, sorter = numericSorter;
   else if (!strcmp(sortColumn, "column_score_as_client"))
     retriever->sorter = column_score_as_client, sorter = numericSorter;
   else if (!strcmp(sortColumn, "column_score_as_server"))
@@ -6036,6 +6046,8 @@ int NetworkInterface::sortFlows(u_int32_t *begin_slot, bool walk_all,
     retriever->sorter = column_out_index, sorter = numericSorter;
   else if (!strcmp(sortColumn, "column_key"))
     retriever->sorter = column_key, sorter = numericSorter;
+  else if (!strcmp(sortColumn, "column_qoe"))
+    retriever->sorter = column_qoe, sorter = numericSorter;
   else {
     ntop->getTrace()->traceEvent(TRACE_WARNING, "Unknown sort column %s",
                                  sortColumn);
@@ -6151,8 +6163,7 @@ int NetworkInterface::getFlows(lua_State *vm, u_int32_t *begin_slot,
   DetailsLevel highDetails;
 
   if (p == NULL) {
-    ntop->getTrace()->traceEvent(
-				 TRACE_WARNING, "Unable to return results with a NULL paginator");
+    ntop->getTrace()->traceEvent(TRACE_WARNING, "Unable to return results with a NULL paginator");
     return (-1);
   }
 

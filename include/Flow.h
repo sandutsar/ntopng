@@ -664,6 +664,7 @@ public:
   void computeQoEscore(u_int8_t *cli_to_srv_qoe, u_int8_t *srv_to_cli_qoe);
   u_int8_t computeQoETCPscore(QoELimits *l, bool cli_to_srv);
   u_int8_t computeQoEUDPscore(QoELimits *l, bool cli_to_srv);
+  u_int8_t getQoEScore();
 #endif
   void endProtocolDissection();
   inline void setCustomApp(custom_app_t ca) {
@@ -1287,7 +1288,7 @@ inline float get_goodput_bytes_thpt() const { return (goodput_bytes_thpt); };
   inline void setFlowDeviceInIndex(u_int32_t idx)  { if(idx != 0) flow_device.in_index = idx; };
   inline void setFlowDeviceOutIndex(u_int32_t idx) { if(idx != 0) flow_device.out_index = idx; };
 
-  inline const u_int16_t getScore() const { return (flow_score); };
+  inline const u_int16_t getScore() const { return (flow_score); };  
 
 #ifdef HAVE_NEDGE
   inline void setLastConntrackUpdate(u_int32_t when) {

@@ -91,7 +91,7 @@ end
 
 local rsp = {}
 local flows_stats = interface.getFlowsInfo(flows_filter["hostFilter"], flows_filter, flows_filter["talkingWith"],
-    flows_filter["client"], flows_filter["server"], flows_filter["flow_info"])
+					   flows_filter["client"], flows_filter["server"], flows_filter["flow_info"])
 
 if not flows_stats then
     rest_utils.extended_answer(rest_utils.consts.success.ok, {}, {

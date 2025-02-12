@@ -690,6 +690,7 @@ typedef enum {
   column_in_index,
   column_out_index,
   column_key,
+  column_qoe,
   /* Hosts */
   column_ip,
   column_alerts,
