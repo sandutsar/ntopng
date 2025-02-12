@@ -92,30 +92,4 @@ Policies
     ../shared/policies/index
 
 
-Settings
---------
-
-.. toctree::
-    :maxdepth: 2
-
-    interface/index
-
-
-Developer
----------
-
-.. toctree::
-    :maxdepth: 2
-
-    interface/index
-
-
-Help
-----
-
-.. toctree::
-    :maxdepth: 2
-
-    interface/index
-
 
