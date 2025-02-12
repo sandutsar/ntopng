@@ -1548,7 +1548,6 @@ else
                         '<a href="#alerts_filter_dialog" alert_id=%u alert_label="%s" class="btn btn-sm btn-warning" role="button"><i class="fas fa-bell-slash"></i></a>',
                         score_alert.alert_id, score_alert.alert_label))
                   end
-                end
 
                   -- If available, add a cog to configure the check
                   if alert_id_to_flow_check[score_alert.alert_id] then
