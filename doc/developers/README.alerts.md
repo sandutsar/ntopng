@@ -10,6 +10,12 @@ performance if every single flow or host has to be evaluated, multiple times dur
 
 The below picture summarizes the interactions between C++ and Lua, and the involved queues.
 
+Note that the database (built-in recipient) is directly connected to one of the recipients queue (the
+first one). There is a "alert_store_db" endpoint which is taking care of inserting alerts into the
+database (see the alert_store.lua and subclasses). The only exception is with flow alerts when clickhouse 
+is enabled: in this case flow alerts are no longer enqueues to the recipient queue for the database, 
+as they are a view on the flows table (historical flows stored on clickhouse).
+
 ![Alerts architecture big picture](../img/alerts-architecture.png)
 
 # Stateless vs Stateful
