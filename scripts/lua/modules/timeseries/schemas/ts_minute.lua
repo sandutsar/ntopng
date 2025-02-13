@@ -86,6 +86,17 @@ schema:addMetric("bytes")
 -- nEDGE SCHEMAS
 -------------------------------------------------------
 
+-- Stats (rx/tx) for the analysed traffic (netfilter interface)
+-- (same as traffic_rxtx, but with minute resolution)
+schema = ts_utils.newSchema("iface:traffic_rxtx_min", {
+    step=60,
+    is_critical_ts=true
+})
+schema:addTag("ifid")
+schema:addMetric("bytes_sent")
+schema:addMetric("bytes_rcvd")
+
+-- Stats per lan/wan interfaces
 schema = ts_utils.newSchema("iface:nedge_traffic_rxtx", {
     step = 60
 })
@@ -93,6 +104,7 @@ schema:addTag("ifid")
 schema:addMetric("bytes_sent")
 schema:addMetric("bytes_rcvd")
 
+-- Stats for the netfilter queue
 schema = ts_utils.newSchema("iface:nedge_traffic_nfq", {
     step = 60
 })

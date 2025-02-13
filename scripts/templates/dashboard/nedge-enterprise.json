@@ -90,7 +90,7 @@
 				"ts_requests": {
 					"$ANY_IFID$" : {
 						"ts_query": "ifid:$IFID$",
-						"ts_schema": "iface:traffic_rxtx",
+						"ts_schema": "iface:traffic_rxtx_min",
 						"tskey": "$IFID$"
 					}
 				}
