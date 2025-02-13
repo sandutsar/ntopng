@@ -28,7 +28,7 @@ local webhook = {
   },
 }
 
-webhook.EXPORT_FREQUENCY = 60
+webhook.EXPORT_FREQUENCY = 5
 webhook.API_VERSION = "0.2"
 webhook.REQUEST_TIMEOUT = 1
 webhook.ITERATION_TIMEOUT = 3
