@@ -12,6 +12,7 @@ local alert_consts = require("alert_consts")
 local alert_entities = require "alert_entities"
 local rest_utils = require "rest_utils"
 local checks = require "checks"
+local alert_category_utils = require "alert_category_utils"
 
 --
 -- Trigger a custom host alert
@@ -26,6 +27,7 @@ local ifid = _POST["ifid"]
 local hostinfo = url2hostinfo(_POST)
 local score = _POST["score"] or "0"
 local info = _POST["info"]
+local alert_category = _POST["alert_category"] or checks.check_categories.other.id
 
 if not auth.has_capability(auth.capabilities.alerts) then
    rest_utils.answer(rest_utils.consts.err.not_granted)
@@ -55,13 +57,18 @@ interface.select(ifid)
 local host_key = hostinfo2hostkey(hostinfo)
 score = tonumber(score)
 
+local category = alert_category_utils.getCategoryById(tonumber(alert_category))
+
 -- Notes:
 -- - This triggers the alert directly from Lua
 -- - This does not require the host to be live, however some metadata may be missing as it is not augmented with host data from C++
 
 local alert = alert_consts.alert_types.host_alert_external_script.new(info)
+
 alert:set_score(score)
 alert:set_subtype(host_key)
+alert:set_category(category)
+
 local alert_info = {
    entity_val = host_key,
    alert_entity = alert_entities.host
