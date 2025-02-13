@@ -272,7 +272,7 @@ const map_table_def_columns = (columns) => {
         },
         "qoe": (value) => {
             if (value && value > 0) {
-                return `<span class='badge ${QoEUtils.QoEQualityBadge(value)}'>${QoEUtils.QoEQualityLabel(value)} (${value} %)</span>`
+                return `<span class='badge ${QoEUtils.QoEQualityBadge(value)}'>${QoEUtils.QoEQualityLabel(value)}</span>`
             }
             return '';
         },
