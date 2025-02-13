@@ -461,6 +461,7 @@ bool SNMP::send_snmp_request(char *agent_host, u_int version, char *community,
             snmpSession->session.securityAuthProto = usmHMACSHA1AuthProtocol;
             snmpSession->session.securityAuthProtoLen = sizeof(usmHMACSHA1AuthProtocol) / sizeof(oid);
             snmpSession->session.securityAuthKeyLen = USM_AUTH_KU_LEN; /* CHECK */
+#ifdef usmHMAC192SHA256AuthProtocol
           } else if(!strcasecmp(auth_protocol, "sha256")) {
             snmpSession->session.securityAuthProto = usmHMAC192SHA256AuthProtocol;
             snmpSession->session.securityAuthProtoLen = sizeof(usmHMAC192SHA256AuthProtocol) / sizeof(oid);
@@ -473,6 +474,7 @@ bool SNMP::send_snmp_request(char *agent_host, u_int version, char *community,
             snmpSession->session.securityAuthProto = usmHMAC384SHA512AuthProtocol;
             snmpSession->session.securityAuthProtoLen = sizeof(usmHMAC384SHA512AuthProtocol) / sizeof(oid);
             snmpSession->session.securityAuthKeyLen = USM_AUTH_KU_LEN; /* CHECK */
+#endif
           } else {
             ntop->getTrace()->traceEvent(TRACE_WARNING, "SNMP PDU invalid authentication protocol [%s]",
 					 auth_protocol);
