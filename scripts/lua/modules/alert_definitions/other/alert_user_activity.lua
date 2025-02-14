@@ -65,7 +65,7 @@ function alert_user_activity.format(ifid, alert, alert_type_params)
 		 return i18n('user_activity.login_not_authorized', {user=user})
 	  end
  
-	   elseif decoded.scope == 'function' and decoded.name ~= nil then
+      elseif decoded.scope == 'function' and decoded.name ~= nil then
 	  local ifname = getInterfaceName(decoded.ifid)
  
 	  -- User add/del/password
@@ -296,12 +296,11 @@ function alert_user_activity.format(ifid, alert, alert_type_params)
  
 	  else
 		 return i18n('user_activity.unknown_activity_function', {user=user, name=decoded.name})
- 
 	  end
-	   end
-	end
+      end
+   end
  
-	return i18n('user_activity.unknown_activity', {user=user, scope=decoded.scope})
+   return i18n('user_activity.unknown_activity', {user=user, scope=decoded.scope})
 end
 
 -- #######################################################
