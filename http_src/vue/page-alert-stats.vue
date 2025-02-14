@@ -451,6 +451,7 @@ const map_table_def_columns = async (columns) => {
             c.button_def_array.forEach((b) => {
                 if (!visible_dict[b.id]) {
                     b.class.push("link-disabled");
+                    return;
                 }
                 if (b.id == "snmp_info") {
                     b.f_map_class = (current_class, row) => {
