@@ -19,7 +19,7 @@ local collected_results = {}
 -- see (am_utils.key2host for the details on such format).
 local function run_speedtest(hosts, granularity)
     local rsp
-    local do_trace = true
+    local do_trace = false
 
     if (do_trace) then
         tprint("[run_speedtest] [" .. granularity .. "]\n")
