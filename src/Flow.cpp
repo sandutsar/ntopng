@@ -52,7 +52,8 @@ Flow::Flow(NetworkInterface *_iface,
     srv_port = _srv_port, privateFlowId = _private_flow_id;
   flow_dropped_counts_increased = 0, protocolErrorCode = 0;
   srcAS = dstAS = 0, rttSec = 0;
-
+  src2dst_tcp_flags = dst2src_tcp_flags = 0;
+  
   tcp = NULL;
   
 #ifdef NTOPNG_PRO
@@ -5472,7 +5473,7 @@ void Flow::updateTcpFlags(const struct bpf_timeval *when, u_int8_t flags,
 
 	if((src2dst_tcp_flags & (TH_SYN | TH_ACK)) == (TH_SYN | TH_ACK)) {
 	  /* SYN|ACK arrived before SYN */
-	  swap_requested = true;
+	  swap_requested = 1;
 	}
       } else if(flags_3wh == (TH_SYN | TH_ACK)) {
         if((tcp->synAckTime.tv_sec == 0) && (tcp->synTime.tv_sec > 0)) {
