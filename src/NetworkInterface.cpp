@@ -6326,7 +6326,7 @@ static bool flow_drop_walker(GenericHashEntry *h, void *user_data,
   Flow *f = (Flow *)h;
 
   if (flow_matches(f, retriever)) {
-    f->setDropVerdict();
+    f->setDropVerdict(DROP_REASON_USER_ACTION);
     *matched = true;
   }
 

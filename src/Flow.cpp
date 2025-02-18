@@ -232,6 +232,7 @@ Flow::Flow(NetworkInterface *_iface,
 #endif
 
   passVerdict = 1;
+  dropVerdictReason = DROP_REASON_UNKNOWN;
 #ifdef ALERTED_FLOWS_DEBUG
   iface_alert_inc = iface_alert_dec = false;
 #endif
@@ -1721,13 +1722,14 @@ char *Flow::print(char *buf, u_int buf_len, bool full_report) const {
   if(iface->is_bridge_interface()) {
     snprintf(
 	     shapers, sizeof(shapers),
-	     "[pass_verdict: %s] "
+	     "[pass_verdict: %s (%d)] "
 	     "[shapers: cli2srv=%u/%u, srv2cli=%u/%u] "
 	     "[cli2srv_ingress shaping_enabled: %i max_rate: %lu] "
 	     "[cli2srv_egress shaping_enabled: %i max_rate: %lu] "
 	     "[srv2cli_ingress shaping_enabled: %i max_rate: %lu] "
 	     "[srv2cli_egress shaping_enabled: %i max_rate: %lu] ",
 	     passVerdict ? "PASS" : "DROP",
+             (int) dropVerdictReason,
 	     flowShaperIds.cli2srv.ingress
 	     ? flowShaperIds.cli2srv.ingress->get_shaper_id()
 	     : DEFAULT_SHAPER_ID,
@@ -1851,13 +1853,14 @@ bool Flow::dump(time_t t, bool last_dump_before_free) {
 
 /* *************************************** */
 
-void Flow::setDropVerdict() {
+void Flow::setDropVerdict(DropReason reason) {
 #if defined(HAVE_NEDGE)
   if((iface->getIfType() == interface_type_NETFILTER) && (passVerdict == 1))
     ((NetfilterInterface *)iface)->setPolicyChanged();
 #endif
 
   passVerdict = 0;
+  dropVerdictReason = reason;
 }
 
 /* *************************************** */
@@ -2989,10 +2992,14 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
 			       : device_unknown);
 
 #ifdef HAVE_NEDGE
-    if(iface->is_bridge_interface())
+    if(iface->is_bridge_interface()) {
       lua_push_bool_table_entry(vm, "verdict.pass", isPassVerdict() ? 1 : 0);
+      lua_push_int32_table_entry(vm, "verdict.reason", (int) dropVerdictReason);
+    }
 #else
-    if(!passVerdict) lua_push_bool_table_entry(vm, "verdict.pass", 0);
+    if(!passVerdict) {
+      lua_push_bool_table_entry(vm, "verdict.pass", 0);
+    }
 #endif
 
     if(get_protocol() == IPPROTO_TCP) lua_get_tcp_info(vm);
@@ -3628,11 +3635,13 @@ void Flow::formatECSNetwork(json_object *my_object, const IpAddress *addr) {
 #endif
 
 #ifdef HAVE_NEDGE
-    if(iface && iface->is_bridge_interface())
-      json_object_object_add(
-			     my_object, "verdict.pass",
+    if(iface && iface->is_bridge_interface()) {
+      json_object_object_add(my_object, "verdict.pass",
 			     json_object_new_boolean(isPassVerdict() ? (json_bool)1
 						     : (json_bool)0));
+      json_object_object_add(my_object, "verdict.reason",
+			     json_object_new_int((int) dropVerdictReason));
+    }
 #else
     if(!passVerdict)
       json_object_object_add(my_object, "pass_verdict",
@@ -4256,9 +4265,12 @@ void Flow::formatGenericFlow(json_object *my_object) {
 			   json_object_new_string(protos.tls.client_requested_server_name));
 
 #ifdef HAVE_NEDGE
-  if(iface && iface->is_bridge_interface())
+  if(iface && iface->is_bridge_interface()) {
     json_object_object_add(my_object, "verdict.pass", /* TODO: convert to Utils::jsonLabel(..) */
 			   json_object_new_boolean(isPassVerdict() ? (json_bool)1 : (json_bool)0));
+    json_object_object_add(my_object, "verdict.reason",
+			   json_object_new_int((int) dropVerdictReason));
+  }
 #else
   if(!passVerdict)
     json_object_object_add(my_object, "verdict.pass", /* TODO: convert to Utils::jsonLabel(..) */
@@ -6626,15 +6638,32 @@ void Flow::dissectNetBIOS(u_int8_t *payload, u_int16_t payload_len) {
 
 #ifdef HAVE_NEDGE
 
-bool Flow::isPassVerdict() const {
-  if(!passVerdict) return (false);
+bool Flow::isPassVerdict() {
+  if (!passVerdict) return (false);
 
-  if(cli_host && srv_host)
-    return ((!quota_exceeded) &&
-            (!(cli_host->dropAllTraffic() || srv_host->dropAllTraffic())) &&
-            (!isBlacklistedFlow()));
-  else
-    return (true);
+  if (cli_host && srv_host) {
+    if (quota_exceeded) {
+      dropVerdictReason = DROP_REASON_QUOTA_EXCEEDED;
+      return false;
+    }
+
+    if (cli_host->dropAllTraffic()) {
+      dropVerdictReason = DROP_REASON_DROP_CLI;
+      return false;
+    }
+
+    if (srv_host->dropAllTraffic()) {
+      dropVerdictReason = DROP_REASON_DROP_SRV;
+      return false;
+    }
+
+    if (isBlacklistedFlow()) {
+      dropVerdictReason = DROP_REASON_BLACKLISTED_FLOW;
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /* *************************************** */
@@ -6662,24 +6691,22 @@ bool Flow::updateDirectionShapers(bool src2dst_direction,
 
   if(cli_host && srv_host) {
     if(src2dst_direction) {
-      *ingress_shaper = srv_host->get_ingress_shaper(ndpiDetectedProtocol),
-	*egress_shaper = cli_host->get_egress_shaper(ndpiDetectedProtocol);
+      *ingress_shaper = srv_host->get_ingress_shaper(ndpiDetectedProtocol);
+      *egress_shaper =  cli_host->get_egress_shaper(ndpiDetectedProtocol);
 
       if(*ingress_shaper) srv2cli_in = (*ingress_shaper)->get_shaper_id();
-      if(*egress_shaper) cli2srv_out = (*egress_shaper)->get_shaper_id();
+      if(*egress_shaper)  cli2srv_out = (*egress_shaper)->get_shaper_id();
 
     } else {
-      *ingress_shaper = cli_host->get_ingress_shaper(ndpiDetectedProtocol),
-	*egress_shaper = srv_host->get_egress_shaper(ndpiDetectedProtocol);
+      *ingress_shaper = cli_host->get_ingress_shaper(ndpiDetectedProtocol);
+      *egress_shaper = srv_host->get_egress_shaper(ndpiDetectedProtocol);
 
       if(*ingress_shaper) cli2srv_in = (*ingress_shaper)->get_shaper_id();
-      if(*egress_shaper) srv2cli_out = (*egress_shaper)->get_shaper_id();
+      if(*egress_shaper)  srv2cli_out = (*egress_shaper)->get_shaper_id();
     }
 
-    if((*ingress_shaper && (*ingress_shaper)->shaping_enabled() &&
-         (*ingress_shaper)->get_max_rate_kbit_sec() == 0) ||
-        (*egress_shaper && (*egress_shaper)->shaping_enabled() &&
-         (*egress_shaper)->get_max_rate_kbit_sec() == 0))
+    if((*ingress_shaper && (*ingress_shaper)->shaping_enabled() && (*ingress_shaper)->get_max_rate_kbit_sec() == 0) ||
+        (*egress_shaper &&  (*egress_shaper)->shaping_enabled() &&  (*egress_shaper)->get_max_rate_kbit_sec() == 0))
       verdict = false;
   } else
     *ingress_shaper = *egress_shaper = NULL;
@@ -6692,15 +6719,17 @@ bool Flow::updateDirectionShapers(bool src2dst_direction,
 void Flow::updateFlowShapers(bool first_update) {
   bool cli2srv_verdict, srv2cli_verdict;
   u_int8_t old_verdict = passVerdict;
-  bool new_verdict;
+  bool new_verdict = true;
   u_int16_t old_cli2srv_in = cli2srv_in, old_cli2srv_out = cli2srv_out,
     old_srv2cli_in = srv2cli_in, old_srv2cli_out = srv2cli_out;
 
   /* Re-compute the verdict */
   cli2srv_verdict = updateDirectionShapers(true, &flowShaperIds.cli2srv.ingress,
                                            &flowShaperIds.cli2srv.egress);
-  srv2cli_verdict = updateDirectionShapers(
-					   false, &flowShaperIds.srv2cli.ingress, &flowShaperIds.srv2cli.egress);
+  srv2cli_verdict = updateDirectionShapers(false, &flowShaperIds.srv2cli.ingress,
+                                           &flowShaperIds.srv2cli.egress);
+  if (!cli2srv_verdict) dropVerdictReason = DROP_REASON_CLI2SRV_SHAPER;
+  if (!srv2cli_verdict) dropVerdictReason = DROP_REASON_SRV2CLI_SHAPER;
   new_verdict = (cli2srv_verdict && srv2cli_verdict);
 
   if(ntop->getPrefs()->are_device_protocol_policies_enabled() &&
@@ -6709,11 +6738,12 @@ void Flow::updateFlowShapers(bool first_update) {
       new_verdict) {
     /* NOTE: this must be handled differently to only consider actual peers
      * direction */
-    if((cli_host->getDeviceAllowedProtocolStatus(ndpiDetectedProtocol,
-                                                  true /* client */) !=
-         device_proto_allowed) ||
-        (srv_host->getDeviceAllowedProtocolStatus(
-						  ndpiDetectedProtocol, false /* server */) != device_proto_allowed)) {
+    if(cli_host->getDeviceAllowedProtocolStatus(ndpiDetectedProtocol, true /* client */) != device_proto_allowed) {
+      dropVerdictReason = DROP_REASON_DEV_NOT_ALLOW_PROTO_CLI;
+      new_verdict = false;
+    }
+    if(srv_host->getDeviceAllowedProtocolStatus(ndpiDetectedProtocol, false /* server */) != device_proto_allowed) {
+      dropVerdictReason = DROP_REASON_DEV_NOT_ALLOW_PROTO_SRV;
       new_verdict = false;
     }
   }
@@ -6721,8 +6751,9 @@ void Flow::updateFlowShapers(bool first_update) {
   if(!new_verdict) {
     /* Always allow network critical protocols */
     if(Utils::isCriticalNetworkProtocol(ndpiDetectedProtocol.proto.master_protocol) ||
-        Utils::isCriticalNetworkProtocol(ndpiDetectedProtocol.proto.app_protocol))
+       Utils::isCriticalNetworkProtocol(ndpiDetectedProtocol.proto.app_protocol)) {
       new_verdict = true;
+    }
   }
 
   /* Set the new verdict */

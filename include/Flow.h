@@ -150,6 +150,7 @@ class Flow : public GenericHashEntry {
       dst2src_tcp_zero_window : 1, non_zero_payload_observed : 1,
     is_periodic_flow : 1, ____notused:1;
   u_int8_t iface_flow_accounted:1, _notused:7;
+  DropReason dropVerdictReason;
 
   u_int8_t rtp_stream_type;
 #ifdef ALERTED_FLOWS_DEBUG
@@ -597,12 +598,12 @@ public:
   inline u_int8_t getTcpFlagsSrv2Cli() const { return (dst2src_tcp_flags); };
 #ifdef HAVE_NEDGE
   bool checkPassVerdict(const struct tm *now);
-  bool isPassVerdict() const;
+  bool isPassVerdict();
   inline void setConntrackMarker(u_int32_t marker) { this->marker = marker; }
   inline u_int32_t getConntrackMarker() { return (marker); }
   void incFlowDroppedCounters();
 #endif
-  void setDropVerdict();
+  void setDropVerdict(DropReason reason);
   u_int32_t getPid(bool client);
   u_int32_t getFatherPid(bool client);
   u_int32_t get_uid(bool client) const;
