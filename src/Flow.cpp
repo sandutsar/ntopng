@@ -6503,14 +6503,14 @@ void Flow::dissectMDNS(u_int8_t *payload, u_int16_t payload_len) {
 
 	    if(txt_len > 0) {
 	      char *model = NULL;
-
-	      strncpy(txt_buf, &txt[off], txt_len);
-	      txt_buf[txt_len] = '\0';
+	      u_int txt_buf_len = ndpi_min(txt_len, sizeof(txt_buf)-1);
+	      
+	      strncpy(txt_buf, &txt[off], txt_buf_len);
+	      txt_buf[txt_buf_len] = '\0';
 	      off += txt_len;
 
 #ifdef DEBUG_DISCOVERY
-	      ntop->getTrace()->traceEvent(TRACE_NORMAL, "===>>> [TXT][%s]",
-					   txt_buf);
+	      ntop->getTrace()->traceEvent(TRACE_NORMAL, "===>>> [TXT][%s]", txt_buf);
 #endif
 
 	      if(strncmp(txt_buf, "am=", 3 /* Apple Model */) == 0)
