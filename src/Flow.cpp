@@ -3033,23 +3033,19 @@ void Flow::lua(lua_State *vm, AddressTree *ptree,
 
     if(cli_host && srv_host) {
       /* Shapers */
-      lua_push_uint64_table_entry(
-				  vm, "shaper.cli2srv_ingress",
+      lua_push_uint64_table_entry(vm, "shaper.cli2srv_ingress",
 				  flowShaperIds.cli2srv.ingress
 				  ? flowShaperIds.cli2srv.ingress->get_shaper_id()
 				  : DEFAULT_SHAPER_ID);
-      lua_push_uint64_table_entry(
-				  vm, "shaper.cli2srv_egress",
+      lua_push_uint64_table_entry(vm, "shaper.cli2srv_egress",
 				  flowShaperIds.cli2srv.egress
 				  ? flowShaperIds.cli2srv.egress->get_shaper_id()
 				  : DEFAULT_SHAPER_ID);
-      lua_push_uint64_table_entry(
-				  vm, "shaper.srv2cli_ingress",
+      lua_push_uint64_table_entry(vm, "shaper.srv2cli_ingress",
 				  flowShaperIds.srv2cli.ingress
 				  ? flowShaperIds.srv2cli.ingress->get_shaper_id()
 				  : DEFAULT_SHAPER_ID);
-      lua_push_uint64_table_entry(
-				  vm, "shaper.srv2cli_egress",
+      lua_push_uint64_table_entry(vm, "shaper.srv2cli_egress",
 				  flowShaperIds.srv2cli.egress
 				  ? flowShaperIds.srv2cli.egress->get_shaper_id()
 				  : DEFAULT_SHAPER_ID);

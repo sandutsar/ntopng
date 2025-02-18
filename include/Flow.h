@@ -669,9 +669,10 @@ public:
   void updateQUICStats(bool src2dst_direction, const struct timeval *tv,
 		       u_int8_t *payload, u_int16_t payload_len);
   void updateUDPTimestamp(bool src2dst_direction, const struct timeval *tv);
-  void computeQoEscore(u_int8_t *cli_to_srv_qoe, u_int8_t *srv_to_cli_qoe);
-  u_int8_t computeQoETCPscore(QoELimits *l, bool cli_to_srv);
-  u_int8_t computeQoEUDPscore(QoELimits *l, bool cli_to_srv);
+  void computeQoEscore(u_int8_t *cli_to_srv_qoe, std::vector<std::string> *cli_to_srv_qoe_issues,
+		       u_int8_t *srv_to_cli_qoe, std::vector<std::string> *srv_to_cli_qoe_issues);
+  u_int8_t computeQoETCPscore(QoELimits *l, bool cli_to_srv, std::vector<std::string> *issues);
+  u_int8_t computeQoEUDPscore(QoELimits *l, bool cli_to_srv, std::vector<std::string> *issues);
   u_int8_t getQoEScore();
 #endif
   void endProtocolDissection();
