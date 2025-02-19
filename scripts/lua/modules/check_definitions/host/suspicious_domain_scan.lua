@@ -104,7 +104,7 @@ local function domains_check(params)
       .. "FROM flows "
       .. "WHERE INTERFACE_ID=%u "
          .. "AND DOMAIN_NAME!='' "
-         .. "AND (L7_PROTO!=5 AND L7_PROTO_MASTER!=5) AND L7_PROTO_MASTER!=5 "
+         .. "AND (L7_PROTO!=5 AND L7_PROTO_MASTER!=5) "
          .. "AND (FIRST_SEEN >= %u AND FIRST_SEEN <= %u AND LAST_SEEN <= %u) "
       .. "GROUP BY VLAN_ID, IPV4_SRC_ADDR, IPV6_SRC_ADDR, IPV4_DST_ADDR, IPV6_DST_ADDR "
       .. "ORDER BY count DESC "
