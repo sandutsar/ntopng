@@ -254,6 +254,7 @@ Prefs::~Prefs() {
   if(ifNames) {
     for (int i = 0; i < num_interfaces; i++) {
       if(ifNames[i].name) free(ifNames[i].name);
+      if(ifNames[i].alias) free(ifNames[i].alias);
       if(ifNames[i].description) free(ifNames[i].description);
     }
 
@@ -832,6 +833,16 @@ char *Prefs::get_if_name(int id) {
 char *Prefs::get_if_descr(int id) {
   for (int i = 0; i < num_interfaces; i++) {
     if(ifNames[i].id == id) return ifNames[i].description;
+  }
+
+  return NULL;
+};
+
+/* ******************************************* */
+
+char *Prefs::get_if_alias(int id) {
+  for (int i = 0; i < num_interfaces; i++) {
+    if(ifNames[i].id == id) return ifNames[i].alias;
   }
 
   return NULL;
@@ -2629,20 +2640,33 @@ int Prefs::loadFromFile(const char *path) {
 
 void Prefs::add_network_interface(char *name, char *description) {
   if(num_interfaces < MAX_NUM_DEFINED_INTERFACES) {
-    int id = Utils::ifname2id(name);
+    char *real_name = NULL;
+    char *ifname = NULL;
+    int id;
 
+    if (strncmp(name, "-", 1) == 0) {
+      ifname = strdup("stdin");
+    } else {
+      /* check if this is an alias (linux altname)*/
+      real_name = Utils::get_real_name(name);
+      if (real_name)
+        ifname = real_name;
+      else
+        ifname = strdup(name);
+    }
+
+    id = Utils::ifname2id(ifname);
     if(id >= 0) {
-      ifNames[num_interfaces].name =
-	strdup(!strncmp(name, "-", 1) ? "stdin" : name);
-      ifNames[num_interfaces].description =
-	strdup(description ? description : name);
+      ifNames[num_interfaces].name = ifname;
+      ifNames[num_interfaces].alias = real_name ? strdup(name) : NULL;
+      ifNames[num_interfaces].description = strdup(description ? description : name);
       ifNames[num_interfaces].id = id;
       num_interfaces++;
-      //      ntop->getTrace()->traceEvent(TRACE_ERROR, "Added interface [id:
-      //      %d][name: %s]", id, name);
-    } else
+    } else {
+      free(ifname);
       ntop->getTrace()->traceEvent(
 				   TRACE_ERROR, "Unable to get a valid id for %s, skipping.", name);
+    }
   } else {
     ntop->getTrace()->traceEvent(TRACE_ERROR,
                                  "Too many interfaces (%d): discarded %s",

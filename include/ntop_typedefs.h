@@ -1076,6 +1076,7 @@ typedef struct _ntop_if_t {
   /* PF_RING related fields */
   char *module;
   int license;
+  int ifindex;
   _ntop_if_t *next;
 } ntop_if_t;
 

@@ -676,6 +676,8 @@
 #define CONST_FLOW_TABLE_TIME NTOPNG_PREFS_PREFIX ".flow_table_time"
 #define CONST_FLOW_TABLE_PROBE_ORDER \
   NTOPNG_PREFS_PREFIX ".flow_table_probe_order"
+#define CONST_INTERFACE_CUSTOM_NAME \
+  NTOPNG_PREFS_PREFIX ".ifid_%d.name"
 #define CONST_MIRRORED_TRAFFIC_PREFS \
   NTOPNG_PREFS_PREFIX ".ifid_%d.is_traffic_mirrored"
 #define CONST_SMART_RECORDING_PREFS \

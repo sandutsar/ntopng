@@ -53,6 +53,7 @@ NetworkInterface::NetworkInterface(const char *name,
   char _ifname[MAX_INTERFACE_NAME_LEN], buf[MAX_INTERFACE_NAME_LEN];
   /* We need to do it as isView() is not yet initialized */
   char pcap_error_buffer[PCAP_ERRBUF_SIZE];
+  char *alias;
 
   if(trace_new_delete) ntop->getTrace()->traceEvent(TRACE_NORMAL, "[new] %s", __FILE__);
 
@@ -74,14 +75,14 @@ NetworkInterface::NetworkInterface(const char *name,
   } else {
     if (isNumber(name)) {
       /* We need to convert this numeric index into an interface name */
-      int id = atoi(name);
+      int ifid = atoi(name);
 
       _ifname[0] = '\0';
-      printAvailableInterfaces(false, id, _ifname, sizeof(_ifname));
+      printAvailableInterfaces(false, ifid, _ifname, sizeof(_ifname));
 
       if (_ifname[0] == '\0') {
         ntop->getTrace()->traceEvent(TRACE_WARNING,
-                                     "Unable to locate interface Id %d", id);
+                                     "Unable to locate interface Id %d", ifid);
         printAvailableInterfaces(false, 0, NULL, 0);
         exit(0);
       }
@@ -108,6 +109,10 @@ NetworkInterface::NetworkInterface(const char *name,
   if (strcmp(name, "-") == 0) name = "stdin";
 
   id = Utils::ifname2id(name);
+
+  /* if interface alias, set as custom name (if not set already) */
+  alias = ntop->getPrefs()->get_if_alias(get_id());
+  if (alias) setCustomName(alias, true);
 
   purge_idle_flows_hosts = true;
 
@@ -780,6 +785,19 @@ bool NetworkInterface::isRunning() const {
  * completed) */
 bool NetworkInterface::isShuttingDown() const {
   return !running && shutting_down;
+}
+
+/* **************************************************** */
+
+void NetworkInterface::setCustomName(char *alias, bool set_on_empty) {
+  char pref_buf[CONST_MAX_LEN_REDIS_KEY];
+  char rsp[MAX_INTERFACE_NAME_LEN];
+
+  if (ntop->getRedis()) {
+    snprintf(pref_buf, sizeof(pref_buf), CONST_INTERFACE_CUSTOM_NAME, get_id());
+    if (!set_on_empty || ntop->getRedis()->get(pref_buf, rsp, sizeof(rsp)) != 0)
+      ntop->getRedis()->set(pref_buf, alias);
+  }
 }
 
 /* **************************************************** */
