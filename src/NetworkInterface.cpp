@@ -1879,7 +1879,7 @@ bool NetworkInterface::processPacket(int32_t if_index, u_int32_t bridge_iface_id
 	      u_int8_t len = options[i+1];
 
 	      if(len == 0)
-		continue;
+		break;
 	      else if(kind == 3 /* Window Scale */) {
 		if(len == 3)
 		  tcp_window_scale = options[i+2];		
