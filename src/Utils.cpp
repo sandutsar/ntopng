@@ -4522,7 +4522,7 @@ err:
 
 int Utils::get_ifindex(const char *ifname) {
   int ifindex = -1;
-#if not defined(WIN32)
+#if not defined(WIN32) and defined(SIOCGIFINDEX)
   int sockfd;
   struct ifreq ifr;
 
