@@ -1,0 +1,101 @@
+{
+	"name" : "Local vs Remote",
+	"readonly" : true,
+	"filters" : [
+		{
+			"name" : "probe_ip",
+			"nested" : [
+				{
+					"name" : "output_snmp"
+				},
+				{
+					"name" : "input_snmp"
+				}
+			]
+		},
+		{
+			"name" : "network"
+		},
+		{
+			"name" : "l4proto"
+		},
+		{
+			"name" : "l7cat"
+		},
+		{
+			"name" : "l7proto"
+		}
+	],
+	"components" : [
+	{
+		"component" : "timeseries",
+		"id" : "traffic_chart",
+		"i18n_name" : "interface_traffic",
+		"width" : 12,
+		"height" : 4,
+		"params" : {
+			"url" : "/lua/pro/rest/v2/get/timeseries/ts_multi.lua",
+			"url_params" : { },
+			"post_params" : {
+				"limit" : 180,
+				"version" : 4,
+				"ts_requests": {
+					"ifid" : {
+						"ts_query": "ifid:$IFID$",
+						"ts_schema": "iface:traffic_rxtx",
+						"tskey": "$IFID$"
+					}
+				}
+			},
+			"source_type" : "interface"
+		}
+	},
+	{
+		"component" : "timeseries",
+		"id" : "local_to_remote",
+		"i18n_name" : "graphs.local2remote",
+		"width" : 12,
+		"height" : 4,
+		"params" : {
+			"url" : "/lua/pro/rest/v2/get/timeseries/ts_multi.lua",
+			"url_params" : { },
+			"post_params" : {
+				"limit" : 180,
+				"version" : 4,
+				"ts_requests": {
+					"ifid" : {
+						"ts_query": "ifid:$IFID$",
+						"ts_schema": "iface:local2remote",
+						"tskey": "$IFID$"
+					}
+				}
+			},
+			"source_type" : "interface"
+		}
+	},
+	{
+		"component" : "timeseries",
+		"id" : "remote_to_local",
+		"i18n_name" : "graphs.remote2local",
+		"width" : 12,
+		"height" : 4,
+		"params" : {
+			"url" : "/lua/pro/rest/v2/get/timeseries/ts_multi.lua",
+			"url_params" : { },
+			"post_params" : {
+				"limit" : 180,
+				"version" : 4,
+				"ts_requests": {
+					"ifid" : {
+						"ts_query": "ifid:$IFID$",
+						"ts_schema": "iface:remote2local",
+						"tskey": "$IFID$"
+					}
+				}
+			},
+			"source_type" : "interface"
+		}
+	}
+	]
+}
+
