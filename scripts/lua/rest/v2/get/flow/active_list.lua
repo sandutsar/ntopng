@@ -12,6 +12,7 @@ local rest_utils = require "rest_utils"
 local alert_consts = require "alert_consts"
 local format_utils = require "format_utils"
 local l4_protocol_list = require "l4_protocol_list"
+local icmp_utils       = require("icmp_utils")
 
 -- Trick to handle the application and the categories togheter
 local application = _GET["application"]
@@ -243,7 +244,14 @@ for _, value in ipairs(flows_stats.flows) do
     record["hash_id"] = string.format("%u", value["hash_entry_id"])
     record["verdict"] = not (value["verdict.pass"] ~= nil and value["verdict.pass"] == false)
     record["duration"] = value["duration"]
-    record["info"] = value["info"]
+    if(
+       ((record.l4_proto.id == 58) or (record.l4_proto.id == 1)) -- ICMP or ICMPv6
+       and (value["info"] ~= "")) then
+       local tc = split(value["info"], ",")
+       record["info"] = icmp_utils.get_icmp_label(tc[1], tc[2])
+    else
+       record["info"] = value["info"]
+    end
     record["periodic_flow"] = value.periodic_flow
     record["client"] = client
     record["server"] = server

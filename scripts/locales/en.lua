@@ -5184,8 +5184,18 @@ local lang = {
         ["code"] = {
         },
       },
+      ["130"] = {
+        ["info"] = "Multicast Listener Query",
+        ["code"] = {
+        },
+      },
       ["131"] = {
         ["info"] = "Multicast Listener Report",
+        ["code"] = {
+        },
+      },
+      ["133"] = {
+        ["info"] = "Router Solicitation",
         ["code"] = {
         },
       },
@@ -5201,6 +5211,11 @@ local lang = {
       },
       ["136"] = {
         ["info"] = "Neighbour Advertisement",
+        ["code"] = {
+        },
+      },
+      ["143"] = {
+        ["info"] = "Multicast Listener Report v2",
         ["code"] = {
         },
       },
