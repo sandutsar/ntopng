@@ -7988,6 +7988,9 @@ void Flow::setProtocolJSONInfo() {
   getProtocolJSONInfo(&s);
   getCustomFieldsInfo(&s);
   getJSONRiskInfo(&s);
+#ifdef NTOPNG_PRO
+  getQoEInfo(&s);
+#endif
 
   json = ndpi_serializer_get_buffer(&s, &json_len);
 
