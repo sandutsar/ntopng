@@ -31,51 +31,49 @@
 /* *************************************** */
 
 Geolocation::Geolocation() {
+  bool mmdbs_asn_ok = false, mmdbs_city_ok = false;
+  char *custom_dir = ntop->getPrefs()->getCustomGeoIPDir();
+  
   if(trace_new_delete) ntop->getTrace()->traceEvent(TRACE_NORMAL, "[new] %s", __FILE__);
+
+  if(custom_dir == NULL) custom_dir = (char*)".";
   
 #ifdef HAVE_MAXMINDDB
   char docs_path[MAX_PATH];
   const char *lookup_paths[] = {
+    custom_dir,
 #ifndef WIN32
-    "/var/lib/GeoIP",  // `geoipupdate` default install dir on Ubuntu 16,18 and
-                       // Debian 10,9
-    "/usr/share/GeoIP",  // `geoipupdate` default install dir on Ubuntu 14 and
-                         // Centos 7,8
+    "/var/lib/GeoIP",    // `geoipupdate` default install dir on Ubuntu 16,18 and Debian 10,9
+    "/usr/share/GeoIP",  // `geoipupdate` default install dir on Ubuntu 14 and Centos 7,8
 #if defined(__FreeBSD__)
-    "/usr/local/share/ntopng/httpdocs/geoip/",  // ntopng-data default install
-                                                // dir
+    "/usr/local/share/ntopng/httpdocs/geoip/",  // ntopng-data default install dir
 #else
     "/usr/share/ntopng/httpdocs/geoip/",  // ntopng-data default install dir
 #endif
 #endif
     docs_path
   };
-  bool mmdbs_asn_ok = false, mmdbs_city_ok = false;
 
   mmdbs_ok = false;
 
-  snprintf(docs_path, sizeof(docs_path), "%s/geoip",
-           ntop->getPrefs()->get_docs_dir());
+  snprintf(docs_path, sizeof(docs_path), "%s/geoip", ntop->getPrefs()->get_docs_dir());
   ntop->fixPath(docs_path);
 
-  for (u_int i = 0;
-       i < sizeof(lookup_paths) / sizeof(lookup_paths[0]) && !mmdbs_ok; i++) {
+  for (u_int i = 0; i < sizeof(lookup_paths) / sizeof(lookup_paths[0]) && !mmdbs_ok; i++) {
     DIR *dirp;
     struct dirent *dp;
 
     /* Let's try with MaxMind files DBs:
      * https://dev.maxmind.com/geoip/geoipupdate/ */
     if (!mmdbs_asn_ok)
-      mmdbs_asn_ok =
-          loadGeoDB(lookup_paths[i], "GeoLite2-ASN.mmdb", &geo_ip_asn_mmdb);
+      mmdbs_asn_ok = loadGeoDB(lookup_paths[i], "GeoLite2-ASN.mmdb", &geo_ip_asn_mmdb);
+
     if (!mmdbs_city_ok)
-      mmdbs_city_ok =
-          loadGeoDB(lookup_paths[i], "GeoLite2-City.mmdb", &geo_ip_city_mmdb);
+      mmdbs_city_ok = loadGeoDB(lookup_paths[i], "GeoLite2-City.mmdb", &geo_ip_city_mmdb);
 
     if (mmdbs_asn_ok && mmdbs_city_ok) {
-      ntop->getTrace()->traceEvent(
-          TRACE_NORMAL,
-          "Using geolocation provided by MaxMind (https://maxmind.com)");
+      ntop->getTrace()->traceEvent(TRACE_NORMAL,
+				   "Using geolocation provided by MaxMind (https://maxmind.com)");
       mmdbs_ok = true;
       break;
     }

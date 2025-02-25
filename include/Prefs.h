@@ -41,7 +41,7 @@ class Prefs {
  private:
   u_int8_t num_deferred_interfaces_to_register;
   pcap_direction_t captureDirection;
-  char **deferred_interfaces_to_register, *cli, *ciphers_list;
+  char **deferred_interfaces_to_register, *cli, *ciphers_list, *custom_geoip_dir;
   char *http_binding_address1, *http_binding_address2;
   char *https_binding_address1, *https_binding_address2;
   char *http_index_page;
@@ -776,6 +776,8 @@ class Prefs {
   inline char* getLicMgrConfigFile()       { return(lic_mgr_config_file);              }
   inline AddressTree* getNwPolicyConfig()  { return(networks_policy_configuration);    }
 #endif
+  inline char* getCustomGeoIPDir()         { return(custom_geoip_dir);                 }
+  void setCustomGeoIPDir(char *d);
 };
 
 #endif /* _PREFS_H_ */

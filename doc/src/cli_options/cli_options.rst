@@ -45,6 +45,7 @@ ntopng supports a large number of command line parameters. To see what they are,
                                         | recording in PCAP format.
                                         | Default: /var/lib/ntopng
     [--no-promisc|-u]                   | Don't set the interface in promisc mode.
+    [--geoip-dir] <dir>                 | Load GeoIP databases from the specified directory.
     [--http-port|-w] <[addr:]port>      | HTTP. Set to 0 to disable http server.
                                         | Addr can be an IPv4 (192.168.1.1)
                                         | or IPv6 ([3ffe:2a00:100:7031::1]) addr.

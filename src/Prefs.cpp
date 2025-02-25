@@ -64,6 +64,7 @@ Prefs::Prefs(Ntop *_ntop) {
   emit_flow_alerts = emit_host_alerts = true;
   fail_on_invalid_license = false;
   zmq_publish_events_url = NULL;
+  custom_geoip_dir = NULL;
   enable_access_log = false, enable_sql_log = false;
   enable_flow_device_port_rrd_creation =
     enable_observation_points_rrd_creation =
@@ -421,12 +422,11 @@ void usage() {
 	 "                                    | Default: %s\n"
 	 "[--callbacks-dir|-3] <path>         | Callbacks directory.\n"
 	 "                                    | Default: %s\n"
-	 "[--pcap-dir|-5] <path>              | Storage directory used for "
-	 "continuous traffic\n"
+	 "[--pcap-dir|-5] <path>              | Storage directory used for continuous traffic\n"
 	 "                                    | recording in PCAP format.\n"
 	 "                                    | Default: %s\n"
-	 "[--no-promisc|-u]                   | Don't set the interface in "
-	 "promisc mode.\n"
+	 "[--no-promisc|-u]                   | Don't set the interface in promisc mode.\n"
+	 "[--geoip-dir] <dir>                 | Load GeoIP databases from the specified directory.\n"
 	 "[--http-port|-w] <[addr:]port>      | HTTP. Set to 0 to disable http "
 	 "server.\n"
 	 "                                    | Addr can be an IPv4 "
@@ -1224,6 +1224,7 @@ static const struct option long_options[] = {
   {"callbacks-dir",           required_argument, NULL, '3'},
   {"prefs-dir",               required_argument, NULL, '4'},
   {"pcap-dir",                required_argument, NULL, '5'},
+  {"geoip-dir",               required_argument, NULL, 196},
 #ifdef NTOPNG_PRO
   {"license-mgr",             required_argument, NULL, 197},
 #endif
@@ -2185,6 +2186,10 @@ int Prefs::setOption(int optkey, char *optarg) {
     print_version = true;
     break;
 
+  case 196:
+    setCustomGeoIPDir(optarg);
+    break;
+      
 #ifdef NTOPNG_PRO
   case 197:
     lic_mgr_config_file = strdup(optarg);
@@ -3356,4 +3361,14 @@ bool Prefs::isDHCPServer(IpAddress *ip, u_int16_t vlan_id) {
 
 bool Prefs::isSMTPServer(IpAddress *ip, u_int16_t vlan_id) {
   return(smtp_servers->findAddress(ip, vlan_id));
+}
+
+/* *************************************** */
+
+void Prefs::setCustomGeoIPDir(char *d) {
+  if(d != NULL) {
+    if(custom_geoip_dir) free(custom_geoip_dir);
+    
+    custom_geoip_dir = strdup(d);
+  }
 }
