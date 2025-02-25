@@ -1,5 +1,5 @@
 {
-	"id": "flow_historical_xl",
+	"id": "flow_historical_l",
 	"data_url": "lua/pro/rest/v2/get/db/historical_db_search.lua",
 	"use_current_page": false,
 	"enable_search": false,

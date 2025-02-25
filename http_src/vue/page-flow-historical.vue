@@ -257,7 +257,7 @@ function init_params() {
     if (selected_query_preset.value.value == null) {
         selected_query_preset.value.value = "";
     }
-    table_config_id.value = props.context.is_enterprise_xl ? `flow_historical_xl` : `flow_historical`;
+    table_config_id.value = props.context.is_enterprise_l ? `flow_historical_l` : `flow_historical`;
     const aggregated = ntopng_url_manager.get_url_entry("aggregated");
     if (aggregated == "true") {
         table_config_id.value = `flow_historical_aggregated`;

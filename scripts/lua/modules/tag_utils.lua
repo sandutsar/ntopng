@@ -995,7 +995,7 @@ function tag_utils.get_tag_info(id, entity, hide_exporters_name, restrict_filter
         end
         filter.value_type = 'array'
         filter.options = {}
-        for _, info in ipairs(getPossibleQoE()) do
+        for _, info in pairsByKeys(getPossibleQoE(), asc) do
             filter.options[#filter.options + 1] = {
                 value = info.value,
                 label = i18n(info.i18n_label),
