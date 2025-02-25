@@ -832,28 +832,28 @@ function formatTCPFlags(flags)
     local out = ''
 
     if (hasbit(flags, 0x02)) then
-        out = out .. '<span class="badge bg-info"    title="SYN">S</span> '
+        out = out .. '<span class="badge bg-info" data-bs-toggle="tooltip" data-bs-placement="bottom" title="SYN">S</span> '
     end
     if (hasbit(flags, 0x10)) then
-        out = out .. '<span class="badge bg-info"    title="ACK">A</span> '
+        out = out .. '<span class="badge bg-info" data-bs-toggle="tooltip" data-bs-placement="bottom" title="ACK">A</span> '
     end
     if (hasbit(flags, 0x01)) then
-        out = out .. '<span class="badge bg-info"    title="FIN">F</span> '
+        out = out .. '<span class="badge bg-info" data-bs-toggle="tooltip" data-bs-placement="bottom" title="FIN">F</span> '
     end
     if (hasbit(flags, 0x08)) then
-        out = out .. '<span class="badge bg-info"    title="PSH">P</span> '
+        out = out .. '<span class="badge bg-info" data-bs-toggle="tooltip" data-bs-placement="bottom" title="PSH">P</span> '
     end
     if (hasbit(flags, 0x04)) then
-        out = out .. '<span class="badge bg-danger"  title="RST">R</span> '
+        out = out .. '<span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="RST">R</span> '
     end
     if (hasbit(flags, 0x20)) then
-        out = out .. '<span class="badge bg-primary" title="URG">U</span> '
+        out = out .. '<span class="badge bg-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="URG">U</span> '
     end
     if (hasbit(flags, 0x40)) then
-        out = out .. '<span class="badge bg-info"    title="ECE">E</span> '
+        out = out .. '<span class="badge bg-info" data-bs-toggle="tooltip" data-bs-placement="bottom" title="ECE">E</span> '
     end
     if (hasbit(flags, 0x80)) then
-        out = out .. '<span class="badge bg-info"    title="CWR">C</span> '
+        out = out .. '<span class="badge bg-info" data-bs-toggle="tooltip" data-bs-placement="bottom" title="CWR">C</span> '
     end
 
     return out

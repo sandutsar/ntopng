@@ -243,7 +243,7 @@
 			"data_field": "src2dst_tcp_flags",
 			"min-width": "140px",
 			"sortable": true,
-			"render_generic": "src2dst_tcp_flags",
+			"render_type": "formatSRC2DSTTCPFlags",
 			"zero_is_null": true,
 			"class": [
 				"no-wrap"
@@ -254,7 +254,7 @@
 			"data_field": "dst2src_tcp_flags",
 			"min-width": "140px",
 			"sortable": true,
-			"render_generic": "dst2src_tcp_flags",
+			"render_type": "formatDST2SRCTCPFlags",
 			"zero_is_null": true,
 			"class": [
 				"no-wrap"

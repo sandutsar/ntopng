@@ -635,12 +635,12 @@ export class DataTableRenders {
     }
 
     static filterize(key, value, label, tag_label, title, html, is_snmp_ip, ip) {
-        let content = `<a class='tag-filter' data-tag-key='${key}' title='${title || value}' data-tag-value='${value}' data-tag-label='${tag_label || label || value}' href='javascript:void(0)'>${html || label || value}</a>`;
+        let content = `<a class='tag-filter' data-bs-toggle='tooltip' data-bs-placement="bottom" data-tag-key='${key}' title='${title || value}' data-tag-value='${value}' data-tag-label='${tag_label || label || value}' href='javascript:void(0)'>${html || label || value}</a>`;
         if (is_snmp_ip != null) {
             if (is_snmp_ip) {
                 if (value) {
                     let url = NtopUtils.buildURL(`${http_prefix}/lua/pro/enterprise/snmp_device_details.lua?host=${value}`);
-                    content += ` <a href='${url}'data-bs-toggle='tooltip' title=''><i class='fas fa-laptop'></i></a>`;
+                    content += ` <a href='${url}' data-bs-toggle='tooltip' data-bs-placement="bottom" title=''><i class='fas fa-laptop'></i></a>`;
                 }
             } else {
                 if (ip && value) {
@@ -649,7 +649,7 @@ export class DataTableRenders {
                         value = value.split("_")[1];
                     }
                     let url = NtopUtils.buildURL(`${http_prefix}/lua/pro/enterprise/snmp_interface_details.lua?host=${ip}&snmp_port_idx=${value}`);
-                    content += ` <a href='${url}'data-bs-toggle='tooltip' title=''><i class='fas fa-laptop'></i></a>`;
+                    content += ` <a href='${url}' data-bs-toggle='tooltip' data-bs-placement="bottom" title=''><i class='fas fa-laptop'></i></a>`;
                 }
             }
         }
@@ -663,21 +663,21 @@ export class DataTableRenders {
             cell = "";
         }
         if (obj.color) cell = `<span class='font-weight-bold' style='color: ${obj.color}'>${cell}</span>`;
-        if (obj.title) cell = `<span title='${obj.title}'>${cell}</span>`;
+        if (obj.title) cell = `<span data-bs-toggle="tooltip" data-bs-placement="bottom" title='${obj.title}'>${cell}</span>`;
         return cell;
     }
 
     static formatValueLabelEngaged(obj, type, row, zero_is_null) {
         let date_time = this.formatValueLabel(obj, type, row, zero_is_null)
         if (row.is_engaged) {
-            date_time = `<i class="fa-solid fa-fire" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="${i18n('engaged_alert')}"></i> ${date_time}`
+            date_time = `<i class="fa-solid fa-fire" data-bs-toggle="tooltip" data-bs-placement="top" title="${i18n('engaged_alert')}"></i> ${date_time}`
         }
         return date_time;
     }
 
     static formatCategory(obj, type, row, zero_is_null) {
         if (type !== "display") return obj.value;
-        let cell = `<a class='tag-filter' data-tag-key='alert_category' data-tag-value='${obj.value}' data-tag-label='${obj.label}' href='javascript:void(0)'><i class="fa fas ${obj.icon}" title="${obj.label}"></i></a>`;
+        let cell = `<a class='tag-filter' data-tag-key='alert_category' data-tag-value='${obj.value}' data-tag-label='${obj.label}' href='javascript:void(0)'><i class="fa fas ${obj.icon}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="${obj.label}"></i></a>`;
         if (zero_is_null == true && obj.value == 0) {
             cell = "";
         }
@@ -713,6 +713,18 @@ export class DataTableRenders {
         return ""
     }
 
+    static formatSRC2DSTTCPFlags(obj, type, row, zero_is_null) {
+        if (type !== "display") return obj.value;
+        let cell = `<a class='tag-filter' data-tag-key='src2dst_tcp_flags' data-tag-value='${obj.value}' data-tag-label='${obj.label}' href='javascript:void(0)'>${obj.label}</a>`;
+        return cell
+    }
+
+    static formatDST2SRCTCPFlags(obj, type, row, zero_is_null) {
+        if (type !== "display") return obj.value;
+        let cell = `<a class='tag-filter' data-tag-key='dst2src_tcp_flags' data-tag-value='${obj.value}' data-tag-label='${obj.label}' href='javascript:void(0)'>${obj.label}</a>`;
+        return cell
+    }
+
     static formatScore(obj, type, row, zero_is_null) {
         if (type !== "display") return obj.value;
         let cell = obj.label;
@@ -737,7 +749,7 @@ export class DataTableRenders {
 
         let cell = obj.descr;
         if (obj.shorten_descr)
-            cell = `<span title="${obj.descr}">${obj.shorten_descr}</span>`;
+            cell = `<span data-bs-toggle="tooltip" data-bs-placement="bottom" title="${obj.descr}">${obj.shorten_descr}</span>`;
 
         return cell;
     }
@@ -759,7 +771,7 @@ export class DataTableRenders {
 
     static filterize_2(key, value, label, tag_label, title, html) {
         if (value == null || (value == 0 && (label == null || label == ""))) { return ""; }
-        return `<a class='tag-filter' data-tag-key='${key}' title='${title || value}' data-tag-value='${value}' data-tag-label='${tag_label || label || value}' href='javascript:void(0)'>${html || label || value}</a>`;
+        return `<a class='tag-filter' data-bs-toggle="tooltip" data-bs-placement="bottom" data-tag-key='${key}' title='${title || value}' data-tag-value='${value}' data-tag-label='${tag_label || label || value}' href='javascript:void(0)'>${html || label || value}</a>`;
     }
 
     static getFormatGenericField(field, zero_is_null) {
@@ -837,17 +849,17 @@ export class DataTableRenders {
 
         if (row.role && row.role.value == 'attacker')
             label = label + ' ' + DataTableRenders.filterize('role', row.role.value,
-                '<i class="fas fa-skull" title="' + row.role.label + '"></i>', row.role.label);
+                '<i class="fas fa-skull" data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + row.role.label + '"></i>', row.role.label);
         else if (row.role && row.role.value == 'victim')
             label = label + ' ' + DataTableRenders.filterize('role', row.role.value,
-                '<i class="fas fa-sad-tear" title="' + row.role.label + '"></i>', row.role.label);
+                '<i class="fas fa-sad-tear" data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + row.role.label + '"></i>', row.role.label);
 
         if (row.role_cli_srv && row.role_cli_srv.value == 'client')
             label = label + ' ' + DataTableRenders.filterize('role_cli_srv', row.role_cli_srv.value,
-                '<i class="fas fa-long-arrow-alt-right" title="' + row.role_cli_srv.label + '"></i>', row.role_cli_srv.label);
+                '<i class="fas fa-long-arrow-alt-right" data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + row.role_cli_srv.label + '"></i>', row.role_cli_srv.label);
         else if (row.role_cli_srv && row.role_cli_srv.value == 'server')
             label = label + ' ' + DataTableRenders.filterize('role_cli_srv', row.role_cli_srv.value,
-                '<i class="fas fa-long-arrow-alt-left" title="' + row.role_cli_srv.label + '"></i>', row.role_cli_srv.label);
+                '<i class="fas fa-long-arrow-alt-left" data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + row.role_cli_srv.label + '"></i>', row.role_cli_srv.label);
 
         return label + ' ' + html_ref;
     }
@@ -891,7 +903,7 @@ export class DataTableRenders {
 
         let cliBlacklisted = ''
         if (flow.cli_ip.blacklisted == true)
-            cliBlacklisted = " <i class=\'fas fa-ban fa-sm\' title=\'" + i18n("hosts_stats.blacklisted") + "\'></i>"
+            cliBlacklisted = " <i class=\'fas fa-ban fa-sm\'  data-bs-toggle=\"tooltip\" data-bs-placement=\"bottom\" title=\'" + i18n("hosts_stats.blacklisted") + "\'></i>"
 
         let cliLocation = ''
         if (flow.cli_ip.location == 'multicast') {
@@ -918,7 +930,7 @@ export class DataTableRenders {
 
         let srvBlacklisted = ''
         if (flow.srv_ip.blacklisted == true)
-            srvBlacklisted = " <i class=\'fas fa-ban fa-sm\' title=\'" + i18n("hosts_stats.blacklisted") + "\'></i>"
+            srvBlacklisted = " <i class=\'fas fa-ban fa-sm\' data-bs-toggle=\"tooltip\" data-bs-placement=\"bottom\" title=\'" + i18n("hosts_stats.blacklisted") + "\'></i>"
 
         let srvLocation = ''
         if (flow.srv_ip.location == 'multicast') {
@@ -933,16 +945,16 @@ export class DataTableRenders {
         let srvIcons = "";
         if (row.cli_role) {
             if (row.cli_role.value == 'attacker')
-                cliIcons += DataTableRenders.filterize('role', 'attacker', '<i class="fas fa-skull" title="' + row.cli_role.label + '"></i>', row.cli_role.tag_label);
+                cliIcons += DataTableRenders.filterize('role', 'attacker', '<i class="fas fa-skull" data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + row.cli_role.label + '"></i>', row.cli_role.tag_label);
             else if (row.cli_role.value == 'victim')
-                cliIcons += DataTableRenders.filterize('role', 'victim', '<i class="fas fa-sad-tear" title="' + row.cli_role.label + '"></i>', row.cli_role.tag_label);
+                cliIcons += DataTableRenders.filterize('role', 'victim', '<i class="fas fa-sad-tear" data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + row.cli_role.label + '"></i>', row.cli_role.tag_label);
         }
 
         if (row.srv_role) {
             if (row.srv_role.value == 'attacker')
-                srvIcons += DataTableRenders.filterize('role', 'attacker', '<i class="fas fa-skull" title="' + row.srv_role.label + '"></i>', row.srv_role.tag_label);
+                srvIcons += DataTableRenders.filterize('role', 'attacker', '<i class="fas fa-skull" data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + row.srv_role.label + '"></i>', row.srv_role.tag_label);
             else if (row.srv_role.value == 'victim')
-                srvIcons += DataTableRenders.filterize('role', 'victim', '<i class="fas fa-sad-tear" title="' + row.srv_role.label + '"></i>', row.srv_role.tag_label);
+                srvIcons += DataTableRenders.filterize('role', 'victim', '<i class="fas fa-sad-tear" data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + row.srv_role.label + '"></i>', row.srv_role.tag_label);
         }
 
         return `${active_ref} ${cliLabel}${cliBlacklisted}${cliLocation}${cliFlagLabel}${cliPortLabel} ${cliIcons} ${flow.cli_ip.reference} <i class="fas fa-exchange-alt fa-lg" aria-hidden="true"></i> ${srvLabel}${srvBlacklisted}${srvLocation}${srvFlagLabel}${srvPortLabel} ${srvIcons} ${flow.srv_ip.reference}`;
