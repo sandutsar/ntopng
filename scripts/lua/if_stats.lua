@@ -1041,17 +1041,13 @@ if ((page == "overview") or (page == nil)) then
             dump_to = "Syslog"
         end
 
-        local export_count = ifstats.stats.flow_export_count
-        local export_rate = ifstats.stats.flow_export_rate
-        local export_drops = ifstats.stats.flow_export_drops
+        local export_count = ifstats.stats_since_reset.flow_export_count or 0
+        local export_rate = ifstats.stats_since_reset.flow_export_rate or 0
+        local export_drops = ifstats.stats_since_reset.flow_export_drops or 0
         local export_drops_pct = 0
 
-        if not export_drops or not export_count then
-            -- Nothing to do
-        elseif export_drops > 0 and export_count > 0 then
+        if export_drops > 0 or export_count > 0 then
             export_drops_pct = export_drops / (export_count + export_drops) * 100
-        elseif export_drops > 0 then
-            export_drops_pct = 100
         end
 
         print("<tr><th colspan=7 nowrap>")
@@ -1078,8 +1074,7 @@ if ((page == "overview") or (page == nil)) then
             "&page=historical&ts_schema=iface:dumped_flows'><i class='fas fa-chart-area fa-sm'></i></A>", "") .. "</th>")
 
         local span_danger = ""
-        if not export_drops then
-        elseif export_drops > 0 then
+        if export_drops > 0 then
             span_danger = ' class="badge bg-danger"'
         end
 
@@ -1231,8 +1226,8 @@ if ((page == "overview") or (page == nil)) then
         print("<td colspan=5>")
 
         local tot = ifstats.stats.bytes + ifstats.stats.packets + ifstats.stats.drops
-        if (ifstats.stats.flow_export_count ~= nil) then
-            tot = tot + ifstats.stats.flow_export_count + ifstats.stats.flow_export_drops
+        if (ifstats.stats_since_reset.flow_export_count ~= nil) then
+            tot = tot + ifstats.stats_since_reset.flow_export_count + ifstats.stats_since_reset.flow_export_drops
         end
 
         print(
