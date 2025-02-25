@@ -40,17 +40,11 @@
 		"component" : "pie",
 		"id" : "top_l7_categories",
 		"i18n_name" : "top_l7_cat",
-		"width" : 4,
+		"width" : 3,
 		"height" : 4,
 		"params" : {
 			"url" : "/lua/pro/rest/v2/get/db/charts/top_l7_categories.lua",
 			"url_params" : {
-				"query_preset" : "protos",
-				"ts_schema" : "host:traffic",
-				"chart_id" : "top_l7_categories",
-				"ts_query" : "ifid:$IFID$",
-				"detail_view" : "flows",
-				"version" : 4,
 				"length" : 10
 			}
 		}
@@ -59,17 +53,11 @@
 		"component" : "pie",
 		"id" : "top_l7_proto",
 		"i18n_name" : "top_l7_proto",
-		"width" : 4,
+		"width" : 3,
 		"height" : 4,
 		"params" : {
 			"url" : "/lua/pro/rest/v2/get/db/charts/top_l7_proto.lua",
 			"url_params" : {
-				"chart_id" : "top_l7_proto",
-				"detail_view" : "flows",
-				"ts_query" : "ifid:$IFID$",
-				"ts_schema" : "host:traffic",
-				"query_preset" : "protos",
-				"version" : 4,
 				"length" : 10
 			}
 		}
@@ -78,17 +66,24 @@
 		"component" : "pie",
 		"id" : "top_l4_proto",
 		"i18n_name" : "top_l4_proto",
-		"width" : 4,
+		"width" : 3,
 		"height" : 4,
 		"params" : {
 			"url" : "/lua/pro/rest/v2/get/db/charts/top_l4_proto.lua",
 			"url_params" : {
-				"chart_id" : "top_l4_proto",
-				"detail_view" : "flows",
-				"ts_query" : "ifid:$IFID$",
-				"ts_schema" : "host:traffic",
-				"query_preset" : "protos",
-				"version" : 4,
+				"length" : 10
+			}
+		}
+	},
+	{
+		"component" : "pie",
+		"id" : "qoe_score",
+		"i18n_name" : "qoe",
+		"width" : 3,
+		"height" : 4,
+		"params" : {
+			"url" : "/lua/pro/rest/v2/get/db/charts/qoe_score.lua",
+			"url_params" : {
 				"length" : 10
 			}
 		}
