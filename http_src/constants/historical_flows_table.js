@@ -21,6 +21,10 @@ const historical_flows_table = {
 	    "data": "score",
 	},
 	{
+	    "name": "qoe_score",
+	    "data": "qoe_score",
+	},
+	{
 	    "name": "flow",
 	    "data": "flow",
 	    "orderable": false,

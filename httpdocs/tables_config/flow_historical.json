@@ -110,6 +110,17 @@
 			]
 		},
 		{
+			"title_i18n": "db_search.tags.qoe_score",
+			"data_field": "qoe_score",
+			"render_type": "formatQoEScore",
+			"min-width": "70px",
+			"sortable": true,
+			"zero_is_null": true,
+			"class": [
+				"text-center"
+			]
+		},
+		{
 			"title_i18n": "db_search.alert_id",
 			"data_field": "alert_id",
 			"min-width": "80px",

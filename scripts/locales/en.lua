@@ -2451,6 +2451,7 @@ local lang = {
       ["user_agent"] = "User Agent",
       ["vlan_id"] = "VLAN",
       ["wlan_ssid"] = "WLAN SSID",
+      ["qoe_score"] = "QoE Score",
       ["minor_connection_states"] = {
         ["0"] = "NO_STATE",
         ["1"] = "S0 - Connection attempt seen, no reply",

@@ -631,6 +631,18 @@ end
 
 -- #####################################
 
+local function dt_format_qoe_score(score)
+   local score = tonumber(score) or 0
+
+   return ({
+      value = score,
+      label = format_utils.formatValue(score),
+      color = nil,
+   })
+end
+
+-- #####################################
+
 local function dt_format_l7_category(l7_category)
    local formatted_cat = {
       title = "",
@@ -1064,6 +1076,13 @@ local function format_flow_score(score, flow)
    return label
 end
 
+local function format_flow_qoe_score(score, flow)
+   local score = tonumber(score)
+   local label = format_utils.formatValue(score)
+
+   return label
+end
+
 local function format_flow_observation_point(id, flow)
    return getFullObsPointName(tonumber(id), nil, true)
 end
@@ -1122,6 +1141,7 @@ local flow_columns = {
    ['SRC2DST_TCP_FLAGS'] =    { tag = "src2dst_tcp_flags", dt_func = dt_format_tcp_flags, db_type = "Number", db_raw_type = "Uint8" },
    ['DST2SRC_TCP_FLAGS'] =    { tag = "dst2src_tcp_flags", dt_func = dt_format_tcp_flags, db_type = "Number", db_raw_type = "Uint8" },
    ['SCORE'] =                { tag = "score",        dt_func = dt_format_score, format_func = format_flow_score, i18n = i18n("score"), order = 9, db_type = "Number", db_raw_type = "Uint16" },
+   ['QOE_SCORE'] =            { tag = "qoe_score",    dt_func = dt_format_qoe_score, format_func = format_flow_qoe_score, i18n = i18n("db_search.tags.qoe_score"), order = 10, db_type = "Number", db_raw_type = "Uint8" },
    ['L7_PROTO_MASTER'] =      { tag = "l7proto_master", dt_func = dt_format_l7_proto, simple_dt_func = interface.getnDPIProtoName, hide = true },
    ['CLIENT_NW_LATENCY_US'] = { tag = "cli_nw_latency", dt_func = dt_format_latency_ms, i18n = i18n("db_search.cli_nw_latency"), order = 13, db_type = "Number", db_raw_type = "Uint32" },
    ['SERVER_NW_LATENCY_US'] = { tag = "srv_nw_latency", dt_func = dt_format_latency_ms, i18n = i18n("db_search.srv_nw_latency"), order = 14, db_type = "Number", db_raw_type = "Uint32" },
@@ -2000,6 +2020,7 @@ function historical_flow_utils.convertFlowToAlert(flow)
          is_srv_attacker = flow.IS_SRV_ATTACKER,
          is_srv_victim = flow.IS_SRV_VICTIM,
          score = flow.SCORE,
+         qoe_score = flow.QOE_SCORE,
          l7_master_proto = flow.L7_PROTO_MASTER,
          vlan_id = flow.VLAN_ID,
          srv_location = flow.SERVER_LOCATION,
