@@ -11,7 +11,7 @@
  * Do not check for 0 as it may be a valid value. */
 const QoEQualityBadge = (value) => {
     let badge = ''
-    if (value > 90) {
+    if (value > 90 && value <= 100) {
         badge = 'bg-success';
     } else if (value > 75) {
         badge = 'bg-primary'
@@ -19,7 +19,7 @@ const QoEQualityBadge = (value) => {
         badge = 'bg-info'
     } else if (value > 50) {
         badge = 'bg-warning'
-    } else {
+    } else if (value > 0) {
         badge = 'bg-danger'
     }
 
@@ -43,7 +43,7 @@ const QoEQualityIcon = (value) => {
         icon = '<svg data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + QoEQualityLabel(value) + '" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-signal-high mb-1 text-success" style="margin-top:-4px;"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/></svg>'
     } else if (value > 50) {
         icon = '<svg data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + QoEQualityLabel(value) + '" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-signal-medium mb-1 text-warning" style="margin-top:-4px;"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/></svg>'
-    } else if (value <= 50) {
+    } else if (value > 0) {
         icon = '<svg data-bs-toggle="tooltip" data-bs-placement="bottom" title="' + QoEQualityLabel(value) + '" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-signal-low mb-1 text-error" style="margin-top:-4px;"><path d="M2 20h.01"/><path d="M7 20v-4"/></svg>'
     }
 
@@ -56,7 +56,7 @@ const QoEQualityIcon = (value) => {
  * Do not check for 0 as it may be a valid value. */
 const QoEQualityLabel = (value) => {
     let label = ''
-    if (value > 90) {
+    if (value > 90 && value <= 100) {
         label = i18n('flow_details.qoe_excellent_label');
     } else if (value > 75) {
         label = i18n('flow_details.qoe_good_label');
@@ -64,11 +64,32 @@ const QoEQualityLabel = (value) => {
         label = i18n('flow_details.qoe_fair_label');
     } else if (value > 50) {
         label = i18n('flow_details.qoe_degraded_label');
-    } else {
+    } else if (value > 0) {
         label = i18n('flow_details.qoe_poor_label');
     }
 
     return label;
+}
+
+/* ******************************************************************** */
+
+/* This function check if value is not set (null or empty).
+ * Do not check for 0 as it may be a valid value. */
+const GetQoEID = (value) => {
+    let id = ''
+    if (value > 90 && value <=100) {
+        id = 91;
+    } else if (value > 75) {
+        id = 76;
+    } else if (value > 60) {
+        id = 61;
+    } else if (value > 50) {
+        id = 51;
+    } else if (value > 0) {
+        id = 1;
+    }
+
+    return id;
 }
 
 /* ******************************************************************** */
@@ -78,6 +99,7 @@ const dataUtils = function () {
         QoEQualityBadge,
         QoEQualityLabel,
         QoEQualityIcon,
+        GetQoEID,
     };
 }();
 

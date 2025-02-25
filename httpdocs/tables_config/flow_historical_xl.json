@@ -1,5 +1,5 @@
 {
-	"id": "flow_historical",
+	"id": "flow_historical_xl",
 	"data_url": "lua/pro/rest/v2/get/db/historical_db_search.lua",
 	"use_current_page": false,
 	"enable_search": false,
@@ -102,6 +102,17 @@
 			"title_i18n": "score",
 			"data_field": "score",
 			"render_type": "formatScore",
+			"min-width": "70px",
+			"sortable": true,
+			"zero_is_null": true,
+			"class": [
+				"text-center"
+			]
+		},
+		{
+			"title_i18n": "db_search.tags.qoe",
+			"data_field": "qoe_score",
+			"render_type": "formatQoE",
 			"min-width": "70px",
 			"sortable": true,
 			"zero_is_null": true,

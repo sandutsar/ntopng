@@ -1,11 +1,10 @@
 --
 -- (C) 2014-24 - ntop.org
 --
-
-if(pragma_once_lua_utils_print == true) then
-   -- io.write(debug.traceback().."\n")
-   -- avoid multiple inclusions
-   return
+if (pragma_once_lua_utils_print == true) then
+    -- io.write(debug.traceback().."\n")
+    -- avoid multiple inclusions
+    return
 end
 
 pragma_once_lua_utils_print = true
@@ -17,84 +16,124 @@ local dscp_consts = require "dscp_consts"
 -- ##############################################
 
 function printGETParameters(get)
-  for key, value in pairs(get) do
-    io.write(key.."="..value.."\n")
-  end
+    for key, value in pairs(get) do io.write(key .. "=" .. value .. "\n") end
 end
 
 -- ##############################################
 
 function printASN(asn, asname)
-  asname = asname:gsub('"','')
-  if(asn > 0) then
-   return("<A class='ntopng-external-link' href='https://stat.ripe.net/app/launchpad/S1_"..asn.."_C13C31C4C34C9C22C28C20C6C7C26C29C30C14C17C2C21C33C16C10'>"..asname.." <i class='fas fa-external-link-alt fa-lg'></i></A>")
-  else
-    return(asname)
-  end
+    asname = asname:gsub('"', '')
+    if (asn > 0) then
+        return
+            ("<A class='ntopng-external-link' href='https://stat.ripe.net/app/launchpad/S1_" ..
+                asn ..
+                "_C13C31C4C34C9C22C28C20C6C7C26C29C30C14C17C2C21C33C16C10'>" ..
+                asname .. " <i class='fas fa-external-link-alt fa-lg'></i></A>")
+    else
+        return (asname)
+    end
 end
 
 -- ##############################################
 
 function printIpVersionDropdown(base_url, page_params)
-   local ipversion = _GET["version"]
-   local ipversion_filter
-   if not isEmptyString(ipversion) then
-      ipversion_filter = '<span class="fas fa-filter"></span>'
-   else
-      ipversion_filter = ''
-   end
+    local ipversion = _GET["version"]
+    local ipversion_filter
+    if not isEmptyString(ipversion) then
+        ipversion_filter = '<span class="fas fa-filter"></span>'
+    else
+        ipversion_filter = ''
+    end
 
-   -- table.clone needed to modify some parameters while keeping the original unchanged
-   local ipversion_params = table.clone(page_params)
-   ipversion_params["version"] = nil
+    -- table.clone needed to modify some parameters while keeping the original unchanged
+    local ipversion_params = table.clone(page_params)
+    ipversion_params["version"] = nil
 
-   print[[\
-      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]] print(i18n("flows_page.ip_version")) print[[]] print(ipversion_filter) print[[<span class="caret"></span></button>\
+    print [[\
+      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]]
+    print(i18n("flows_page.ip_version"))
+    print [[]]
+    print(ipversion_filter)
+    print [[<span class="caret"></span></button>\
       <ul class="dropdown-menu scrollable-dropdown" role="menu" id="flow_dropdown">\
-      ]]print('<li><a class="dropdown-item') print(page_params.version == nil and ' active' or '') print[[" href="]] print(getPageUrl(base_url, ipversion_params)) print[[">]] print(i18n("flows_page.all_ip_versions")) print[[</a></li>\
-         <li><a class="dropdown-item ]] if ipversion == "4" then print('active') end print[[" href="]] ipversion_params["version"] = "4"; print(getPageUrl(base_url, ipversion_params)); print[[">]] print(i18n("flows_page.ipv4_only")) print[[</a></li>\
-         <li><a class="dropdown-item ]] if ipversion == "6" then print('active') end print[[" href="]] ipversion_params["version"] = "6"; print(getPageUrl(base_url, ipversion_params)); print[[">]] print(i18n("flows_page.ipv6_only")) print[[</a></li>\
+      ]]
+    print('<li><a class="dropdown-item')
+    print(page_params.version == nil and ' active' or '')
+    print [[" href="]]
+    print(getPageUrl(base_url, ipversion_params))
+    print [[">]]
+    print(i18n("flows_page.all_ip_versions"))
+    print [[</a></li>\
+         <li><a class="dropdown-item ]]
+    if ipversion == "4" then print('active') end
+    print [[" href="]]
+    ipversion_params["version"] = "4";
+    print(getPageUrl(base_url, ipversion_params));
+    print [[">]]
+    print(i18n("flows_page.ipv4_only"))
+    print [[</a></li>\
+         <li><a class="dropdown-item ]]
+    if ipversion == "6" then print('active') end
+    print [[" href="]]
+    ipversion_params["version"] = "6";
+    print(getPageUrl(base_url, ipversion_params));
+    print [[">]]
+    print(i18n("flows_page.ipv6_only"))
+    print [[</a></li>\
       </ul>]]
 end
 
 -- ##############################################
 
 function printVLANFilterDropdown(base_url, page_params)
-   local vlans = interface.getVLANsList()
+    local vlans = interface.getVLANsList()
 
-   if vlans == nil then vlans = {VLANs={}} end
-   vlans = vlans["VLANs"]
+    if vlans == nil then vlans = {VLANs = {}} end
+    vlans = vlans["VLANs"]
 
-   local ids = {}
-   for _, vlan in ipairs(vlans) do
-      ids[#ids + 1] = vlan["vlan_id"]
-   end
+    local ids = {}
+    for _, vlan in ipairs(vlans) do ids[#ids + 1] = vlan["vlan_id"] end
 
-   local vlan_id = _GET["vlan"]
-   local vlan_id_filter = ''
-   if not isEmptyString(vlan_id) then
-      vlan_id_filter = '<span class="fas fa-filter"></span>'
-   end
+    local vlan_id = _GET["vlan"]
+    local vlan_id_filter = ''
+    if not isEmptyString(vlan_id) then
+        vlan_id_filter = '<span class="fas fa-filter"></span>'
+    end
 
-   -- table.clone needed to modify some parameters while keeping the original unchanged
-   local vlan_id_params = table.clone(page_params)
-   vlan_id_params["vlan"] = nil
+    -- table.clone needed to modify some parameters while keeping the original unchanged
+    local vlan_id_params = table.clone(page_params)
+    vlan_id_params["vlan"] = nil
 
-   print[[\
-      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]] print(i18n("flows_page.vlan")) print[[]] print(vlan_id_filter) print[[<span class="caret"></span></button>\
+    print [[\
+      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]]
+    print(i18n("flows_page.vlan"))
+    print [[]]
+    print(vlan_id_filter)
+    print [[<span class="caret"></span></button>\
       <ul class="dropdown-menu scrollable-dropdown" role="menu" id="flow_dropdown">\
-      ]]print('<li><a class="dropdown-item') print(page_params.vlan == nil and ' active' or '') print[[" href="]] print(getPageUrl(base_url, vlan_id_params)) print[[">]] print(i18n("all")) print[[</a></li>\]]
-   for _, vid in ipairs(ids) do
-      vlan_id_params["vlan"] = vid
-      local vlan_name = tostring(getFullVlanName(vid))
-      if isEmptyString(vlan_name) then
-         vlan_name = i18n('no_vlan')
-      end
-      print[[
+      ]]
+    print('<li><a class="dropdown-item')
+    print(page_params.vlan == nil and ' active' or '')
+    print [[" href="]]
+    print(getPageUrl(base_url, vlan_id_params))
+    print [[">]]
+    print(i18n("all"))
+    print [[</a></li>\]]
+    for _, vid in ipairs(ids) do
+        vlan_id_params["vlan"] = vid
+        local vlan_name = tostring(getFullVlanName(vid))
+        if isEmptyString(vlan_name) then vlan_name = i18n('no_vlan') end
+        print [[
          <li>\
-           <a class="dropdown-item ]] print(vlan_id == tostring(vid) and 'active' or '') print[[" href="]] print(getPageUrl(base_url, vlan_id_params)) print[[">]] print(vlan_name) print[[</a></li>\]]
-   end
-   print[[
+           <a class="dropdown-item ]]
+        print(vlan_id == tostring(vid) and 'active' or '')
+        print [[" href="]]
+        print(getPageUrl(base_url, vlan_id_params))
+        print [[">]]
+        print(vlan_name)
+        print [[</a></li>\]]
+    end
+    print [[
 
       </ul>]]
 end
@@ -102,152 +141,207 @@ end
 -- ##############################################
 
 function printDSCPDropdown(base_url, page_params, dscp_list, format_utils)
-   local dscp = _GET["dscp"]
-   local dscp_filter
-   if not isEmptyString(dscp) then
-      dscp_filter = '<span class="fas fa-filter"></span>'
-   else
-      dscp_filter = ''
-   end
+    local dscp = _GET["dscp"]
+    local dscp_filter
+    if not isEmptyString(dscp) then
+        dscp_filter = '<span class="fas fa-filter"></span>'
+    else
+        dscp_filter = ''
+    end
 
-   -- table.clone needed to modify some parameters while keeping the original unchanged
-   local dscp_params = table.clone(page_params)
-   dscp_params["dscp"] = nil
-   -- Used to possibly remove tcp state filters when selecting a non-TCP l4 protocol
-   local dscp_params_non_filter = table.clone(dscp_params)
-   if dscp_params_non_filter["dscp"] then
-      dscp_params_non_filter["dscp"] = nil
-   end
+    -- table.clone needed to modify some parameters while keeping the original unchanged
+    local dscp_params = table.clone(page_params)
+    dscp_params["dscp"] = nil
+    -- Used to possibly remove tcp state filters when selecting a non-TCP l4 protocol
+    local dscp_params_non_filter = table.clone(dscp_params)
+    if dscp_params_non_filter["dscp"] then
+        dscp_params_non_filter["dscp"] = nil
+    end
 
-   local ordered_dscp_list = {}
+    local ordered_dscp_list = {}
 
-   for key, value in pairs(dscp_list) do
-      local name = dscp_consts.dscp_descr(key)
-      ordered_dscp_list[name] = {}
-      ordered_dscp_list[name]["id"] = key
-      ordered_dscp_list[name]["count"] = value.count
-   end
+    for key, value in pairs(dscp_list) do
+        local name = dscp_consts.dscp_descr(key)
+        ordered_dscp_list[name] = {}
+        ordered_dscp_list[name]["id"] = key
+        ordered_dscp_list[name]["count"] = value.count
+    end
 
-   print[[\
-      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]] print(i18n("flows_page.dscp")) print[[]] print(dscp_filter) print[[<span class="caret"></span></button>\
+    print [[\
+      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]]
+    print(i18n("flows_page.dscp"))
+    print [[]]
+    print(dscp_filter)
+    print [[<span class="caret"></span></button>\
       <ul class="dropdown-menu dropdown-menu-end scrollable-dropdown" role="menu" id="flow_dropdown">\
-      ]]print('<li><a class="dropdown-item') print(page_params.dscp == nil and ' active' or '') print[[" href="]] print(getPageUrl(base_url, dscp_params_non_filter)) print[[">]] print(i18n("flows_page.all_dscp")) print[[</a></li>]]
+      ]]
+    print('<li><a class="dropdown-item')
+    print(page_params.dscp == nil and ' active' or '')
+    print [[" href="]]
+    print(getPageUrl(base_url, dscp_params_non_filter))
+    print [[">]]
+    print(i18n("flows_page.all_dscp"))
+    print [[</a></li>]]
 
-   for key, value in pairsByKeys(ordered_dscp_list, asc) do
-	  print[[<li]]
+    for key, value in pairsByKeys(ordered_dscp_list, asc) do
+        print [[<li]]
 
-	  print([[><a class="dropdown-item ]].. (tonumber(dscp) == value.id and 'active' or '') ..[[" href="]])
+        print([[><a class="dropdown-item ]] ..
+                  (tonumber(dscp) == value.id and 'active' or '') ..
+                  [[" href="]])
 
-	  local dscp_table = ternary(key ~= 6, dscp_params_non_filter, dscp_params)
+        local dscp_table =
+            ternary(key ~= 6, dscp_params_non_filter, dscp_params)
 
-	  dscp_table["dscp"] = value.id
-	  print(getPageUrl(base_url, dscp_table))
+        dscp_table["dscp"] = value.id
+        print(getPageUrl(base_url, dscp_table))
 
-	  print[[">]] print(key) print [[ (]] print(format_utils.formatValue(value.count)) print [[)</a></li>]]
-   end
+        print [[">]]
+        print(key)
+        print [[ (]]
+        print(format_utils.formatValue(value.count))
+        print [[)</a></li>]]
+    end
 
-   print[[</ul>]]
+    print [[</ul>]]
 end
 
 -- ###################################
 
 local function sub_quotes_to_string(string_to_fix)
-  return string_to_fix:gsub("%'", "&lsquo;")
+    return string_to_fix:gsub("%'", "&lsquo;")
 end
 
 -- ###################################
 
-function printHostPoolDropdown(base_url, page_params, host_pool_list, format_utils)
-   local host_pools = require "host_pools"
+function printHostPoolDropdown(base_url, page_params, host_pool_list,
+                               format_utils)
+    local host_pools = require "host_pools"
 
-   local host_pools_instance = host_pools:create()
-   local host_pool = _GET["host_pool_id"]
-   local host_pool_filter
-   if not isEmptyString(host_pool) then
-      host_pool_filter = '<span class="fas fa-filter"></span>'
-   else
-      host_pool_filter = ''
-   end
+    local host_pools_instance = host_pools:create()
+    local host_pool = _GET["host_pool_id"]
+    local host_pool_filter
+    if not isEmptyString(host_pool) then
+        host_pool_filter = '<span class="fas fa-filter"></span>'
+    else
+        host_pool_filter = ''
+    end
 
-   -- table.clone needed to modify some parameters while keeping the original unchanged
-   local host_pool_params = table.clone(page_params)
-   host_pool_params["host_pool_id"] = nil
-   -- Used to possibly remove tcp state filters when selecting a non-TCP l4 protocol
-   local host_pool_params_non_filter = table.clone(host_pool_params)
-   if host_pool_params_non_filter["host_pool_id"] then
-      host_pool_params_non_filter["host_pool_id"] = nil
-   end
+    -- table.clone needed to modify some parameters while keeping the original unchanged
+    local host_pool_params = table.clone(page_params)
+    host_pool_params["host_pool_id"] = nil
+    -- Used to possibly remove tcp state filters when selecting a non-TCP l4 protocol
+    local host_pool_params_non_filter = table.clone(host_pool_params)
+    if host_pool_params_non_filter["host_pool_id"] then
+        host_pool_params_non_filter["host_pool_id"] = nil
+    end
 
-   local ordered_host_pool_list = {}
+    local ordered_host_pool_list = {}
 
-   if host_pool then
-      local id = tonumber(host_pool)
-      if host_pool_list[id] then
-        ordered_host_pool_list[id] = {}
-        ordered_host_pool_list[id]["count"] = host_pool_list[id]["count"]
-      end
-   else
-      for key, value in pairs(host_pool_list) do
-	 ordered_host_pool_list[key] = {}
-	 ordered_host_pool_list[key]["count"] = value.count
-      end
-   end
+    if host_pool then
+        local id = tonumber(host_pool)
+        if host_pool_list[id] then
+            ordered_host_pool_list[id] = {}
+            ordered_host_pool_list[id]["count"] = host_pool_list[id]["count"]
+        end
+    else
+        for key, value in pairs(host_pool_list) do
+            ordered_host_pool_list[key] = {}
+            ordered_host_pool_list[key]["count"] = value.count
+        end
+    end
 
-   print[[\
-      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]] print(i18n("details.host_pool")) print[[]] print(host_pool_filter) print[[<span class="caret"></span></button>\
+    print [[\
+      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]]
+    print(i18n("details.host_pool"))
+    print [[]]
+    print(host_pool_filter)
+    print [[<span class="caret"></span></button>\
       <ul class="dropdown-menu dropdown-menu-end scrollable-dropdown" role="menu" id="flow_dropdown">\
-      ]]print('<li><a class="dropdown-item') print(page_params.host_pool_id == nil and ' active' or '') print[[" href="]] print(getPageUrl(base_url, host_pool_params_non_filter)) print[[">]] print(i18n("flows_page.all_host_pool")) print[[</a></li>]]
+      ]]
+    print('<li><a class="dropdown-item')
+    print(page_params.host_pool_id == nil and ' active' or '')
+    print [[" href="]]
+    print(getPageUrl(base_url, host_pool_params_non_filter))
+    print [[">]]
+    print(i18n("flows_page.all_host_pool"))
+    print [[</a></li>]]
 
-   for key, value in pairsByKeys(ordered_host_pool_list, asc) do
-      print[[<li]]
+    for key, value in pairsByKeys(ordered_host_pool_list, asc) do
+        print [[<li]]
 
-      print([[><a class="dropdown-item ]].. (tonumber(host_pool) == key and 'active' or '') ..[[" href="]])
+        print([[><a class="dropdown-item ]] ..
+                  (tonumber(host_pool) == key and 'active' or '') ..
+                  [[" href="]])
 
-      local host_pool_table = ternary(key ~= 6, host_pool_params_non_filter, host_pool_params)
+        local host_pool_table = ternary(key ~= 6, host_pool_params_non_filter,
+                                        host_pool_params)
 
-      host_pool_table["host_pool_id"] = key
-      print(getPageUrl(base_url, host_pool_table))
-      
-      print[[">]] print(sub_quotes_to_string(host_pools_instance:get_pool_name(key))) print [[ (]] print(format_utils.formatValue(value.count)) print [[)</a></li>]]
-   end
+        host_pool_table["host_pool_id"] = key
+        print(getPageUrl(base_url, host_pool_table))
 
-   print[[</ul>]]
+        print [[">]]
+        print(sub_quotes_to_string(host_pools_instance:get_pool_name(key)))
+        print [[ (]]
+        print(format_utils.formatValue(value.count))
+        print [[)</a></li>]]
+    end
+
+    print [[</ul>]]
 end
 
 -- ###################################
 
 function printLocalNetworksDropdown(base_url, page_params)
-   local networks_stats = interface.getNetworksStats()
+    local networks_stats = interface.getNetworksStats()
 
-   local ids = {}
-   for n, local_network in pairs(networks_stats) do
-      local network_name = getFullLocalNetworkName(local_network["network_key"])
-      ids[network_name] = local_network
-   end
+    local ids = {}
+    for n, local_network in pairs(networks_stats) do
+        local network_name = getFullLocalNetworkName(
+                                 local_network["network_key"])
+        ids[network_name] = local_network
+    end
 
-   local local_network_id = _GET["network"]
-   local local_network_id_filter = ''
-   if not isEmptyString(local_network_id) then
-      local_network_id_filter = '<span class="fas fa-filter"></span>'
-   end
+    local local_network_id = _GET["network"]
+    local local_network_id_filter = ''
+    if not isEmptyString(local_network_id) then
+        local_network_id_filter = '<span class="fas fa-filter"></span>'
+    end
 
-   -- table.clone needed to modify some parameters while keeping the original unchanged
-   local local_network_id_params = table.clone(page_params)
-   local_network_id_params["network"] = nil
+    -- table.clone needed to modify some parameters while keeping the original unchanged
+    local local_network_id_params = table.clone(page_params)
+    local_network_id_params["network"] = nil
 
-   print[[\
-      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]] print(i18n("flows_page.networks")) print[[]] print(local_network_id_filter) print[[<span class="caret"></span></button>\
+    print [[\
+      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]]
+    print(i18n("flows_page.networks"))
+    print [[]]
+    print(local_network_id_filter)
+    print [[<span class="caret"></span></button>\
       <ul class="dropdown-menu scrollable-dropdown" role="menu" id="flow_dropdown">\
-      ]]print('<li><a class="dropdown-item') print(page_params.network == nil and ' active' or '') print[[" href="]] print(getPageUrl(base_url, local_network_id_params)) print[[">]] print(i18n("flows_page.all_networks")) print[[</a></li>\]]
+      ]]
+    print('<li><a class="dropdown-item')
+    print(page_params.network == nil and ' active' or '')
+    print [[" href="]]
+    print(getPageUrl(base_url, local_network_id_params))
+    print [[">]]
+    print(i18n("flows_page.all_networks"))
+    print [[</a></li>\]]
 
-   for local_network_name, local_network in pairsByKeys(ids) do
-      local cur_id = local_network["network_id"]
-      local_network_id_params["network"] = cur_id
-      print[[
+    for local_network_name, local_network in pairsByKeys(ids) do
+        local cur_id = local_network["network_id"]
+        local_network_id_params["network"] = cur_id
+        print [[
 	 <li>\
-	   <a class="dropdown-item ]] print(local_network_id == tostring(cur_id) and 'active' or '') print[[" href="]] print(getPageUrl(base_url, local_network_id_params)) print[[">]] print(local_network_name) print[[</a></li>\]]
-   end
-   print[[
+	   <a class="dropdown-item ]]
+        print(local_network_id == tostring(cur_id) and 'active' or '')
+        print [[" href="]]
+        print(getPageUrl(base_url, local_network_id_params))
+        print [[">]]
+        print(local_network_name)
+        print [[</a></li>\]]
+    end
+    print [[
 
       </ul>]]
 end
@@ -255,122 +349,168 @@ end
 -- ##############################################
 
 function printTrafficTypeFilterDropdown(base_url, page_params)
-   local traffic_type = _GET["traffic_type"]
-   local traffic_type_filter = ''
-   if not isEmptyString(traffic_type) then
-      traffic_type_filter = '<span class="fas fa-filter"></span>'
-   end
+    local traffic_type = _GET["traffic_type"]
+    local traffic_type_filter = ''
+    if not isEmptyString(traffic_type) then
+        traffic_type_filter = '<span class="fas fa-filter"></span>'
+    end
 
-   -- table.clone needed to modify some parameters while keeping the original unchanged
-   local traffic_type_params = table.clone(page_params)
-   traffic_type_params["traffic_type"] = nil
+    -- table.clone needed to modify some parameters while keeping the original unchanged
+    local traffic_type_params = table.clone(page_params)
+    traffic_type_params["traffic_type"] = nil
 
-   print[[\
-      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]] print(i18n("flows_page.direction")) print[[]] print(traffic_type_filter) print[[<span class="caret"></span></button>\
+    print [[\
+      <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">]]
+    print(i18n("flows_page.direction"))
+    print [[]]
+    print(traffic_type_filter)
+    print [[<span class="caret"></span></button>\
       <ul class="dropdown-menu scrollable-dropdown" role="menu" id="flow_dropdown">\
-      ]]print('<li><a class="dropdown-item') print(page_params.traffic_type == nil and ' active' or '') print[[" href="]] print(getPageUrl(base_url, traffic_type_params)) print[[">]] print(i18n("hosts_stats.traffic_type_all")) print[[</a></li>\]]
+      ]]
+    print('<li><a class="dropdown-item')
+    print(page_params.traffic_type == nil and ' active' or '')
+    print [[" href="]]
+    print(getPageUrl(base_url, traffic_type_params))
+    print [[">]]
+    print(i18n("hosts_stats.traffic_type_all"))
+    print [[</a></li>\]]
 
-   -- now forthe one-way
-   traffic_type_params["traffic_type"] = "one_way"
-   print[[
+    -- now forthe one-way
+    traffic_type_params["traffic_type"] = "one_way"
+    print [[
          <li>\
-           <a class="dropdown-item ]] if traffic_type == "one_way" then print('active') end print[[" href="]] print(getPageUrl(base_url, traffic_type_params)) print[[">]] print(i18n("hosts_stats.traffic_type_one_way")) print[[</a></li>\]]
-   traffic_type_params["traffic_type"] = "bidirectional"
-   print[[
+           <a class="dropdown-item ]]
+    if traffic_type == "one_way" then print('active') end
+    print [[" href="]]
+    print(getPageUrl(base_url, traffic_type_params))
+    print [[">]]
+    print(i18n("hosts_stats.traffic_type_one_way"))
+    print [[</a></li>\]]
+    traffic_type_params["traffic_type"] = "bidirectional"
+    print [[
          <li>\
-           <a class="dropdown-item ]] if traffic_type == "bidirectional" then print('active') end print[[" href="]] print(getPageUrl(base_url, traffic_type_params)) print[[">]] print(i18n("hosts_stats.traffic_type_two_ways")) print[[</a></li>\]]
-   print[[
+           <a class="dropdown-item ]]
+    if traffic_type == "bidirectional" then print('active') end
+    print [[" href="]]
+    print(getPageUrl(base_url, traffic_type_params))
+    print [[">]]
+    print(i18n("hosts_stats.traffic_type_two_ways"))
+    print [[</a></li>\]]
+    print [[
       </ul>]]
 end
 
 function processColor(proc)
-  if(proc == nil) then
-    return("")
-  elseif(proc["average_cpu_load"] < 33) then
-    return("<font color=green>"..proc["name"].."</font>")
-  elseif(proc["average_cpu_load"] < 66) then
-    return("<font color=orange>"..proc["name"].."</font>")
-  else
-    return("<font color=red>"..proc["name"].."</font>")
-  end
+    if (proc == nil) then
+        return ("")
+    elseif (proc["average_cpu_load"] < 33) then
+        return ("<font color=green>" .. proc["name"] .. "</font>")
+    elseif (proc["average_cpu_load"] < 66) then
+        return ("<font color=orange>" .. proc["name"] .. "</font>")
+    else
+        return ("<font color=red>" .. proc["name"] .. "</font>")
+    end
 end
 
 -- print TCP flags
-function printTCPFlags(flags)
-   print(formatTCPFlags(flags))
-end
-
+function printTCPFlags(flags) print(formatTCPFlags(flags)) end
 
 -- ###########################################
 
 function printWarningAlert(message)
-   print[[<div class="alert alert-warning alert-dismissable" role="alert">]]
-   print[[<i class="fas fa-exclamation-triangle fa-sm"></i> ]]
-   print[[<strong>]] print(i18n("warning")) print[[</strong> ]]
-   print(message)
-   print[[<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>]]
-   print[[</div>]]
+    print [[<div class="alert alert-warning alert-dismissable" role="alert">]]
+    print [[<i class="fas fa-exclamation-triangle fa-sm"></i> ]]
+    print [[<strong>]]
+    print(i18n("warning"))
+    print [[</strong> ]]
+    print(message)
+    print [[<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>]]
+    print [[</div>]]
 end
 
 -- ###########################################
 
 -- Banner format: {type="success|warning|danger", text="..."}
 function printMessageBanners(banners)
-   for _, msg in ipairs(banners) do
-      print[[
-  <div class="alert alert-]] print(msg.type) print([[ alert-dismissible" style="margin-top:2em; margin-bottom:0em;">
+    for _, msg in ipairs(banners) do
+        print [[
+  <div class="alert alert-]]
+        print(msg.type)
+        print([[ alert-dismissible" style="margin-top:2em; margin-bottom:0em;">
     ]])
 
-      if (msg.type == "warning") then
-         print("<b>".. i18n("warning") .. "</b>: ")
-      elseif (msg.type == "danger") then
-         print("<b>".. i18n("error") .. "</b>: ")
-      end
+        if (msg.type == "warning") then
+            print("<b>" .. i18n("warning") .. "</b>: ")
+        elseif (msg.type == "danger") then
+            print("<b>" .. i18n("error") .. "</b>: ")
+        end
 
-      print(msg.text)
+        print(msg.text)
 
-      print[[
+        print [[
          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>]]
-   end
+    end
 end
 
 -- ##############################################
 
 function print_copy_button(id, data)
-   print('<button style="" class="btn btn-sm border ms-1" data-placement="bottom" id="btn-copy-' .. id ..'" data="' .. data .. '"><i class="fas fa-copy"></i></button>')
-   print("<script>$('#btn-copy-" .. id .. "').click(function(e) { NtopUtils.copyToClipboard($(this).attr('data'), '" .. i18n('copied') .. "', '" .. i18n('request_failed_message') .. "', $(this));});</script>")
+    print(
+        '<button style="" class="btn btn-sm border ms-1" data-placement="bottom" id="btn-copy-' ..
+            id .. '" data="' .. data .. '"><i class="fas fa-copy"></i></button>')
+    print("<script>$('#btn-copy-" .. id ..
+              "').click(function(e) { NtopUtils.copyToClipboard($(this).attr('data'), '" ..
+              i18n('copied') .. "', '" .. i18n('request_failed_message') ..
+              "', $(this));});</script>")
 end
 
 -- ##############################################
+
+local possible_qoe = {
+    {i18n_badge = "flow_details.qoe_excellent", i18n_label = "flow_details.qoe_excellent_label", value = 91, max_value = 100},
+    {i18n_badge = "flow_details.qoe_good", i18n_label = "flow_details.qoe_good_label", value = 76, max_value = 90},
+    {i18n_badge = "flow_details.qoe_fair", i18n_label = "flow_details.qoe_fair_label", value = 61, max_value = 75},
+    {i18n_badge = "flow_details.qoe_degraded", i18n_label = "flow_details.qoe_degraded_label", value = 51, max_value = 60},
+    {i18n_badge = "flow_details.qoe_poor", i18n_label = "flow_details.qoe_poor_label", value = 1, max_value = 50}
+}
 
 -- See QoEQualityLabel in http_src/utilities/qoe-utils.js
 function formatQoE(qoe)
-   local value = qoe.qoe_score
-   
-   if((value == 0) or (value >     100)) then label = "" -- Unknown QoE
-   elseif(value >  90) then label = i18n("flow_details.qoe_excellent", { value = value })
-   elseif(value > 75)  then label = i18n("flow_details.qoe_good",      { value = value })
-   elseif(value > 60)  then label = i18n("flow_details.qoe_fair",      { value = value })
-   elseif(value > 50)  then label = i18n("flow_details.qoe_degraded",  { value = value })
-   else label = i18n("flow_details.qoe_poor",                          { value = value })
-   end
+    local value = qoe.qoe_score
 
-   if(#qoe.issues > 0) then
-      label = label .. "\n<p><ul>\n"
-      
-      for _, i in pairs(qoe.issues) do
-	 label = label .. "<li>"..i.."\n"
-      end
+    if ((value == 0) or (value > 100)) then
+        label = "" -- Unknown QoE
+    else
+        for _, qoe_value in ipairs(possible_qoe) do
+            if value >= qoe_value.value and value <= qoe_value.max_value then
+                label = i18n(qoe_value.i18n_badge, { value = value })
+            end
+        end
+    end
 
-      label = label .. "\n</ul>\n"
-   end
+    if (#qoe.issues > 0) then
+        label = label .. "\n<p><ul>\n"
 
-   return(label)
+        for _, i in pairs(qoe.issues) do
+            label = label .. "<li>" .. i .. "\n"
+        end
+
+        label = label .. "\n</ul>\n"
+    end
+
+    return (label)
 end
 
 -- ##############################################
 
-if(trace_script_duration ~= nil) then
-   io.write(debug.getinfo(1,'S').source .." executed in ".. (os.clock()-clock_start)*1000 .. " ms\n")
+function getPossibleQoE()
+    return possible_qoe
+end
+
+-- ##############################################
+
+if (trace_script_duration ~= nil) then
+    io.write(debug.getinfo(1, 'S').source .. " executed in " ..
+                 (os.clock() - clock_start) * 1000 .. " ms\n")
 end

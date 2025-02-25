@@ -301,8 +301,9 @@ tag_utils.defined_tags = {
         operators = { 'eq', 'neq', 'lt', 'gt', 'gte', 'lte' }
     },
     qoe_score = {
-        value_type = 'score',
-        i18n_label = i18n('db_search.tags.qoe_score'),
+        type = tag_utils.input_types.select,
+        value_type = 'qoe_score',
+        i18n_label = i18n('db_search.tags.qoe'),
         operators = { 'eq', 'neq', 'lt', 'gt', 'gte', 'lte' }
     },
     mac = {
@@ -984,6 +985,20 @@ function tag_utils.get_tag_info(id, entity, hide_exporters_name, restrict_filter
             filter.options[#filter.options + 1] = {
                 value = id,
                 label = info.label
+            }
+        end
+    elseif tag.value_type == "qoe_score" then
+        if not ntop.isEnterpriseXL() then
+            -- Exclude the filter if it's not XL, this info is found only in the xl version
+            filter = nil
+            return nil
+        end
+        filter.value_type = 'array'
+        filter.options = {}
+        for _, info in ipairs(getPossibleQoE()) do
+            filter.options[#filter.options + 1] = {
+                value = info.value,
+                label = i18n(info.i18n_label),
             }
         end
     elseif tag.value_type == "mitre_id" then

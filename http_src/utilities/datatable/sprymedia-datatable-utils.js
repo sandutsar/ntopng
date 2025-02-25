@@ -5,6 +5,7 @@
 'use strict';
 
 import NtopUtils from "../ntop-utils";
+import { default as QoEUtils } from "../qoe-utils.js";
 
 
 const DataTableHandlers = function () {
@@ -722,14 +723,13 @@ export class DataTableRenders {
         return `<a class='tag-filter' data-tag-key='score' title='${obj.label}' data-tag-value='${obj.value}' data-tag-label='${obj.label}' href='javascript:void(0)'>${cell}</a>`;
     }
 
-    static formatQoEScore(obj, type, row, zero_is_null) {
+    static formatQoE(obj, type, row, zero_is_null) {
         if (type !== "display") return obj.value;
         let cell = obj.label;
         if (zero_is_null == true && obj.value == 0) {
             cell = "";
         }
-        if (obj.color) cell = `<span class='font-weight-bold' style='color: ${obj.color}'>${cell}</span>`;
-        return `<a class='tag-filter' data-tag-key='qoe_score' title='${obj.label}' data-tag-value='${obj.value}' data-tag-label='${obj.label}' href='javascript:void(0)'>${cell}</a>`;
+        return `<a class='tag-filter' data-tag-key='qoe_score' title='${obj.label}' data-tag-value='${QoEUtils.GetQoEID(obj.value)}' data-tag-label='${obj.label}' href='javascript:void(0)'>${QoEUtils.QoEQualityIcon(obj.value)}</a>`;
     }
 
     static formatMessage(obj, type, row, zero_is_null) {
